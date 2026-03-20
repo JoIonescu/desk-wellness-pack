@@ -87,21 +87,17 @@
 
     .feature-icon { font-size: 18px; min-width: 24px; text-align: center; }
 
-    .btn-done {
-      width: 100%;
-      border: none;
-      border-radius: 14px;
-      padding: 13px 14px;
-      font-size: 14px;
-      font-weight: 800;
-      cursor: pointer;
-      background: var(--green);
-      color: #0f1b12;
-      transition: transform 0.15s ease;
-      margin-top: 4px;
+    .close-instruction {
+      margin-top: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      text-align: center;
     }
-    .btn-done:hover { transform: translateY(-1px); }
-    .btn-done:active { transform: translateY(0); }
 
     .note { margin-top: 14px; font-size: 11px; color: var(--muted); line-height: 1.5; }
   </style>
@@ -118,9 +114,9 @@
       Skip during meetings — Google Calendar
     </div>
 
-    <button class="btn-done" onclick="window.close()">Done — close this tab</button>
-
-    <div class="note">Features unlock the moment you click Verify Payment in the extension.</div>
+    <div class="close-instruction">
+      You can close this tab and go back to the extension to click <strong>Verify Payment</strong>.
+    </div>
   </div>
 </body>
 </html>
