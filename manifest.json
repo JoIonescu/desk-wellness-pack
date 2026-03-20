@@ -11,7 +11,7 @@
   ],
   "host_permissions": [
     "https://www.googleapis.com/*",
-    "https://YOUR_VERCEL_APP.vercel.app/*"
+    "https://smart-stretch-backend-3s9c5lnw0-ioanaelionescu-3621s-projects.vercel.app/*"
   ],
   "oauth2": {
     "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",

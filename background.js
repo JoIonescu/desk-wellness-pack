@@ -2,7 +2,7 @@ const ALARM_NAME = "stretchAlarm";
 const WEEKLY_RESET_ALARM = "weeklyStatsReset";
 
 // Replace with your deployed Vercel URL after deployment
-const BACKEND_URL = "https://YOUR_VERCEL_APP.vercel.app";
+const BACKEND_URL = "https://smart-stretch-backend-3s9c5lnw0-ioanaelionescu-3621s-projects.vercel.app";;
 
 let countdownInterval = null;
 
