@@ -189,6 +189,16 @@ async function loadSettings() {
   if (smartModeToggle) smartModeToggle.checked = !!res.smartModeEnabled;
   if (soundToggle)     soundToggle.checked     = !!res.soundEnabled;
 
+  // Sync custom dropdown label to match loaded value
+  const customLabel = document.getElementById("customSelectLabel");
+  const optionEls   = document.querySelectorAll(".custom-select-option");
+  const strVal      = String(res.stretchInterval || 30);
+  optionEls.forEach((el) => {
+    const isSelected = el.dataset.value === strVal;
+    el.classList.toggle("selected", isSelected);
+    if (isSelected && customLabel) customLabel.textContent = el.textContent;
+  });
+
   await startPopupTimerFromState(res);
 }
 
@@ -255,6 +265,54 @@ async function init() {
   if (isPro) {
     await loadIntegrationSettings();
   }
+
+  /* ---- Custom interval dropdown ---- */
+
+  const customTrigger = document.getElementById("customSelectTrigger");
+  const customOptions = document.getElementById("customSelectOptions");
+  const customLabel   = document.getElementById("customSelectLabel");
+  const optionEls     = customOptions?.querySelectorAll(".custom-select-option");
+
+  function setCustomDropdownValue(value) {
+    const strVal = String(value);
+    optionEls?.forEach((el) => {
+      const isSelected = el.dataset.value === strVal;
+      el.classList.toggle("selected", isSelected);
+      if (isSelected && customLabel) customLabel.textContent = el.textContent;
+    });
+    if (intervalSelect) intervalSelect.value = strVal;
+  }
+
+  function closeCustomDropdown() {
+    customTrigger?.classList.remove("open");
+    customOptions?.classList.remove("open");
+  }
+
+  customTrigger?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = customOptions?.classList.contains("open");
+    if (isOpen) {
+      closeCustomDropdown();
+    } else {
+      customTrigger.classList.add("open");
+      customOptions?.classList.add("open");
+    }
+  });
+
+  optionEls?.forEach((el) => {
+    el.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const value = el.dataset.value;
+      setCustomDropdownValue(value);
+      closeCustomDropdown();
+      const minutes = Number(value);
+      await sendMessage({ type: "setStretchInterval", minutes });
+      await loadSettings();
+    });
+  });
+
+  // Close when clicking outside
+  document.addEventListener("click", () => closeCustomDropdown());
 
   /* ---- Original button handlers ---- */
 
