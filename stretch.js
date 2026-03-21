@@ -32,9 +32,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       exerciseName: "Shoulder Reset",
       icon: "🫶",
       instructions: [
-        "Roll your shoulders back slowly and release neck tension.",
-        "Take 3 slow breaths and gently open your chest.",
-        "Stand tall, loosen your shoulders, and reset your posture."
+        "🌬 Take a deep breath and relax your shoulders.",
+        "✋ Shake out your hands and wrists.",
+        "🧘 Roll your shoulders slowly.",
+        "👀 Look away from the screen and relax your eyes.",
+        "🤲 Interlace your fingers and stretch your arms forward.",
+        "😮‍💨 Exhale slowly and drop your jaw to release tension.",
+        "👁️ Blink slowly 10 times to reset your eyes.",
+        "🫁 Breathe in for 4 counts, hold for 4, out for 4."
       ]
     },
     gentle_stretch: {
@@ -44,9 +49,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       exerciseName: "Gentle Flow",
       icon: "🧘",
       instructions: [
-        "Stretch your neck gently side to side and relax your shoulders.",
-        "Reach upward, then slowly loosen your wrists and forearms.",
-        "Take a gentle standing stretch and release upper-body tension."
+        "🧠 Stretch your neck gently left and right.",
+        "🌬 Take a deep breath and relax your shoulders.",
+        "✋ Shake out your hands and wrists.",
+        "👀 Look away from the screen and relax your eyes.",
+        "🫶 Gently squeeze your shoulder blades together and release.",
+        "🤸 Slowly tilt your head toward each shoulder and hold.",
+        "💆 Massage the back of your neck with your fingertips.",
+        "🖐️ Spread your fingers wide, hold for 5 seconds, then relax."
       ]
     },
     standard_stretch: {
@@ -56,9 +66,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       exerciseName: "Desk Reset",
       icon: "🙆",
       instructions: [
-        "Stand up, roll your shoulders, and stretch your arms overhead.",
-        "Loosen your neck, wrists, and back with a light full-body stretch.",
-        "Take a full minute to stand, breathe, and release desk tension."
+        "🙆 Stand up and reach your arms overhead.",
+        "💪 Stretch your back and open your chest.",
+        "🧠 Stretch your neck gently left and right.",
+        "🚶 Walk around the room for a moment.",
+        "🔄 Roll your ankles in slow circles, both directions.",
+        "🧍 Stand tall, feet hip-width apart, and breathe deeply.",
+        "🤾 Reach one arm across your chest and hold for 10 seconds each side.",
+        "🦵 Stand on one foot for 10 seconds, then switch."
       ]
     },
     full_reset: {
@@ -68,9 +83,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       exerciseName: "Full Body Reset",
       icon: "💪",
       instructions: [
-        "Take a fuller reset: stand, stretch your back, shoulders, neck, and wrists.",
-        "Give yourself a restorative reset—breathe deeply and stretch slowly.",
-        "Use this longer break to fully release tension across your upper body."
+        "💪 Stretch your back and open your chest.",
+        "🚶 Walk around the room for a moment.",
+        "🙆 Stand up and reach your arms overhead.",
+        "🧘 Roll your shoulders slowly.",
+        "🧎 Do 5 slow squats to wake up your legs.",
+        "🔁 Rotate your torso gently left and right while seated.",
+        "🫸 Place both hands on your lower back and lean gently backward.",
+        "🦾 Clasp your hands behind your back and open your chest wide."
       ]
     }
   };
@@ -95,9 +115,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   // -----------------------------
   // HELPERS
   // -----------------------------
-  function getRandomItem(items) {
+  function getRandomItem(items, sessionType) {
     if (!Array.isArray(items) || !items.length) return "";
-    return items[Math.floor(Math.random() * items.length)];
+    if (items.length === 1) return items[0];
+
+    // Avoid repeating the last shown instruction for this session type
+    const storageKey = `lastInstruction_${sessionType}`;
+    const last = sessionStorage.getItem(storageKey);
+
+    const candidates = items.filter((item) => item !== last);
+    const pool = candidates.length > 0 ? candidates : items;
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+
+    sessionStorage.setItem(storageKey, chosen);
+    return chosen;
   }
 
   function formatSeconds(seconds) {
@@ -215,7 +246,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (titleEl)       titleEl.textContent       = config.title;
     if (subtitleEl)    subtitleEl.textContent     = config.subtitle;
     if (exerciseNameEl) exerciseNameEl.textContent = config.exerciseName;
-    if (stretchTextEl) stretchTextEl.textContent  = getRandomItem(config.instructions);
+    if (stretchTextEl) stretchTextEl.textContent  = getRandomItem(config.instructions, sessionType);
     if (stretchIconEl) stretchIconEl.textContent  = config.icon || "🙆";
 
     updateTimerUI();
