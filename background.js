@@ -8,7 +8,7 @@ const POST_MEETING_BUFFER_MINUTES = 5;
 const WATER_ALARM_NAME = "waterAlarm";
 
 // Replace with your deployed Vercel URL
-const BACKEND_URL = "https://smart-stretch-backend.vercel.app";
+const BACKEND_URL = "https://desk-wellness-pack.vercel.app";
 
 let countdownInterval = null;
 
