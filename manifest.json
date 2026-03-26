@@ -14,7 +14,7 @@
     "https://smart-stretch-backend.vercel.app/*"
   ],
   "oauth2": {
-    "client_id": "750220805739-kuihv9grhjb9n66iqg8h52jr4c6anlrg.apps.googleusercontent.com",
+    "client_id":"750220805739-kuihv9grhjb9n66iqg8h52jr4c6anlrg.apps.googleusercontent.com",
     "scopes": ["https://www.googleapis.com/auth/calendar.readonly"]
   },
   "background": {
