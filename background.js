@@ -1021,7 +1021,6 @@ chrome.runtime.onInstalled.addListener(async () => {
     waterGlassesToday: 0,
     waterGlassesDate:  today
   });
-  scheduleWaterAlarm(30);
 
   chrome.windows.create({
     url: "welcome.html",
