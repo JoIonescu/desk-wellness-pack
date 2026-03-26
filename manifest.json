@@ -11,7 +11,7 @@
   ],
   "host_permissions": [
     "https://www.googleapis.com/*",
-    "https://smart-stretch-backend.vercel.app/*"
+    "https://desk-wellness-pack.vercel.app/*"
   ],
   "oauth2": {
     "client_id":"750220805739-kuihv9grhjb9n66iqg8h52jr4c6anlrg.apps.googleusercontent.com",
