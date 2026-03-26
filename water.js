@@ -26,7 +26,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const glassCount     = document.getElementById("glassCount");
   const glassGoalLabel = document.getElementById("glassGoalLabel");
   const dotsContainer  = document.getElementById("dotsContainer");
-  const nextReminderTime = document.getElementById("nextReminderTime");
   const drinkBtn       = document.getElementById("drinkBtn");
   const skipBtn        = document.getElementById("skipBtn");
   const successOverlay = document.getElementById("successOverlay");
@@ -111,7 +110,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     goal    = data.waterGoal || 8;
 
     renderGlass();
-    startReminderCountdown(data.waterStartTime, data.waterInterval);
   }
 
   /* ── Drink handler ── */

@@ -319,6 +319,14 @@ function startBadgeCountdown() {
       return;
     }
 
+    // If no stretch timer running but water is active, show blue drop
+    const { waterEnabled, waterStartTime, waterInterval } = await getLocal(["waterEnabled","waterStartTime","waterInterval"]);
+    if (waterEnabled && waterStartTime && waterInterval) {
+  chrome.action.setBadgeBackgroundColor({ color: "#5aa9ff" });
+  chrome.action.setBadgeText({ text: "💧" });
+  return;
+}
+
     const elapsed = (Date.now() - data.startTime) / 1000;
     const total = Number(data.interval) * 60;
     const remaining = Math.max(0, total - elapsed);
