@@ -288,8 +288,11 @@ function switchTab(tab) {
 }
 
 // Expose globally for onclick in HTML
-window.switchTab = switchTab;
+const tabStretch = document.getElementById("tabStretch");
+const tabWater = document.getElementById("tabWater");
 
+tabStretch?.addEventListener("click", () => switchTab("stretch"));
+tabWater?.addEventListener("click", () => switchTab("water"));
 /* ---- Water timer display ---- */
 
 function stopWaterTimer() {
