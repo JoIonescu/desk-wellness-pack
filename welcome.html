@@ -3,144 +3,154 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Welcome to Smart Stretch</title>
+<title>Welcome to Desk Wellness Pack</title>
 <style>
-:root {
---bg-1: #1b1f2a;
---bg-2: #23293a;
---panel: rgba(255, 255, 255, 0.08);
---panel-border: rgba(255, 255, 255, 0.12);
---text: #ffffff;
---muted: #c7cedd;
---yellow: #ffd400;
---orange: #ff7a00;
---green: #34c759;
---shadow: 0 16px 36px rgba(0, 0, 0, 0.30);
-}
+  :root {
+    --bg-1: #1b1f2a;
+    --bg-2: #23293a;
+    --panel: rgba(255, 255, 255, 0.08);
+    --panel-border: rgba(255, 255, 255, 0.12);
+    --text: #ffffff;
+    --muted: #c7cedd;
+    --yellow: #ffd400;
+    --orange: #ff7a00;
+    --green: #34c759;
+    --blue: #5aa9ff;
+    --shadow: 0 16px 36px rgba(0, 0, 0, 0.30);
+  }
 
-* {
-box-sizing: border-box;
-}
+  * { box-sizing: border-box; }
 
-html, body {
-margin: 0;
-width: 100%;
-height: 100%;
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
-color: var(--text);
-overflow: hidden;
-}
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    color: var(--text);
+    overflow-y: auto;
+  }
 
-body {
-display: flex;
-align-items: center;
-justify-content: center;
-padding: 24px;
-}
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px 40px;
+    gap: 0;
+  }
 
-.card {
-width: 100%;
-max-width: 480px;
-background: var(--panel);
-border: 1px solid var(--panel-border);
-border-radius: 24px;
-padding: 28px 24px;
-text-align: center;
-box-shadow: var(--shadow);
-backdrop-filter: blur(10px);
-}
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: rgba(100, 95, 40, 0.55);
+    border: 1px solid rgba(255, 212, 0, 0.25);
+    color: var(--yellow);
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 28px;
+    letter-spacing: 0.2px;
+  }
 
-.badge {
-display: inline-block;
-padding: 8px 14px;
-border-radius: 999px;
-background: rgba(255, 212, 0, 0.14);
-color: var(--yellow);
-font-size: 13px;
-font-weight: 800;
-margin-bottom: 16px;
-letter-spacing: 0.3px;
-}
+  /* ── MODULE CARDS ── */
+  .modules {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
 
-h1 {
-margin: 0 0 14px;
-font-size: 30px;
-line-height: 1.15;
-font-weight: 900;
-}
+  .module-card {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 22px;
+    padding: 24px 22px 20px;
+    box-shadow: var(--shadow);
+  }
 
-.lead {
-font-size: 16px;
-line-height: 1.6;
-color: var(--muted);
-margin: 0 auto 18px;
-max-width: 390px;
-}
+  .module-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
 
-.tip {
-margin: 0 auto 24px;
-font-size: 14px;
-line-height: 1.5;
-color: #f7f8fb;
-background: rgba(255,255,255,0.05);
-border: 1px solid rgba(255,255,255,0.08);
-border-radius: 16px;
-padding: 14px 16px;
-max-width: 390px;
-}
+  .module-desc {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
 
-.btn {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-min-width: 180px;
-border: none;
-border-radius: 16px;
-padding: 14px 22px;
-font-size: 15px;
-font-weight: 900;
-cursor: pointer;
-background: var(--green);
-color: #0f1b12;
-transition: transform 0.15s ease, opacity 0.15s ease;
-}
+  .module-tip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #f0f0f0;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 11px 14px;
+  }
 
-.btn:hover {
-transform: translateY(-1px);
-}
+  /* ── BUTTON ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 280px;
+    border: none;
+    border-radius: 16px;
+    padding: 16px 22px;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    background: var(--green);
+    color: #0f1b12;
+    transition: transform 0.15s ease;
+    letter-spacing: 0.2px;
+  }
 
-.btn:active {
-transform: translateY(0);
-}
-
-.footer {
-margin-top: 16px;
-font-size: 12px;
-color: var(--muted);
-}
+  .btn:hover  { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
 </style>
 </head>
 <body>
-<div class="card">
-<div class="badge">Desk Wellness Pack</div>
 
-<h1>Welcome to Smart Stretch</h1>
+  <div class="badge">Welcome to Desk Wellness Pack</div>
 
-<p class="lead">
-Stretch reminder helps you stay healthy while working. Set your timer and take short stretch breaks during the day.
-</p>
+  <div class="modules">
 
-<div class="tip">
-📌 Don’t forget to pin the extension in the browser
-</div>
+    <div class="module-card">
+      <div class="module-title">Smart Stretch</div>
+      <div class="module-desc">
+        Stretch reminder helps you stay healthy while working.
+        Set your timer and take short stretch breaks during the day.
+      </div>
+      <div class="module-tip">
+        📌 Don't forget to pin the extension in the browser
+      </div>
+    </div>
 
-<button class="btn" id="openPopupBtn">Open Smart Stretch</button>
+    <div class="module-card">
+      <div class="module-title">Water Reminder</div>
+      <div class="module-desc">
+        Hydration supports better focus, steadier energy, and a
+        calmer body. This is your reminder to take a mindful sip.
+      </div>
+      <div class="module-tip">
+        📌 Don't forget to pin the extension in the browser
+      </div>
+    </div>
 
-<div class="footer">
-Start your timer from the popup whenever you're ready.
-</div>
-</div>
+  </div>
+
+  <button class="btn" id="openPopupBtn">Open my extension</button>
 
 <script src="welcome.js"></script>
 </body>

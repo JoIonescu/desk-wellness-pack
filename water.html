@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Water Reminder</title>
+<style>
+  :root {
+    --bg:    #141820;
+    --blue:  #5aa9ff;
+    --blue2: #3d8fe0;
+    --muted: #8895b0;
+    --text:  #eef2ff;
+    --green: #34c759;
+    --panel: rgba(255,255,255,0.06);
+    --border:rgba(255,255,255,0.09);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 500px; height: 620px;
+    overflow: hidden;
+    background: radial-gradient(circle at top, #1a2540 0%, var(--bg) 45%, #0e1318 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── SCREEN ── */
+  .screen {
+    width: 460px; height: 580px;
+    background: var(--panel);
+    border: 1px solid rgba(90,169,255,0.15);
+    border-radius: 28px;
+    padding: 28px 32px 24px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: space-between;
+    position: relative; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+  }
+
+  /* ── WAVES ── */
+  .wave-bg {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 50%; overflow: hidden;
+    border-radius: 0 0 27px 27px; z-index: 0; opacity: 0.10;
+  }
+  .wave { position: absolute; bottom: 0; left: -100%; width: 300%; height: 100%; }
+  .wave svg { width: 100%; height: 100%; position: absolute; bottom: 0; }
+  .wave-1 { animation: waveMove 6s linear infinite; }
+  .wave-2 { animation: waveMove 9s linear infinite reverse; opacity: 0.6; }
+  .wave-3 { animation: waveMove 12s linear infinite; opacity: 0.4; }
+  @keyframes waveMove { 0%{transform:translateX(0)} 100%{transform:translateX(33.33%)} }
+
+  /* ── TOP ── */
+  .top { text-align: center; position: relative; z-index: 2; }
+  .eyebrow {
+    font-size: 11px; font-weight: 600; color: var(--blue);
+    letter-spacing: 2.5px; text-transform: uppercase;
+    margin-bottom: 8px; opacity: 0.8;
+  }
+  .title { font-size: 28px; font-weight: 800; line-height: 1.1; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ── CENTER ── */
+  .center {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 16px; position: relative; z-index: 2;
+    flex: 1; justify-content: center;
+  }
+
+  /* ── GLASS ── */
+  .glass-wrap { position: relative; width: 100px; height: 130px; }
+  .glass-top {
+    position: absolute; top: 0; left: -2px; right: -2px; height: 2px;
+    background: rgba(90,169,255,0.4); border-radius: 2px 2px 0 0;
+  }
+  .glass-outline {
+    position: absolute; inset: 0;
+    border: 2.5px solid rgba(90,169,255,0.35); border-top: none;
+    border-radius: 3px 3px 18px 18px;
+  }
+  .glass-shine {
+    position: absolute; top: 8px; left: 10px;
+    width: 8px; height: 35%; background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent);
+    border-radius: 4px; z-index: 4;
+  }
+  .water-fill {
+    position: absolute; bottom: 2px; left: 2px; right: 2px;
+    border-radius: 2px 2px 16px 16px; overflow: hidden; z-index: 2;
+    background: linear-gradient(180deg, rgba(90,169,255,0.55), rgba(61,143,224,0.75));
+    transition: height 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .water-surface {
+    position: absolute; top: 0; left: -20%; right: -20%; height: 10px;
+  }
+  .water-surface svg { width: 100%; height: 100%; animation: ripple 2.5s ease-in-out infinite; }
+  @keyframes ripple { 0%,100%{transform:translateX(0)} 50%{transform:translateX(-12px)} }
+  .bubble {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,0.28); animation: rise linear infinite;
+  }
+  .b1{width:5px;height:5px;left:20%;bottom:8%;animation-duration:2.4s;}
+  .b2{width:3px;height:3px;left:55%;bottom:5%;animation-duration:3.1s;animation-delay:0.8s;}
+  .b3{width:4px;height:4px;left:72%;bottom:12%;animation-duration:2.7s;animation-delay:1.5s;}
+  @keyframes rise { 0%{transform:translateY(0);opacity:0.4} 100%{transform:translateY(-80px);opacity:0} }
+
+  /* ── COUNTER ── */
+  .counter { text-align: center; }
+  .counter-num {
+    font-size: 40px; font-weight: 900; color: var(--blue); line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .counter-num span { font-size: 18px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+  .counter-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── PROGRESS DOTS ── */
+  .dots-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .dots-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .dots { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; max-width: 280px; }
+  .dot {
+    height: 7px; border-radius: 4px; flex: 1; min-width: 18px; max-width: 28px;
+    background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.07);
+    transition: all 0.3s ease;
+  }
+  .dot.filled {
+    background: var(--blue); border-color: var(--blue2);
+    box-shadow: 0 0 5px rgba(90,169,255,0.35);
+  }
+  .dot.goal-dot { background: linear-gradient(90deg, var(--blue), var(--green)); border-color: var(--green); }
+
+  /* ── NEXT REMINDER ── */
+  .next-reminder {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(90,169,255,0.08); border: 1px solid rgba(90,169,255,0.15);
+    border-radius: 10px; padding: 7px 14px;
+    font-size: 12px; color: var(--muted);
+  }
+  .next-reminder strong { color: var(--blue); font-variant-numeric: tabular-nums; }
+
+  /* ── ACTIONS ── */
+  .actions { width: 100%; display: flex; gap: 10px; position: relative; z-index: 2; }
+  .btn {
+    flex: 1; border: none; border-radius: 16px; padding: 14px;
+    font-size: 14px; font-weight: 800; cursor: pointer;
+    font-family: inherit; transition: transform 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-drink { background: var(--blue); color: #081726; flex: 2; font-size: 15px; }
+  .btn-skip  { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.10); color: var(--muted); }
+
+  /* ── SUCCESS OVERLAY ── */
+  .success {
+    display: none; position: absolute; inset: 0;
+    background: rgba(14,19,30,0.96); border-radius: 28px;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; z-index: 20; animation: fadeIn 0.3s ease;
+  }
+  .success.show { display: flex; }
+  @keyframes fadeIn { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
+  .success-icon { font-size: 64px; animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+  .success-title { font-size: 28px; font-weight: 900; color: var(--blue); }
+  .success-sub   { font-size: 14px; color: var(--muted); text-align: center; max-width: 260px; line-height: 1.5; }
+
+  /* ── GOAL REACHED BANNER ── */
+  .goal-banner {
+    display: none;
+    background: rgba(52,199,89,0.12); border: 1px solid rgba(52,199,89,0.25);
+    border-radius: 10px; padding: 8px 14px;
+    font-size: 12px; color: var(--green); text-align: center;
+    position: relative; z-index: 2;
+  }
+  .goal-banner.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="screen" id="screen">
+
+  <!-- Waves -->
+  <div class="wave-bg">
+    <div class="wave wave-1">
+      <svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,100 C150,160 350,40 600,100 C850,160 1050,40 1200,100 L1200,200 L0,200 Z" fill="#5aa9ff"/>
+      </svg>
+    </div>
+    <div class="wave wave-2">
+      <svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,120 C200,60 400,180 600,120 C800,60 1000,180 1200,120 L1200,200 L0,200 Z" fill="#3d8fe0"/>
+      </svg>
+    </div>
+    <div class="wave wave-3">
+      <svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,80 C300,140 500,20 800,80 C1000,120 1100,60 1200,80 L1200,200 L0,200 Z" fill="#5aa9ff"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Top -->
+  <div class="top">
+    <div class="eyebrow">💧 Hydration Break</div>
+    <div class="title">Time to drink water</div>
+    <div class="subtitle">Hydration keeps your focus sharp and your energy steady.</div>
+  </div>
+
+  <!-- Center -->
+  <div class="center">
+
+    <div class="glass-wrap">
+      <div class="glass-top"></div>
+      <div class="glass-outline"></div>
+      <div class="glass-shine"></div>
+      <div class="water-fill" id="waterFill">
+        <div class="water-surface">
+          <svg viewBox="0 0 200 10" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,5 C25,0 50,10 75,5 C100,0 125,10 150,5 C175,0 200,10 200,5 L200,10 L0,10 Z" fill="rgba(255,255,255,0.22)"/>
+          </svg>
+        </div>
+        <div class="bubble b1"></div>
+        <div class="bubble b2"></div>
+        <div class="bubble b3"></div>
+      </div>
+    </div>
+
+    <div class="counter">
+      <div class="counter-num" id="glassCount">0 <span id="glassGoalLabel">/ 8</span></div>
+      <div class="counter-sub">glasses today</div>
+    </div>
+
+    <div class="dots-wrap">
+      <div class="dots-label">Daily Goal</div>
+      <div class="dots" id="dotsContainer"></div>
+    </div>
+
+    <div class="next-reminder" id="nextReminder">
+      ⏱ Next reminder in <strong id="nextReminderTime">–:––</strong>
+    </div>
+
+  </div>
+
+  <div class="goal-banner" id="goalBanner">🎉 Daily goal reached! Keep going if you'd like.</div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-drink" id="drinkBtn">💧 I just drank water</button>
+    <button class="btn btn-skip"  id="skipBtn">Skip</button>
+  </div>
+
+  <!-- Success overlay -->
+  <div class="success" id="successOverlay">
+    <div class="success-icon">💧</div>
+    <div class="success-title">Great job!</div>
+    <div class="success-sub" id="successSub">Keep it up — your body thanks you.</div>
+  </div>
+
+</div>
+
+<script src="water.js"></script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 let timerInterval = null;
+let waterTimerInterval = null;
 let popupRefreshInterval = null;
 const POST_MEETING_BUFFER_MINUTES = 5;
+let currentTab = "stretch"; // "stretch" | "water"
 
 function sendMessage(message) {
   return new Promise((resolve) => {
@@ -246,6 +248,175 @@ function showPendingState() {
   if (upgradeBtn)  upgradeBtn.textContent    = "Upgrade — €3.00 ↗";
 }
 
+/* ---- Tab switching ---- */
+
+function switchTab(tab) {
+  currentTab = tab;
+
+  const sStretch = document.getElementById("sectionStretch");
+  const sWater   = document.getElementById("sectionWater");
+  const tStretch = document.getElementById("tabStretch");
+  const tWater   = document.getElementById("tabWater");
+
+  if (tab === "stretch") {
+    if (sStretch) sStretch.style.display = "";
+    if (sWater)   sWater.style.display   = "none";
+    if (tStretch) {
+      tStretch.style.background = "rgba(255,212,0,0.10)";
+      tStretch.style.color      = "var(--yellow)";
+      tStretch.style.border     = "1px solid rgba(255,212,0,0.20)";
+    }
+    if (tWater) {
+      tWater.style.background = "transparent";
+      tWater.style.color      = "var(--muted)";
+      tWater.style.border     = "1px solid transparent";
+    }
+  } else {
+    if (sStretch) sStretch.style.display = "none";
+    if (sWater)   sWater.style.display   = "";
+    if (tWater) {
+      tWater.style.background = "rgba(90,169,255,0.10)";
+      tWater.style.color      = "var(--blue)";
+      tWater.style.border     = "1px solid rgba(90,169,255,0.20)";
+    }
+    if (tStretch) {
+      tStretch.style.background = "transparent";
+      tStretch.style.color      = "var(--muted)";
+      tStretch.style.border     = "1px solid transparent";
+    }
+  }
+}
+
+// Expose globally for onclick in HTML
+window.switchTab = switchTab;
+
+/* ---- Water timer display ---- */
+
+function stopWaterTimer() {
+  if (waterTimerInterval) { clearInterval(waterTimerInterval); waterTimerInterval = null; }
+}
+
+function setWaterTimerInactive() {
+  const el = document.getElementById("waterTimerDisplay");
+  if (el) el.textContent = "Timer Inactive";
+}
+
+function renderWaterDots(glasses, goal) {
+  const container = document.getElementById("waterDotsContainer");
+  if (!container) return;
+  container.innerHTML = "";
+  for (let i = 0; i < goal; i++) {
+    const d = document.createElement("div");
+    d.style.cssText = `height:7px;border-radius:4px;flex:1;min-width:18px;max-width:28px;
+      border:1px solid rgba(255,255,255,0.07);transition:all 0.3s ease;
+      ${i < glasses
+        ? "background:var(--blue);border-color:#3d8fe0;box-shadow:0 0 5px rgba(90,169,255,0.35);"
+        : "background:rgba(255,255,255,0.09);"}`;
+    container.appendChild(d);
+  }
+}
+
+function renderWaterMiniGlass(glasses, goal) {
+  const fill = document.getElementById("waterMiniGlassFill");
+  if (!fill) return;
+  const pct = goal > 0 ? Math.min(glasses / goal, 1) : 0;
+  fill.style.height = `${Math.max(pct * 90, 2)}%`;
+}
+
+async function loadWaterSettings() {
+  const res = await sendMessage({ type: "getWaterSettings" });
+  if (!res?.ok) return;
+
+  const waterIntervalSelect = document.getElementById("waterIntervalSelect");
+  const waterSoundToggle    = document.getElementById("waterSoundToggle");
+  const waterGlassCount     = document.getElementById("waterGlassCount");
+  const waterGoalDisplay    = document.getElementById("waterGoalDisplay");
+  const waterGoalValue      = document.getElementById("waterGoalValue");
+  const waterTimerDisplay   = document.getElementById("waterTimerDisplay");
+  const waterTimerLabel     = document.getElementById("waterTimerLabel");
+
+  const glasses  = res.waterGlassesToday || 0;
+  const goal     = res.waterGoal || 8;
+  const isWaterPro = res.isWaterPro || false;
+
+  if (waterIntervalSelect)  waterIntervalSelect.value = String(res.waterInterval || 30);
+  if (waterSoundToggle)     waterSoundToggle.checked  = !!res.waterSoundEnabled;
+  if (waterGlassCount)      waterGlassCount.textContent = String(glasses);
+  if (waterGoalDisplay)     waterGoalDisplay.textContent = String(goal);
+  if (waterGoalValue)       waterGoalValue.textContent = String(goal);
+
+  // Sync custom water dropdown label
+  const wLabel   = document.getElementById("waterCustomSelectLabel");
+  const wOptions = document.querySelectorAll("#waterCustomSelectOptions .custom-select-option");
+  const strVal   = String(res.waterInterval || 30);
+  wOptions.forEach(el => {
+    const isSel = el.dataset.value === strVal;
+    el.classList.toggle("selected", isSel);
+    if (isSel && wLabel) wLabel.textContent = el.textContent;
+  });
+
+  renderWaterDots(glasses, goal);
+  renderWaterMiniGlass(glasses, goal);
+
+  // Timer countdown
+  stopWaterTimer();
+  if (res.waterEnabled !== false && res.waterStartTime && res.waterInterval) {
+    if (waterTimerLabel) waterTimerLabel.textContent = "Next water reminder";
+    if (waterTimerDisplay) waterTimerDisplay.style.color = "var(--blue)";
+    const render = () => {
+      const totalMs   = res.waterInterval * 60 * 1000;
+      const elapsed   = Date.now() - res.waterStartTime;
+      const remaining = totalMs - elapsed;
+      if (!waterTimerDisplay) return;
+      if (remaining <= 0) { waterTimerDisplay.textContent = "0:00"; return; }
+      const s = Math.max(0, Math.ceil(remaining / 1000));
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      waterTimerDisplay.textContent = `${m}:${String(sec).padStart(2, "0")}`;
+    };
+    render();
+    waterTimerInterval = setInterval(render, 1000);
+  } else {
+    setWaterTimerInactive();
+  }
+
+  // Pro / free UI
+  const waterUpgradeCard = document.getElementById("waterUpgradeCard");
+  const waterProCard     = document.getElementById("waterProCard");
+  const waterGoalStepper = document.getElementById("waterGoalStepper");
+  const waterGoalLockIcon = document.getElementById("waterGoalLockIcon");
+  const waterGoalSubLabel = document.getElementById("waterGoalSubLabel");
+  const waterCalendarToggle = document.getElementById("waterCalendarToggle");
+  const waterCalendarStatus = document.getElementById("waterCalendarStatus");
+
+  if (isWaterPro) {
+    if (waterUpgradeCard) waterUpgradeCard.style.display = "none";
+    if (waterProCard)     waterProCard.style.display     = "block";
+    // Unlock goal stepper
+    if (waterGoalStepper) {
+      waterGoalStepper.style.opacity       = "1";
+      waterGoalStepper.style.pointerEvents = "auto";
+    }
+    if (waterGoalLockIcon) waterGoalLockIcon.style.display = "none";
+    if (waterGoalSubLabel) waterGoalSubLabel.textContent   = "Set your personal daily target";
+    if (waterCalendarToggle) waterCalendarToggle.checked   = !!res.waterCalendarEnabled;
+    if (waterCalendarStatus) {
+      waterCalendarStatus.style.display = res.waterCalendarEnabled ? "block" : "none";
+    }
+  } else {
+    if (waterUpgradeCard) waterUpgradeCard.style.display = "block";
+    if (waterProCard)     waterProCard.style.display     = "none";
+  }
+
+  // Pending payment
+  if (!isWaterPro && res.hasPendingWaterSession) {
+    const waterVerifyBtn  = document.getElementById("waterVerifyBtn");
+    const waterPendingNote = document.getElementById("waterPendingNote");
+    if (waterVerifyBtn)   waterVerifyBtn.style.display   = "block";
+    if (waterPendingNote) waterPendingNote.style.display = "block";
+  }
+}
+
 /* ---- Init ---- */
 
 async function init() {
@@ -265,6 +436,8 @@ async function init() {
   if (isPro) {
     await loadIntegrationSettings();
   }
+
+  await loadWaterSettings();
 
   /* ---- Custom interval dropdown ---- */
 
@@ -430,6 +603,147 @@ async function init() {
     }
   });
 
+  /* ---- Water button handlers ---- */
+
+  const waterStartBtn = document.getElementById("waterStartBtn");
+  const waterStopBtn  = document.getElementById("waterStopBtn");
+  const waterSoundToggle = document.getElementById("waterSoundToggle");
+
+  waterStartBtn?.addEventListener("click", async () => {
+    const waterIntervalSelect = document.getElementById("waterIntervalSelect");
+    const minutes = Number(waterIntervalSelect?.value || 30);
+    await sendMessage({ type: "startWaterTimer", minutes });
+    await loadWaterSettings();
+  });
+
+  waterStopBtn?.addEventListener("click", async () => {
+    await sendMessage({ type: "stopWaterTimer" });
+    stopWaterTimer();
+    setWaterTimerInactive();
+  });
+
+  waterSoundToggle?.addEventListener("change", async () => {
+    await sendMessage({ type: "setWaterSound", enabled: waterSoundToggle.checked });
+  });
+
+  /* ---- Water custom dropdown ---- */
+  const waterTrigger = document.getElementById("waterCustomSelectTrigger");
+  const waterOptions = document.getElementById("waterCustomSelectOptions");
+  const waterLabel   = document.getElementById("waterCustomSelectLabel");
+  const waterOptEls  = waterOptions?.querySelectorAll(".custom-select-option");
+
+  function closeWaterDropdown() {
+    waterTrigger?.classList.remove("open");
+    waterOptions?.classList.remove("open");
+  }
+
+  waterTrigger?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = waterOptions?.classList.contains("open");
+    if (isOpen) { closeWaterDropdown(); }
+    else { waterTrigger.classList.add("open"); waterOptions?.classList.add("open"); }
+  });
+
+  waterOptEls?.forEach(el => {
+    el.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const value = el.dataset.value;
+      waterOptEls.forEach(o => o.classList.toggle("selected", o.dataset.value === value));
+      if (waterLabel) waterLabel.textContent = el.textContent;
+      const waterIntervalSelect = document.getElementById("waterIntervalSelect");
+      if (waterIntervalSelect) waterIntervalSelect.value = value;
+      closeWaterDropdown();
+      await sendMessage({ type: "setWaterInterval", minutes: Number(value) });
+      await loadWaterSettings();
+    });
+  });
+
+  document.addEventListener("click", () => closeWaterDropdown());
+
+  /* ---- Water goal stepper ---- */
+  let waterGoalLocal = 8;
+
+  document.getElementById("waterGoalMinus")?.addEventListener("click", async () => {
+    if (waterGoalLocal <= 1) return;
+    waterGoalLocal -= 1;
+    const el = document.getElementById("waterGoalValue");
+    if (el) el.textContent = String(waterGoalLocal);
+    await sendMessage({ type: "setWaterGoal", goal: waterGoalLocal });
+    await loadWaterSettings();
+  });
+
+  document.getElementById("waterGoalPlus")?.addEventListener("click", async () => {
+    if (waterGoalLocal >= 20) return;
+    waterGoalLocal += 1;
+    const el = document.getElementById("waterGoalValue");
+    if (el) el.textContent = String(waterGoalLocal);
+    await sendMessage({ type: "setWaterGoal", goal: waterGoalLocal });
+    await loadWaterSettings();
+  });
+
+  /* ---- Water upgrade ---- */
+  const waterUpgradeBtn = document.getElementById("waterUpgradeBtn");
+  waterUpgradeBtn?.addEventListener("click", async () => {
+    waterUpgradeBtn.textContent = "Opening checkout…";
+    waterUpgradeBtn.disabled    = true;
+    const res = await sendMessage({ type: "startWaterCheckout" });
+    waterUpgradeBtn.disabled = false;
+    if (res?.ok) {
+      const waterVerifyBtn   = document.getElementById("waterVerifyBtn");
+      const waterPendingNote = document.getElementById("waterPendingNote");
+      if (waterVerifyBtn)   waterVerifyBtn.style.display   = "block";
+      if (waterPendingNote) waterPendingNote.style.display = "block";
+      waterUpgradeBtn.textContent = "Upgrade — €5.00 ↗";
+    } else {
+      waterUpgradeBtn.textContent = "Upgrade — €5.00";
+      alert("Could not open checkout. Please try again.");
+    }
+  });
+
+  const waterVerifyBtn = document.getElementById("waterVerifyBtn");
+  waterVerifyBtn?.addEventListener("click", async () => {
+    waterVerifyBtn.textContent = "Verifying…";
+    waterVerifyBtn.disabled    = true;
+    const res = await sendMessage({ type: "verifyWaterPayment" });
+    if (res?.paid) {
+      await loadWaterSettings();
+    } else {
+      waterVerifyBtn.textContent = "✓ I've paid — Verify Payment";
+      waterVerifyBtn.disabled    = false;
+      const waterPendingNote = document.getElementById("waterPendingNote");
+      if (waterPendingNote) waterPendingNote.textContent = "Payment not found yet. Complete checkout in the other tab, then try again.";
+    }
+  });
+
+  /* ---- Water calendar toggle ---- */
+  const waterCalendarToggle = document.getElementById("waterCalendarToggle");
+  const waterCalendarStatus = document.getElementById("waterCalendarStatus");
+
+  waterCalendarToggle?.addEventListener("change", async () => {
+    if (waterCalendarToggle.checked) {
+      await sendMessage({ type: "setWaterCalendarEnabled", enabled: true });
+      chrome.windows.create({
+        url: chrome.runtime.getURL("oauth.html"),
+        type: "popup", width: 380, height: 260, focused: true
+      });
+      const handleAuthResult = (msg) => {
+        if (msg.type !== "calendarAuthResult") return;
+        chrome.runtime.onMessage.removeListener(handleAuthResult);
+        if (msg.success) {
+          if (waterCalendarStatus) waterCalendarStatus.style.display = "block";
+        } else {
+          waterCalendarToggle.checked = false;
+          sendMessage({ type: "setWaterCalendarEnabled", enabled: false });
+          if (waterCalendarStatus) waterCalendarStatus.style.display = "none";
+        }
+      };
+      chrome.runtime.onMessage.addListener(handleAuthResult);
+    } else {
+      await sendMessage({ type: "setWaterCalendarEnabled", enabled: false });
+      if (waterCalendarStatus) waterCalendarStatus.style.display = "none";
+    }
+  });
+
   /* ---- Periodic refresh (original) ---- */
 
   if (popupRefreshInterval) clearInterval(popupRefreshInterval);
@@ -437,6 +751,7 @@ async function init() {
   popupRefreshInterval = setInterval(async () => {
     await loadSettings();
     await loadStats();
+    await loadWaterSettings();
   }, 3000);
 }
 

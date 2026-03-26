@@ -4,6 +4,9 @@ const MEETING_CHECK_ALARM = "meetingCheckAlarm";
 const POST_MEETING_ALARM = "postMeetingAlarm";
 const POST_MEETING_BUFFER_MINUTES = 5;
 
+/* ---- Water module constants ---- */
+const WATER_ALARM_NAME = "waterAlarm";
+
 // Replace with your deployed Vercel URL
 const BACKEND_URL = "https://smart-stretch-backend.vercel.app";
 
@@ -22,6 +25,10 @@ let runtimeState = { ...DEFAULT_RUNTIME };
 // In-memory license cache — resets when service worker sleeps
 let _licenseCache = null;
 let _licenseCacheAt = 0;
+
+// Water license cache
+let _waterLicenseCache = null;
+let _waterLicenseCacheAt = 0;
 
 /* ---------------------------------- */
 /* SYNC STORAGE — license keys only   */
@@ -813,6 +820,171 @@ async function recoverMissedStretch() {
 }
 
 /* ---------------------------------- */
+/* WATER MODULE                       */
+/* ---------------------------------- */
+
+async function getWaterSettings() {
+  const data = await getLocal([
+    "waterInterval", "waterGoal", "waterSoundEnabled",
+    "waterGlassesToday", "waterGlassesDate", "waterStartTime", "waterEnabled"
+  ]);
+  return {
+    waterInterval:     Number(data.waterInterval || 30),
+    waterGoal:         Number(data.waterGoal || 8),
+    waterSoundEnabled: typeof data.waterSoundEnabled === "boolean" ? data.waterSoundEnabled : true,
+    waterGlassesToday: Number(data.waterGlassesToday || 0),
+    waterGlassesDate:  data.waterGlassesDate || null,
+    waterStartTime:    data.waterStartTime || null,
+    waterEnabled:      typeof data.waterEnabled === "boolean" ? data.waterEnabled : true
+  };
+}
+
+async function resetWaterGlassesIfNewDay() {
+  const today = getTodayKey();
+  const data  = await getLocal(["waterGlassesDate", "waterGlassesToday"]);
+  if (data.waterGlassesDate !== today) {
+    await setLocal({ waterGlassesToday: 0, waterGlassesDate: today });
+    return 0;
+  }
+  return Number(data.waterGlassesToday || 0);
+}
+
+async function getWaterLicenseStatus() {
+  if (_waterLicenseCache !== null && Date.now() - _waterLicenseCacheAt < 60 * 60 * 1000) {
+    return _waterLicenseCache;
+  }
+
+  try {
+    const data = await getSync(["waterLicenseToken", "waterLicenseVerifiedAt"]);
+
+    if (!data.waterLicenseToken) {
+      _waterLicenseCache = { isPro: false };
+      _waterLicenseCacheAt = Date.now();
+      return _waterLicenseCache;
+    }
+
+    if (data.waterLicenseVerifiedAt && Date.now() - data.waterLicenseVerifiedAt < 24 * 60 * 60 * 1000) {
+      _waterLicenseCache = { isPro: true };
+      _waterLicenseCacheAt = Date.now();
+      return _waterLicenseCache;
+    }
+
+    try {
+      const installationId = await getInstallationId();
+      const res = await fetchWithTimeout(
+        `${BACKEND_URL}/api/verify-water-license`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ installationId, licenseToken: data.waterLicenseToken })
+        },
+        5000
+      );
+      const json = await res.json();
+
+      if (json.valid) {
+        await setSync({ waterLicenseVerifiedAt: Date.now() });
+        _waterLicenseCache = { isPro: true };
+      } else {
+        await removeSync(["waterLicenseToken", "waterLicenseVerifiedAt"]);
+        _waterLicenseCache = { isPro: false };
+      }
+    } catch (e) {
+      console.warn("Water license verify error, trusting cached:", e.message);
+      _waterLicenseCache = { isPro: true };
+    }
+  } catch (e) {
+    console.warn("getWaterLicenseStatus error:", e.message);
+    _waterLicenseCache = { isPro: false };
+  }
+
+  _waterLicenseCacheAt = Date.now();
+  return _waterLicenseCache;
+}
+
+async function createWaterCheckoutSession() {
+  const installationId = await getInstallationId();
+  const res = await fetchWithTimeout(
+    `${BACKEND_URL}/api/create-water-checkout`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ installationId })
+    },
+    10000
+  );
+  const json = await res.json();
+  await setLocal({ waterPendingSessionId: json.sessionId });
+  return json;
+}
+
+async function verifyWaterPaymentSession(sessionId) {
+  const installationId = await getInstallationId();
+  const res = await fetchWithTimeout(
+    `${BACKEND_URL}/api/verify-water-payment`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ installationId, sessionId })
+    },
+    10000
+  );
+  const json = await res.json();
+
+  if (json.paid && json.licenseToken) {
+    await setSync({ waterLicenseToken: json.licenseToken, waterLicenseVerifiedAt: Date.now() });
+    await removeLocal(["waterPendingSessionId"]);
+    _waterLicenseCache = { isPro: true };
+    _waterLicenseCacheAt = Date.now();
+    return { paid: true };
+  }
+
+  return { paid: false };
+}
+
+async function findExistingWaterWindow() {
+  const windows = await chrome.windows.getAll({ populate: true });
+  for (const win of windows) {
+    if (!win.tabs || !win.tabs.length) continue;
+    const hasWater = win.tabs.some(tab => tab.url && tab.url.includes("water.html"));
+    if (hasWater) return win;
+  }
+  return null;
+}
+
+async function openWaterWindow() {
+  try {
+    const existing = await findExistingWaterWindow();
+    if (existing) {
+      await chrome.windows.update(existing.id, { focused: true });
+      return;
+    }
+    await chrome.windows.create({
+      url: "water.html",
+      type: "popup",
+      width: 500,
+      height: 620,
+      focused: true
+    });
+  } catch (error) {
+    console.error("openWaterWindow error:", error);
+  }
+}
+
+function scheduleWaterAlarm(minutes) {
+  const safeMinutes = Math.max(1, Number(minutes || 30));
+  chrome.alarms.clear(WATER_ALARM_NAME, async () => {
+    chrome.alarms.create(WATER_ALARM_NAME, { delayInMinutes: safeMinutes });
+    await setLocal({ waterStartTime: Date.now(), waterInterval: safeMinutes });
+  });
+}
+
+async function stopWaterAlarm() {
+  chrome.alarms.clear(WATER_ALARM_NAME);
+  await removeLocal(["waterStartTime"]);
+}
+
+/* ---------------------------------- */
 /* WEEKLY RESET ALARM                 */
 /* ---------------------------------- */
 
@@ -831,11 +1003,23 @@ chrome.runtime.onInstalled.addListener(async () => {
   await setRuntimeState({ ...DEFAULT_RUNTIME });
   stopBadgeCountdown();
 
+  // Initialize water module defaults
+  const today = getTodayKey();
+  await setLocal({
+    waterEnabled:      true,
+    waterInterval:     30,
+    waterGoal:         8,
+    waterSoundEnabled: true,
+    waterGlassesToday: 0,
+    waterGlassesDate:  today
+  });
+  scheduleWaterAlarm(30);
+
   chrome.windows.create({
     url: "welcome.html",
     type: "popup",
     width: 520,
-    height: 620,
+    height: 680,
     focused: true
   });
 });
@@ -852,6 +1036,18 @@ chrome.runtime.onStartup.addListener(async () => {
   await maybeResetWeeklyStats();
   ensureWeeklyResetAlarm();
   await recoverMissedStretch();
+
+  // Recover water alarm
+  const { waterEnabled } = await getLocal(["waterEnabled"]);
+  if (waterEnabled !== false) {
+    await resetWaterGlassesIfNewDay();
+    const alarms = await new Promise(resolve => chrome.alarms.getAll(resolve));
+    const hasWaterAlarm = alarms.some(a => a.name === WATER_ALARM_NAME);
+    if (!hasWaterAlarm) {
+      const ws = await getWaterSettings();
+      scheduleWaterAlarm(ws.waterInterval);
+    }
+  }
 });
 
 /* ---------------------------------- */
@@ -919,6 +1115,36 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       // Buffer expired — open stretch now
       await removeLocal(["postMeetingStartTime"]);
       await openStretchIfActive();
+      return;
+    }
+
+    if (alarm.name === WATER_ALARM_NAME) {
+      // Reset glasses if new day
+      await resetWaterGlassesIfNewDay();
+
+      // Check calendar for water Pro users
+      const { isPro: isWaterPro } = await getWaterLicenseStatus();
+      const { waterCalendarEnabled } = await getLocal(["waterCalendarEnabled"]);
+
+      if (isWaterPro && waterCalendarEnabled) {
+        const { inMeeting, meetingEndTime } = await checkCalendar();
+        if (inMeeting) {
+          // Reschedule water for when meeting ends
+          let minutesUntilEnd = 1;
+          if (meetingEndTime) {
+            const ms = meetingEndTime - Date.now();
+            minutesUntilEnd = Math.max(1, Math.ceil(ms / 60000));
+          }
+          chrome.alarms.clear(WATER_ALARM_NAME, () => {
+            chrome.alarms.create(WATER_ALARM_NAME, { delayInMinutes: minutesUntilEnd });
+          });
+          console.log(`Water: meeting detected, rescheduling in ${minutesUntilEnd} min`);
+          return;
+        }
+      }
+
+      // Open water screen
+      await openWaterWindow();
       return;
     }
 
@@ -1110,6 +1336,125 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return;
       }
 
+      // ---- Water module messages ----
+
+      if (request.type === "getWaterSettings") {
+        const ws = await getWaterSettings();
+        const { isPro: isWaterPro } = await getWaterLicenseStatus();
+        const extra = await getLocal(["waterCalendarEnabled", "waterPendingSessionId"]);
+        await resetWaterGlassesIfNewDay();
+        const fresh = await getLocal(["waterGlassesToday"]);
+        sendResponse({
+          ok: true,
+          waterInterval:     ws.waterInterval,
+          waterGoal:         ws.waterGoal,
+          waterSoundEnabled: ws.waterSoundEnabled,
+          waterGlassesToday: Number(fresh.waterGlassesToday || 0),
+          waterStartTime:    ws.waterStartTime,
+          waterEnabled:      ws.waterEnabled,
+          isWaterPro,
+          waterCalendarEnabled:    !!extra.waterCalendarEnabled,
+          hasPendingWaterSession:  !!extra.waterPendingSessionId
+        });
+        return;
+      }
+
+      if (request.type === "getWaterLicenseStatus") {
+        const { isPro } = await getWaterLicenseStatus();
+        sendResponse({ ok: true, isPro });
+        return;
+      }
+
+      if (request.type === "startWaterTimer") {
+        const minutes = Math.max(1, Number(request.minutes || 30));
+        await setLocal({ waterEnabled: true, waterInterval: minutes });
+        scheduleWaterAlarm(minutes);
+        sendResponse({ ok: true });
+        return;
+      }
+
+      if (request.type === "stopWaterTimer") {
+        await setLocal({ waterEnabled: false });
+        await stopWaterAlarm();
+        sendResponse({ ok: true });
+        return;
+      }
+
+      if (request.type === "logGlass") {
+        await resetWaterGlassesIfNewDay();
+        const data = await getLocal(["waterGlassesToday"]);
+        const newCount = Number(data.waterGlassesToday || 0) + 1;
+        await setLocal({ waterGlassesToday: newCount });
+        // Reschedule next water alarm from now
+        const ws = await getWaterSettings();
+        if (ws.waterEnabled) scheduleWaterAlarm(ws.waterInterval);
+        sendResponse({ ok: true, waterGlassesToday: newCount });
+        return;
+      }
+
+      if (request.type === "skipWater") {
+        // Reschedule from now
+        const ws = await getWaterSettings();
+        if (ws.waterEnabled) scheduleWaterAlarm(ws.waterInterval);
+        sendResponse({ ok: true });
+        return;
+      }
+
+      if (request.type === "setWaterInterval") {
+        const minutes = Math.max(1, Number(request.minutes || 30));
+        await setLocal({ waterInterval: minutes });
+        const { waterEnabled } = await getLocal(["waterEnabled"]);
+        if (waterEnabled !== false) scheduleWaterAlarm(minutes);
+        sendResponse({ ok: true });
+        return;
+      }
+
+      if (request.type === "setWaterGoal") {
+        const goal = Math.max(1, Math.min(20, Number(request.goal || 8)));
+        await setLocal({ waterGoal: goal });
+        sendResponse({ ok: true });
+        return;
+      }
+
+      if (request.type === "setWaterSound") {
+        await setLocal({ waterSoundEnabled: !!request.enabled });
+        sendResponse({ ok: true });
+        return;
+      }
+
+      if (request.type === "setWaterCalendarEnabled") {
+        await setLocal({ waterCalendarEnabled: !!request.enabled });
+        sendResponse({ ok: true });
+        return;
+      }
+
+      if (request.type === "startWaterCheckout") {
+        try {
+          const { checkoutUrl, sessionId } = await createWaterCheckoutSession();
+          chrome.tabs.create({ url: checkoutUrl });
+          sendResponse({ ok: true, sessionId });
+        } catch (e) {
+          sendResponse({ ok: false, error: String(e) });
+        }
+        return;
+      }
+
+      if (request.type === "verifyWaterPayment") {
+        try {
+          const data = await getLocal(["waterPendingSessionId"]);
+          const sessionId = request.sessionId || data.waterPendingSessionId;
+          if (!sessionId) {
+            sendResponse({ ok: false, paid: false, error: "No pending water session" });
+            return;
+          }
+          const result = await verifyWaterPaymentSession(sessionId);
+          sendResponse({ ok: true, ...result });
+        } catch (e) {
+          sendResponse({ ok: false, paid: false, error: String(e) });
+        }
+        return;
+      }
+
       sendResponse({ ok: false, error: "Unknown message type" });
     } catch (error) {
       console.error("Message handler error:", error);
@@ -1132,6 +1477,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     await maybeResetWeeklyStats();
     ensureWeeklyResetAlarm();
     await recoverMissedStretch();
+
+    // Recover water alarm on service worker restart
+    const { waterEnabled } = await getLocal(["waterEnabled"]);
+    if (waterEnabled !== false) {
+      await resetWaterGlassesIfNewDay();
+      const alarms = await new Promise(resolve => chrome.alarms.getAll(resolve));
+      const hasWaterAlarm = alarms.some(a => a.name === WATER_ALARM_NAME);
+      if (!hasWaterAlarm) {
+        const ws = await getWaterSettings();
+        scheduleWaterAlarm(ws.waterInterval);
+      }
+    }
   } catch (error) {
     console.error("Bootstrap error:", error);
   }

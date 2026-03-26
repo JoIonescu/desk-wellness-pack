@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Desk Wellness Pack - Smart Stretch</title>
+  <title>Desk Wellness Pack</title>
   <style>
     :root {
       --bg-1: #1b1f2a;
@@ -148,27 +148,32 @@
     .toggle {
       appearance: none;
       -webkit-appearance: none;
-      width: 22px;
+      width: 40px;
       height: 22px;
-      min-width: 22px;
+      min-width: 40px;
       min-height: 22px;
-      border-radius: 6px;
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      background: rgba(255, 255, 255, 0.08);
+      border-radius: 100px;
+      border: none;
+      background: rgba(255, 255, 255, 0.15);
       cursor: pointer;
       margin-top: 2px;
       position: relative;
+      transition: background 0.2s ease;
+      flex-shrink: 0;
     }
-    .toggle:checked { background: var(--yellow); border-color: var(--yellow); }
-    .toggle:checked::after {
-      content: "✓";
+    .toggle::after {
+      content: "";
       position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-size: 14px;
-      font-weight: 900;
-      color: #1b1f2a;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.6);
+      top: 3px; left: 3px;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .toggle:checked { background: var(--yellow); }
+    .toggle:checked::after {
+      background: #1b1f2a;
+      transform: translateX(18px);
     }
 
     /* ---- Status ---- */
@@ -442,13 +447,30 @@
     <!-- HEADER -->
     <div class="card">
       <div class="header-row">
-        <div class="title">Smart Stretch</div>
+        <div class="title">Desk Wellness Pack</div>
         <div class="pro-badge" id="proBadge">✨ Pro</div>
       </div>
       <div class="subtitle">
-        Adjusts the stretch experience based on skips, snoozes and completions
+        Smart reminders for healthier desk habits
       </div>
     </div>
+
+    <!-- MODULE TABS -->
+    <div class="card" style="padding:6px;">
+      <div style="display:flex;gap:5px;background:rgba(0,0,0,0.25);border-radius:12px;padding:4px;">
+        <div id="tabStretch" onclick="switchTab('stretch')"
+          style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;background:rgba(255,212,0,0.10);color:var(--yellow);border:1px solid rgba(255,212,0,0.20);">
+          🧘 Smart Stretch
+        </div>
+        <div id="tabWater" onclick="switchTab('water')"
+          style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);border:1px solid transparent;">
+          💧 Water Reminder
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STRETCH SECTION ══ -->
+    <div id="sectionStretch">
 
     <!-- TIMER -->
     <div class="card">
@@ -621,6 +643,137 @@
       </div>
       <div class="weekly-note">Resets every week (Sunday) · Tap dot to see last week</div>
     </div>
+
+    </div><!-- end #sectionStretch -->
+
+    <!-- ══ WATER SECTION ══ -->
+    <div id="sectionWater" style="display:none;">
+
+      <!-- Water Timer -->
+      <div class="card">
+        <div class="timer-box" style="background:rgba(90,169,255,0.06);border-color:rgba(90,169,255,0.14);">
+          <div class="timer-label" id="waterTimerLabel">Next water reminder</div>
+          <div class="timer-value" id="waterTimerDisplay" style="color:var(--blue);">Timer Inactive</div>
+        </div>
+        <div class="controls" style="margin-top:8px;">
+          <button id="waterStartBtn" class="btn btn-start">Start</button>
+          <button id="waterStopBtn"  class="btn btn-stop">Stop</button>
+        </div>
+      </div>
+
+      <!-- Water interval dropdown -->
+      <select id="waterIntervalSelect" class="select">
+        <option value="30">Every 30 minutes</option>
+        <option value="45">Every 45 minutes</option>
+        <option value="60">Every 60 minutes</option>
+        <option value="90">Every 90 minutes</option>
+        <option value="120">Every 2 hours</option>
+      </select>
+
+      <div class="custom-select-wrap" id="waterCustomSelectWrap">
+        <div class="custom-select-trigger" id="waterCustomSelectTrigger"
+          style="border-color:rgba(90,169,255,0.25);">
+          <span id="waterCustomSelectLabel">Every 30 minutes</span>
+          <span class="custom-select-arrow">▼</span>
+        </div>
+        <div class="custom-select-options" id="waterCustomSelectOptions"
+          style="border-color:rgba(90,169,255,0.3);">
+          <div class="custom-select-option" data-value="30">Every 30 minutes</div>
+          <div class="custom-select-option selected" data-value="45">Every 45 minutes</div>
+          <div class="custom-select-option" data-value="60">Every 60 minutes</div>
+          <div class="custom-select-option" data-value="90">Every 90 minutes</div>
+          <div class="custom-select-option" data-value="120">Every 2 hours</div>
+        </div>
+      </div>
+
+      <!-- Water glass counter -->
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <!-- Mini glass viz -->
+          <div style="position:relative;width:36px;height:46px;flex-shrink:0;">
+            <div style="position:absolute;top:0;left:-2px;right:-2px;height:2px;background:rgba(90,169,255,0.4);border-radius:2px;"></div>
+            <div style="position:absolute;inset:0;border:2px solid rgba(90,169,255,0.35);border-top:none;border-radius:2px 2px 10px 10px;"></div>
+            <div id="waterMiniGlassFill"
+              style="position:absolute;bottom:2px;left:2px;right:2px;border-radius:1px 1px 8px 8px;background:linear-gradient(180deg,rgba(90,169,255,0.55),rgba(61,143,224,0.75));transition:height 0.5s ease;height:0%;"></div>
+          </div>
+          <div>
+            <div style="font-size:22px;font-weight:800;color:var(--blue);line-height:1;">
+              <span id="waterGlassCount">0</span>
+              <span style="font-size:13px;font-weight:400;color:var(--muted);">/ <span id="waterGoalDisplay">8</span></span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">glasses today</div>
+          </div>
+        </div>
+        <!-- Progress dots -->
+        <div id="waterDotsContainer" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;"></div>
+      </div>
+
+      <!-- Water settings -->
+      <div class="card">
+        <div class="setting">
+          <div>
+            <div class="label">Play sound</div>
+            <div class="sub-label">Gentle chime when reminder fires</div>
+          </div>
+          <input type="checkbox" id="waterSoundToggle" class="toggle" />
+        </div>
+        <!-- Goal stepper — locked for free, unlocked for Pro -->
+        <div class="setting" id="waterGoalSetting">
+          <div>
+            <div class="label">Daily goal <span id="waterGoalLockIcon" style="font-size:11px;opacity:0.5;">🔒</span></div>
+            <div class="sub-label" id="waterGoalSubLabel">Upgrade to Pro to set your own goal</div>
+          </div>
+          <div id="waterGoalStepper" style="display:flex;align-items:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:10px;overflow:hidden;opacity:0.4;pointer-events:none;">
+            <button id="waterGoalMinus" style="width:28px;height:28px;border:none;background:none;color:var(--blue);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">−</button>
+            <div id="waterGoalValue" style="min-width:24px;text-align:center;font-size:13px;font-weight:700;color:var(--blue);border-left:1px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.08);line-height:28px;">8</div>
+            <button id="waterGoalPlus"  style="width:28px;height:28px;border:none;background:none;color:var(--blue);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Water Upgrade Card — shown when not Water Pro -->
+      <div class="card upgrade-card" id="waterUpgradeCard" style="display:none;">
+        <div class="upgrade-title-row">
+          <div class="upgrade-title">💧 Upgrade Water to Pro</div>
+        </div>
+        <div class="upgrade-sub">One-time purchase. Unlock for Water Reminder.</div>
+        <div class="upgrade-features">
+          <div class="upgrade-feature">
+            <div class="upgrade-feature-icon">📅</div>
+            <div>
+              <div class="label" style="font-size:13px;">Skip during meetings</div>
+              <div class="sub-label">Pauses water reminders during Google Calendar events</div>
+            </div>
+          </div>
+          <div class="upgrade-feature">
+            <div class="upgrade-feature-icon">🎯</div>
+            <div>
+              <div class="label" style="font-size:13px;">Custom daily glass goal</div>
+              <div class="sub-label">Set your own target — not locked to 8 glasses</div>
+            </div>
+          </div>
+        </div>
+        <button id="waterUpgradeBtn" class="btn btn-upgrade">Upgrade — €5.00</button>
+        <button id="waterVerifyBtn" class="btn btn-verify">✓ I've paid — Verify Payment</button>
+        <div class="pending-note" id="waterPendingNote">
+          Complete your payment in the tab that just opened,<br>then click Verify Payment above.
+        </div>
+        <div class="upgrade-price">One-time · No subscription · Instant unlock</div>
+      </div>
+
+      <!-- Water Pro integrations — shown when Water Pro -->
+      <div class="card" id="waterProCard" style="display:none;border-color:rgba(90,169,255,0.2);background:rgba(90,169,255,0.04);">
+        <div class="setting">
+          <div>
+            <div class="label">📅 Skip during meetings</div>
+            <div class="sub-label">Pauses water reminders during Google Calendar events</div>
+          </div>
+          <input type="checkbox" id="waterCalendarToggle" class="toggle" />
+        </div>
+        <div id="waterCalendarStatus" class="status-ok">✅ Google Calendar connected</div>
+      </div>
+
+    </div><!-- end #sectionWater -->
 
   </div>
   <script src="popup.js"></script>

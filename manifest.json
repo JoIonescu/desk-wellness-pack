@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Desk Wellness Pack - Smart Stretch",
-  "description": "Smart stretch reminders for healthier desk work habits.",
-  "version": "1.5",
+  "description": "Smart stretch and hydration reminders for healthier desk work habits.",
+  "version": "2.0",
   "permissions": [
     "alarms",
     "storage",
@@ -14,7 +14,7 @@
     "https://smart-stretch-backend.vercel.app/*"
   ],
   "oauth2": {
-    "client_id": "750220805739-kuihv9grhjb9n66iqg8h52jr4c6anlrg.apps.googleusercontent.com",
+    "client_id": "YOUR_REAL_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
     "scopes": ["https://www.googleapis.com/auth/calendar.readonly"]
   },
   "background": {
