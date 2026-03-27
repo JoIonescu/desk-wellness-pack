@@ -22,15 +22,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   /* ── DOM ── */
-  const waterFill      = document.getElementById("waterFill");
-  const glassCount     = document.getElementById("glassCount");
-  const glassGoalLabel = document.getElementById("glassGoalLabel");
-  const dotsContainer  = document.getElementById("dotsContainer");
-  const drinkBtn       = document.getElementById("drinkBtn");
-  const skipBtn        = document.getElementById("skipBtn");
-  const successOverlay = document.getElementById("successOverlay");
-  const successSub     = document.getElementById("successSub");
-  const goalBanner     = document.getElementById("goalBanner");
+  const waterFill        = document.getElementById("waterFill");
+  const glassCount       = document.getElementById("glassCount");
+  const glassGoalLabel   = document.getElementById("glassGoalLabel");
+  const dotsContainer    = document.getElementById("dotsContainer");
+  const nextReminderTime = document.getElementById("nextReminderTime"); // ← was missing
+  const drinkBtn         = document.getElementById("drinkBtn");
+  const skipBtn          = document.getElementById("skipBtn");
+  const successOverlay   = document.getElementById("successOverlay");
+  const successSub       = document.getElementById("successSub");
+  const goalBanner       = document.getElementById("goalBanner");
 
   /* ── State ── */
   let glasses = 0;
@@ -42,8 +43,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     dotsContainer.innerHTML = "";
     for (let i = 0; i < goal; i++) {
       const d = document.createElement("div");
-      d.className = "dot" + (i < glasses ? (i === goal - 1 && glasses >= goal ? " goal-dot" : " filled") : "");
-      if (i < glasses) d.classList.add("filled");
+      d.className = "dot";
+      if (i < glasses) {
+        d.classList.add("filled");
+        if (i === goal - 1 && glasses >= goal) d.classList.add("goal-dot");
+      }
       dotsContainer.appendChild(d);
     }
   }
@@ -51,19 +55,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderGlass() {
     const pct = goal > 0 ? Math.min(glasses / goal, 1) : 0;
     waterFill.style.height = `${Math.max(pct * 96, 3)}%`;
-    const countText = glasses;
-    glassCount.innerHTML = `${countText} <span id="glassGoalLabel">/ ${goal}</span>`;
+    glassCount.innerHTML = `${glasses} <span id="glassGoalLabel">/ ${goal}</span>`;
     renderDots();
     goalBanner.classList.toggle("show", glasses >= goal);
   }
 
   function startReminderCountdown(startTime, intervalMinutes) {
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    if (!startTime || !intervalMinutes) { nextReminderTime.textContent = "–:––"; return; }
+    if (!nextReminderTime) return;
+    if (!startTime || !intervalMinutes) {
+      nextReminderTime.textContent = "–:––";
+      return;
+    }
 
     const render = () => {
-      const totalMs  = intervalMinutes * 60 * 1000;
-      const elapsed  = Date.now() - startTime;
+      const totalMs   = intervalMinutes * 60 * 1000;
+      const elapsed   = Date.now() - startTime;
       const remaining = totalMs - elapsed;
       if (remaining <= 0) {
         nextReminderTime.textContent = "0:00";
@@ -82,18 +89,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await getLocal(["waterSoundEnabled"]);
     if (data.waterSoundEnabled === false) return;
 
+    // water-chime.wav is the dedicated water sound
     const paths = [
-      "stretch-chime.mp3",
+      "water-chime.wav",
+      "water-chime.mp3",
       "stretch-chime.wav",
-      "assets/stretch-chime.mp3",
-      "assets/stretch-chime.wav"
+      "stretch-chime.mp3"
     ];
 
     setTimeout(async () => {
       for (const path of paths) {
         try {
           const audio = new Audio(chrome.runtime.getURL(path));
-          audio.volume = 0.7;
+          audio.volume = 0.8;
           await audio.play();
           return;
         } catch (e) { /* try next */ }
@@ -110,6 +118,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     goal    = data.waterGoal || 8;
 
     renderGlass();
+
+    // Wire up the next-reminder countdown — was missing before
+    startReminderCountdown(data.waterStartTime, data.waterInterval);
   }
 
   /* ── Drink handler ── */
@@ -131,7 +142,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       setTimeout(() => {
         successOverlay.classList.remove("show");
         drinkBtn.disabled = false;
-        // Close window — background will reschedule next alarm
         setTimeout(() => {
           try { window.close(); } catch (e) {}
         }, 300);

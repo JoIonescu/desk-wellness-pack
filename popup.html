@@ -448,7 +448,6 @@
     <div class="card">
       <div class="header-row">
         <div class="title">Desk Wellness Pack</div>
-        <div class="pro-badge" id="proBadge">✨ Pro</div>
       </div>
       <div class="subtitle">
         Smart reminders for healthier desk habits
@@ -474,6 +473,9 @@
 
     <!-- TIMER -->
     <div class="card">
+      <div style="position:relative;">
+        <div id="stretchProBadge" style="display:none;position:absolute;top:0;right:0;font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;background:linear-gradient(90deg,var(--yellow),var(--orange));color:#1b1f2a;letter-spacing:0.3px;">✨ Pro</div>
+      </div>
       <div class="timer-box">
         <div class="timer-label" id="timerLabel">Next stretch break</div>
         <div class="timer-value" id="timerDisplay">Timer Inactive</div>
@@ -651,6 +653,9 @@
 
       <!-- Water Timer -->
       <div class="card">
+        <div style="position:relative;">
+          <div id="waterProBadge" style="display:none;position:absolute;top:0;right:0;font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;letter-spacing:0.3px;">💧 Pro</div>
+        </div>
         <div class="timer-box" style="background:rgba(90,169,255,0.06);border-color:rgba(90,169,255,0.14);">
           <div class="timer-label" id="waterTimerLabel">Next water reminder</div>
           <div class="timer-value" id="waterTimerDisplay" style="color:var(--blue);">Timer Inactive</div>

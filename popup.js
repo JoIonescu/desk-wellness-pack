@@ -210,16 +210,16 @@ async function loadLicenseStatus() {
   const res = await sendMessage({ type: "getLicenseStatus" });
   const isPro = res?.isPro || false;
 
-  const proBadge            = document.getElementById("proBadge");
+  const stretchProBadge     = document.getElementById("stretchProBadge");
   const upgradeCard         = document.getElementById("upgradeCard");
   const proIntegrationsCard = document.getElementById("proIntegrationsCard");
 
   if (isPro) {
-    if (proBadge)            proBadge.style.display           = "inline-block";
+    if (stretchProBadge)     stretchProBadge.style.display     = "block";
     if (upgradeCard)         upgradeCard.style.display         = "none";
     if (proIntegrationsCard) proIntegrationsCard.style.display = "block";
   } else {
-    if (proBadge)            proBadge.style.display           = "none";
+    if (stretchProBadge)     stretchProBadge.style.display     = "none";
     if (upgradeCard)         upgradeCard.style.display         = "block";
     if (proIntegrationsCard) proIntegrationsCard.style.display = "none";
   }
@@ -287,12 +287,12 @@ function switchTab(tab) {
   }
 }
 
-// Expose globally for onclick in HTML
+// Wire tab clicks via event listeners
 const tabStretch = document.getElementById("tabStretch");
-const tabWater = document.getElementById("tabWater");
-
+const tabWater   = document.getElementById("tabWater");
 tabStretch?.addEventListener("click", () => switchTab("stretch"));
-tabWater?.addEventListener("click", () => switchTab("water"));
+tabWater?.addEventListener("click",   () => switchTab("water"));
+
 /* ---- Water timer display ---- */
 
 function stopWaterTimer() {
@@ -395,6 +395,9 @@ async function loadWaterSettings() {
   if (isWaterPro) {
     if (waterUpgradeCard) waterUpgradeCard.style.display = "none";
     if (waterProCard)     waterProCard.style.display     = "block";
+    // Show water Pro badge inside the water timer card
+    const waterProBadge = document.getElementById("waterProBadge");
+    if (waterProBadge) waterProBadge.style.display = "block";
     // Unlock goal stepper
     if (waterGoalStepper) {
       waterGoalStepper.style.opacity       = "1";
