@@ -753,7 +753,17 @@ async function stopTimer() {
     pausedAt: null,
     remainingMsAtPause: null
   });
-  stopBadgeCountdown();
+
+  // If water is still active, keep the badge loop running for the 💧 badge
+  // rather than killing it entirely
+  const { waterEnabled, waterStartTime, waterInterval } = await getLocal([
+    "waterEnabled", "waterStartTime", "waterInterval"
+  ]);
+  if (waterEnabled === true && waterStartTime && waterInterval) {
+    startBadgeCountdown(); // restarts interval — will show 💧 since stretch is now inactive
+  } else {
+    stopBadgeCountdown();
+  }
 }
 
 async function snoozeTimer() {

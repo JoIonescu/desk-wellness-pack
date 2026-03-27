@@ -766,11 +766,20 @@ async function init() {
 document.addEventListener("DOMContentLoaded", () => {
   const infoBtn   = document.getElementById("infoBtn");
   const infoPanel = document.getElementById("infoPanel");
-
   if (infoBtn && infoPanel) {
     infoBtn.addEventListener("click", () => {
       const isOpen = infoPanel.classList.toggle("open");
       infoBtn.classList.toggle("active", isOpen);
+    });
+  }
+
+  // Water info button — same pattern
+  const waterInfoBtn   = document.getElementById("waterInfoBtn");
+  const waterInfoPanel = document.getElementById("waterInfoPanel");
+  if (waterInfoBtn && waterInfoPanel) {
+    waterInfoBtn.addEventListener("click", () => {
+      const isOpen = waterInfoPanel.classList.toggle("open");
+      waterInfoBtn.classList.toggle("active", isOpen);
     });
   }
 

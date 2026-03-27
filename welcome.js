@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
           chrome.storage.local.set(defaults, () => {
             try {
               const width = 460;
-              const height = 820;
+              const height = 560;
               const left = Math.max(0, Math.round((screen.availWidth - width) / 2));
               const top  = Math.max(0, Math.round((screen.availHeight - height) / 2));
               window.open(
