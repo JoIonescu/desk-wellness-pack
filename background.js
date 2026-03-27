@@ -8,7 +8,7 @@ const POST_MEETING_BUFFER_MINUTES = 5;
 const WATER_ALARM_NAME = "waterAlarm";
 
 // Replace with your deployed Vercel URL
-const BACKEND_URL = "https://desk-wellness-pack.vercel.app";
+const BACKEND_URL = "https://smart-stretch-backend.vercel.app";
 
 let countdownInterval = null;
 
@@ -315,17 +315,16 @@ function startBadgeCountdown() {
     }
 
     if (!data || !data.interval || !data.startTime) {
-      clearBadge();
+      // Stretch not running — check if water timer is active before clearing
+      const waterData = await getLocal(["waterEnabled", "waterStartTime", "waterInterval"]);
+      if (waterData.waterEnabled !== false && waterData.waterStartTime && waterData.waterInterval) {
+        chrome.action.setBadgeBackgroundColor({ color: "#5aa9ff" });
+        chrome.action.setBadgeText({ text: "💧" });
+      } else {
+        clearBadge();
+      }
       return;
     }
-
-    // If no stretch timer running but water is active, show blue drop
-    const { waterEnabled, waterStartTime, waterInterval } = await getLocal(["waterEnabled","waterStartTime","waterInterval"]);
-    if (waterEnabled && waterStartTime && waterInterval) {
-  chrome.action.setBadgeBackgroundColor({ color: "#5aa9ff" });
-  chrome.action.setBadgeText({ text: "💧" });
-  return;
-}
 
     const elapsed = (Date.now() - data.startTime) / 1000;
     const total = Number(data.interval) * 60;
@@ -1011,16 +1010,17 @@ chrome.runtime.onInstalled.addListener(async () => {
   await setRuntimeState({ ...DEFAULT_RUNTIME });
   stopBadgeCountdown();
 
-  // Initialize water module defaults
+  // Initialize water module defaults — disabled until user presses Start
   const today = getTodayKey();
   await setLocal({
-    waterEnabled:      true,
+    waterEnabled:      false,
     waterInterval:     30,
     waterGoal:         8,
     waterSoundEnabled: true,
     waterGlassesToday: 0,
     waterGlassesDate:  today
   });
+  // Do NOT call scheduleWaterAlarm here — water only starts when user clicks Start
 
   chrome.windows.create({
     url: "welcome.html",
@@ -1044,9 +1044,9 @@ chrome.runtime.onStartup.addListener(async () => {
   ensureWeeklyResetAlarm();
   await recoverMissedStretch();
 
-  // Recover water alarm
-  const { waterEnabled } = await getLocal(["waterEnabled"]);
-  if (waterEnabled !== false) {
+  // Only restore water alarm if user had explicitly started it
+  const { waterEnabled, waterStartTime } = await getLocal(["waterEnabled", "waterStartTime"]);
+  if (waterEnabled === true && waterStartTime) {
     await resetWaterGlassesIfNewDay();
     const alarms = await new Promise(resolve => chrome.alarms.getAll(resolve));
     const hasWaterAlarm = alarms.some(a => a.name === WATER_ALARM_NAME);
@@ -1054,6 +1054,7 @@ chrome.runtime.onStartup.addListener(async () => {
       const ws = await getWaterSettings();
       scheduleWaterAlarm(ws.waterInterval);
     }
+    startBadgeCountdown();
   }
 });
 
@@ -1376,6 +1377,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const minutes = Math.max(1, Number(request.minutes || 30));
         await setLocal({ waterEnabled: true, waterInterval: minutes });
         scheduleWaterAlarm(minutes);
+        startBadgeCountdown(); // kick off badge loop so 💧 appears
         sendResponse({ ok: true });
         return;
       }
@@ -1383,6 +1385,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (request.type === "stopWaterTimer") {
         await setLocal({ waterEnabled: false });
         await stopWaterAlarm();
+        // Only clear badge if stretch is also not running
+        const currentRuntime = await getRuntimeState();
+        if (currentRuntime.stretchReminderState === "inactive") {
+          stopBadgeCountdown();
+        }
         sendResponse({ ok: true });
         return;
       }
@@ -1485,9 +1492,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     ensureWeeklyResetAlarm();
     await recoverMissedStretch();
 
-    // Recover water alarm on service worker restart
-    const { waterEnabled } = await getLocal(["waterEnabled"]);
-    if (waterEnabled !== false) {
+    // Only restore water alarm if user had explicitly started it
+    const { waterEnabled: wEnabled, waterStartTime: wStartTime } = await getLocal(["waterEnabled", "waterStartTime"]);
+    if (wEnabled === true && wStartTime) {
       await resetWaterGlassesIfNewDay();
       const alarms = await new Promise(resolve => chrome.alarms.getAll(resolve));
       const hasWaterAlarm = alarms.some(a => a.name === WATER_ALARM_NAME);
@@ -1495,6 +1502,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const ws = await getWaterSettings();
         scheduleWaterAlarm(ws.waterInterval);
       }
+      startBadgeCountdown();
     }
   } catch (error) {
     console.error("Bootstrap error:", error);
