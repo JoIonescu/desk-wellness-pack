@@ -2,6 +2,7 @@ let timerInterval = null;
 let waterTimerInterval = null;
 let popupRefreshInterval = null;
 const POST_MEETING_BUFFER_MINUTES = 5;
+const WATER_POST_MEETING_BUFFER_MINUTES = 5;
 let currentTab = "stretch"; // "stretch" | "water"
 
 function sendMessage(message) {
@@ -361,11 +362,54 @@ async function loadWaterSettings() {
   renderWaterDots(glasses, goal);
   renderWaterMiniGlass(glasses, goal);
 
-  // Timer countdown
+  // Timer countdown — meeting-aware
   stopWaterTimer();
-  if (res.waterEnabled !== false && res.waterStartTime && res.waterInterval) {
+
+  const waterMeetingNote = document.getElementById("waterMeetingNote");
+
+  if (res.waterMeetingActive) {
+    // Meeting in progress — show pause message + resume time
+    if (waterTimerLabel) waterTimerLabel.textContent = "Meeting in progress";
+    if (waterTimerDisplay) {
+      waterTimerDisplay.style.color = "var(--blue)";
+      if (res.waterMeetingEndTime) {
+        const resumeTime = new Date(res.waterMeetingEndTime + WATER_POST_MEETING_BUFFER_MINUTES * 60 * 1000);
+        const h = resumeTime.getHours();
+        const m = String(resumeTime.getMinutes()).padStart(2, "0");
+        const ampm = h >= 12 ? "PM" : "AM";
+        const h12 = h % 12 || 12;
+        waterTimerDisplay.textContent = `Resumes ~${h12}:${m} ${ampm}`;
+      } else {
+        waterTimerDisplay.textContent = "Paused";
+      }
+    }
+    if (waterMeetingNote) {
+      waterMeetingNote.style.display = "block";
+      waterMeetingNote.textContent = "Water intake will resume 5 min after meeting ends";
+    }
+  } else if (res.waterPostMeetingStartTime) {
+    // Post-meeting buffer — live countdown, same pattern as stretch
+    if (waterTimerLabel) waterTimerLabel.textContent = "Meeting ended — water break starting in";
+    if (waterTimerDisplay) waterTimerDisplay.style.color = "var(--blue)";
+    if (waterMeetingNote) waterMeetingNote.style.display = "none";
+    const bufferMs = WATER_POST_MEETING_BUFFER_MINUTES * 60 * 1000;
+    const renderBuffer = () => {
+      const elapsed = Date.now() - res.waterPostMeetingStartTime;
+      const rem = Math.max(0, bufferMs - elapsed);
+      if (!waterTimerDisplay) return;
+      if (rem <= 0) { waterTimerDisplay.textContent = "0:00"; return; }
+      const s = Math.max(0, Math.ceil(rem / 1000));
+      const min = Math.floor(s / 60);
+      const sec = s % 60;
+      waterTimerDisplay.textContent = `${min}:${String(sec).padStart(2, "0")}`;
+    };
+    renderBuffer();
+    waterTimerInterval = setInterval(renderBuffer, 1000);
+  } else if (res.waterEnabled !== false && res.waterStartTime && res.waterInterval) {
+    // Normal countdown
     if (waterTimerLabel) waterTimerLabel.textContent = "Next water reminder";
     if (waterTimerDisplay) waterTimerDisplay.style.color = "var(--blue)";
+    if (waterMeetingNote) waterMeetingNote.style.display = "none";
     const render = () => {
       const totalMs   = res.waterInterval * 60 * 1000;
       const elapsed   = Date.now() - res.waterStartTime;
@@ -373,13 +417,14 @@ async function loadWaterSettings() {
       if (!waterTimerDisplay) return;
       if (remaining <= 0) { waterTimerDisplay.textContent = "0:00"; return; }
       const s = Math.max(0, Math.ceil(remaining / 1000));
-      const m = Math.floor(s / 60);
+      const min = Math.floor(s / 60);
       const sec = s % 60;
-      waterTimerDisplay.textContent = `${m}:${String(sec).padStart(2, "0")}`;
+      waterTimerDisplay.textContent = `${min}:${String(sec).padStart(2, "0")}`;
     };
     render();
     waterTimerInterval = setInterval(render, 1000);
   } else {
+    if (waterMeetingNote) waterMeetingNote.style.display = "none";
     setWaterTimerInactive();
   }
 
