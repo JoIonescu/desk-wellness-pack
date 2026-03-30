@@ -22,16 +22,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   /* ── DOM ── */
-  const waterFill        = document.getElementById("waterFill");
-  const glassCount       = document.getElementById("glassCount");
-  const glassGoalLabel   = document.getElementById("glassGoalLabel");
-  const dotsContainer    = document.getElementById("dotsContainer");
-  const nextReminderTime = document.getElementById("nextReminderTime"); // ← was missing
-  const drinkBtn         = document.getElementById("drinkBtn");
-  const skipBtn          = document.getElementById("skipBtn");
-  const successOverlay   = document.getElementById("successOverlay");
-  const successSub       = document.getElementById("successSub");
-  const goalBanner       = document.getElementById("goalBanner");
+  const waterFill       = document.getElementById("waterFill");
+  const glassCount      = document.getElementById("glassCount");
+  const glassGoalLabel  = document.getElementById("glassGoalLabel");
+  const dotsContainer   = document.getElementById("dotsContainer");
+  const drinkBtn        = document.getElementById("drinkBtn");
+  const skipBtn         = document.getElementById("skipBtn");
+  const successOverlay  = document.getElementById("successOverlay");
+  const successSub      = document.getElementById("successSub");
+  const goalBanner      = document.getElementById("goalBanner");
+  const nextReminderTime = document.getElementById("nextReminderTime");
+
+  /* ── Confetti — same pattern as stretch.html ── */
+  const waterConfettiCanvas = document.getElementById("waterConfettiCanvas");
+  const waterConfetti = (typeof confetti !== "undefined" && waterConfettiCanvas)
+    ? confetti.create(waterConfettiCanvas, { resize: true, useWorker: false })
+    : null;
+
+  function fireWaterConfetti() {
+    if (!waterConfetti) return;
+    waterConfetti({
+      particleCount: 70,
+      spread: 65,
+      origin: { y: 0.6 },
+      colors: ["#5aa9ff", "#3d8fe0", "#b3d9ff", "#ffffff", "#34c759"]
+    });
+  }
 
   /* ── State ── */
   let glasses = 0;
@@ -43,11 +59,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     dotsContainer.innerHTML = "";
     for (let i = 0; i < goal; i++) {
       const d = document.createElement("div");
-      d.className = "dot";
-      if (i < glasses) {
-        d.classList.add("filled");
-        if (i === goal - 1 && glasses >= goal) d.classList.add("goal-dot");
-      }
+      d.className = "dot" + (i < glasses ? (i === goal - 1 && glasses >= goal ? " goal-dot" : " filled") : "");
+      if (i < glasses) d.classList.add("filled");
       dotsContainer.appendChild(d);
     }
   }
@@ -55,18 +68,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderGlass() {
     const pct = goal > 0 ? Math.min(glasses / goal, 1) : 0;
     waterFill.style.height = `${Math.max(pct * 96, 3)}%`;
-    glassCount.innerHTML = `${glasses} <span id="glassGoalLabel">/ ${goal}</span>`;
+    const countText = glasses;
+    glassCount.innerHTML = `${countText} <span id="glassGoalLabel">/ ${goal}</span>`;
     renderDots();
     goalBanner.classList.toggle("show", glasses >= goal);
   }
 
   function startReminderCountdown(startTime, intervalMinutes) {
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    if (!nextReminderTime) return;
-    if (!startTime || !intervalMinutes) {
-      nextReminderTime.textContent = "–:––";
-      return;
-    }
+    if (!startTime || !intervalMinutes) { nextReminderTime.textContent = "–:––"; return; }
 
     const render = () => {
       const totalMs   = intervalMinutes * 60 * 1000;
@@ -79,7 +89,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       nextReminderTime.textContent = formatRemaining(remaining);
     };
-
     render();
     timerInterval = setInterval(render, 1000);
   }
@@ -89,19 +98,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await getLocal(["waterSoundEnabled"]);
     if (data.waterSoundEnabled === false) return;
 
-    // water-chime.wav is the dedicated water sound
     const paths = [
-      "water-chime.wav",
       "water-chime.mp3",
-      "stretch-chime.wav",
-      "stretch-chime.mp3"
+      "water-chime.wav",
+      "assets/water-chime.mp3",
+      "assets/water-chime.wav"
     ];
 
     setTimeout(async () => {
       for (const path of paths) {
         try {
           const audio = new Audio(chrome.runtime.getURL(path));
-          audio.volume = 0.8;
+          audio.volume = 0.7;
           await audio.play();
           return;
         } catch (e) { /* try next */ }
@@ -118,8 +126,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     goal    = data.waterGoal || 8;
 
     renderGlass();
-
-    // Wire up the next-reminder countdown — was missing before
     startReminderCountdown(data.waterStartTime, data.waterInterval);
   }
 
@@ -138,6 +144,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         : `Keep it up — your body thanks you.`;
 
       successOverlay.classList.add("show");
+
+      // Fire confetti the moment the success overlay appears
+      fireWaterConfetti();
 
       setTimeout(() => {
         successOverlay.classList.remove("show");
