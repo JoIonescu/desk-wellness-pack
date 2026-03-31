@@ -3,21 +3,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   // -----------------------------
   // DOM
   // -----------------------------
-  const stretchScreen  = document.getElementById("stretchScreen");
-  const successScreen  = document.getElementById("successScreen");
-  const stretchTop     = document.getElementById("stretchTop");
-  const stretchContent = document.getElementById("stretchContent");
-  const stretchActions = document.getElementById("stretchActions");
-  const titleEl        = document.getElementById("sessionTitle");
-  const subtitleEl     = document.getElementById("sessionSubtitle");
-  const exerciseNameEl = document.getElementById("exerciseName");
-  const stretchTextEl  = document.getElementById("exerciseInstruction");
-  const stretchIconEl  = document.getElementById("exerciseIcon");
-  const timerEl        = document.getElementById("timeRemaining");
-  const progressCircle = document.getElementById("ringProgress");
-  const snoozeBtn      = document.getElementById("snoozeBtn");
-  const skipBtn        = document.getElementById("skipBtn");
-  const confettiCanvas = document.getElementById("confettiCanvas");
+  const stretchScreen   = document.getElementById("stretchScreen");
+  const successScreen   = document.getElementById("successScreen");
+  const stretchTop      = document.getElementById("stretchTop");
+  const stretchContent  = document.getElementById("stretchContent");
+  const stretchActions  = document.getElementById("stretchActions");
+  const titleEl         = document.getElementById("sessionTitle");
+  const subtitleEl      = document.getElementById("sessionSubtitle");
+  const exerciseNameEl  = document.getElementById("exerciseName");
+  const stretchTextEl   = document.getElementById("exerciseInstruction");
+  const stretchIconEl   = document.getElementById("exerciseIcon");
+  const timerEl         = document.getElementById("timeRemaining");
+  const progressCircle  = document.getElementById("ringProgress");
+  const snoozeBtn       = document.getElementById("snoozeBtn");
+  const skipBtn         = document.getElementById("skipBtn");
+  const confettiCanvas  = document.getElementById("confettiCanvas");
 
   // -----------------------------
   // CONFIG
@@ -103,9 +103,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   let totalDuration     = 60;
   let soundEnabled      = true;
 
-  // Match actual SVG radius in stretch.html
-  const radius         = 52;
-  const circumference  = 2 * Math.PI * radius;
+  const radius        = 52;
+  const circumference = 2 * Math.PI * radius;
 
   if (progressCircle) {
     progressCircle.style.strokeDasharray  = `${circumference}`;
@@ -118,22 +117,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   function getRandomItem(items, sessionType) {
     if (!Array.isArray(items) || !items.length) return "";
     if (items.length === 1) return items[0];
-
-    // Avoid repeating the last shown instruction for this session type
     const storageKey = `lastInstruction_${sessionType}`;
-    const last = sessionStorage.getItem(storageKey);
-
-    const candidates = items.filter((item) => item !== last);
-    const pool = candidates.length > 0 ? candidates : items;
-    const chosen = pool[Math.floor(Math.random() * pool.length)];
-
+    const last       = sessionStorage.getItem(storageKey);
+    const candidates = items.filter(item => item !== last);
+    const pool       = candidates.length > 0 ? candidates : items;
+    const chosen     = pool[Math.floor(Math.random() * pool.length)];
     sessionStorage.setItem(storageKey, chosen);
     return chosen;
   }
 
-  function formatSeconds(seconds) {
-    return `${Math.max(0, seconds)}`;
-  }
+  function formatSeconds(seconds) { return `${Math.max(0, seconds)}`; }
 
   function showStretchScreen() {
     if (stretchTop)     stretchTop.style.display     = "";
@@ -156,10 +149,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function stopCountdown() {
-    if (countdownInterval) {
-      clearInterval(countdownInterval);
-      countdownInterval = null;
-    }
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
   }
 
   function updateProgressCircle() {
@@ -208,9 +198,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function playStartSoundIfEnabled() {
     if (!soundEnabled) return;
-
-    // Root-level paths are checked first — matches actual file location.
-    // Falls back to assets/ subfolder paths and chime.mp3 for compatibility.
     const possiblePaths = [
       "stretch-chime.mp3",
       "stretch-chime.wav",
@@ -220,18 +207,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       "assets/notification.wav",
       "chime.mp3"
     ];
-
-    // IMPORTANT: 1 second after popup opens
     setTimeout(async () => {
       for (const path of possiblePaths) {
         try {
           const audio = new Audio(chrome.runtime.getURL(path));
           audio.volume = 0.9;
           await audio.play();
-          return; // stop on first success
-        } catch (e) {
-          // try next path
-        }
+          return;
+        } catch (e) { /* try next path */ }
       }
       console.warn("Stretch sound could not be played. Check audio file path in manifest and assets.");
     }, 1000);
@@ -239,16 +222,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function applySessionUI(sessionType) {
     const config = SESSION_CONFIG[sessionType] || SESSION_CONFIG.standard_stretch;
-
     totalDuration    = config.durationSeconds;
     remainingSeconds = config.durationSeconds;
-
-    if (titleEl)       titleEl.textContent       = config.title;
-    if (subtitleEl)    subtitleEl.textContent     = config.subtitle;
+    if (titleEl)        titleEl.textContent        = config.title;
+    if (subtitleEl)     subtitleEl.textContent     = config.subtitle;
     if (exerciseNameEl) exerciseNameEl.textContent = config.exerciseName;
-    if (stretchTextEl) stretchTextEl.textContent  = getRandomItem(config.instructions, sessionType);
-    if (stretchIconEl) stretchIconEl.textContent  = config.icon || "🙆";
-
+    if (stretchTextEl)  stretchTextEl.textContent  = getRandomItem(config.instructions, sessionType);
+    if (stretchIconEl)  stretchIconEl.textContent  = config.icon || "🙆";
     updateTimerUI();
   }
 
@@ -257,7 +237,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     countdownInterval = setInterval(async () => {
       remainingSeconds -= 1;
       updateTimerUI();
-
       if (remainingSeconds <= 0) {
         stopCountdown();
         remainingSeconds = 0;
@@ -270,57 +249,46 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function handleStretchComplete() {
     showSuccessScreenUI();
     await sendMessage({ type: "stretchCompleted" });
-
-    // Let layout settle before launching celebration
     setTimeout(() => { launchCelebration(); }, 120);
     safeCloseWindow(SUCCESS_AUTO_CLOSE_MS);
   }
 
   function launchCelebration() {
-    // Preferred: fullscreen confetti if library is loaded in stretch.html
     if (typeof confetti === "function") {
       const duration     = 1800;
       const animationEnd = Date.now() + duration;
       const defaults     = { startVelocity: 28, spread: 360, ticks: 80, zIndex: 9999 };
-
       const interval = setInterval(() => {
         const timeLeft = animationEnd - Date.now();
         if (timeLeft <= 0) { clearInterval(interval); return; }
-
         const particleCount = 22;
         confetti({ ...defaults, particleCount, origin: { x: Math.random() * 0.3 + 0.1, y: Math.random() * 0.8 + 0.1 } });
         confetti({ ...defaults, particleCount, origin: { x: Math.random() * 0.3 + 0.6, y: Math.random() * 0.8 + 0.1 } });
         confetti({ ...defaults, particleCount: 16, origin: { x: 0.5, y: 0.2 } });
       }, 220);
-
       return;
     }
-
-    // Fallback: local canvas confetti
     launchCanvasConfettiFallback();
   }
 
   function launchCanvasConfettiFallback() {
     if (!confettiCanvas) return;
-    const ctx = confettiCanvas.getContext("2d");
+    const ctx  = confettiCanvas.getContext("2d");
     if (!ctx) return;
-
     const rect = confettiCanvas.getBoundingClientRect();
     confettiCanvas.width  = Math.max(300, Math.floor(rect.width));
     confettiCanvas.height = Math.max(140, Math.floor(rect.height));
-
     const pieces = Array.from({ length: 70 }).map(() => ({
       x:     Math.random() * confettiCanvas.width,
       y:     Math.random() * (confettiCanvas.height * 0.35),
       w:     6 + Math.random() * 6,
       h:     8 + Math.random() * 8,
-      vx:    -1.8 + Math.random() * 3.6,
+      vx:   -1.8 + Math.random() * 3.6,
       vy:    1.8 + Math.random() * 3.8,
       rot:   Math.random() * Math.PI,
-      vr:    -0.18 + Math.random() * 0.36,
-      color: ["#FFD400", "#FF7A00", "#60A5FA", "#34D399", "#F472B6"][Math.floor(Math.random() * 5)]
+      vr:   -0.18 + Math.random() * 0.36,
+      color: ["#FFD400","#FF7A00","#60A5FA","#34D399","#F472B6"][Math.floor(Math.random() * 5)]
     }));
-
     let frames = 0;
     function draw() {
       ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
@@ -351,7 +319,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   skipBtn?.addEventListener("click", async () => {
     stopCountdown();
-    await sendMessage({ type: "skipStretch" });
+    await sendMessage({ type: "stretchSkipped" }); // FIX: was "skipStretch" — no handler existed for that in background.js
     safeCloseWindow(150);
   });
 
