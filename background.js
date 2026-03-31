@@ -476,6 +476,8 @@ async function recoverMissedStretch() {
   const elapsed = (Date.now() - data.startTime) / 1000;
   const total   = Number(data.interval) * 60;
   if (elapsed >= total) {
+    // Start badge briefly first so the user sees context before the screen opens
+    startBadgeCountdown();
     await openStretchIfActive();
   } else {
     startBadgeCountdown();
@@ -1019,7 +1021,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     runtimeState = { ...DEFAULT_RUNTIME, ...(await getRuntimeState()) };
     await maybeResetWeeklyStats();
     ensureWeeklyResetAlarm();
-    await recoverMissedStretch();
+    // recoverMissedStretch is intentionally NOT called here.
+    // The bootstrap IIFE runs on every service worker wake (alarms, messages, etc).
+    // Recovery logic lives in onStartup only, which fires only on Chrome launch.
+    // Calling it here caused stretch to misfire on laptop wake from sleep.
+    startBadgeCountdown();
 
     // Only restore water if user had explicitly started it
     const { waterEnabled, waterStartTime } = await getLocal(["waterEnabled","waterStartTime"]);
