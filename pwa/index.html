@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#1b1f2a" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f2f7" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Desk Wellness" />
+  <title>Desk Wellness Pack</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="./css/base.css" />
+
+  <style>
+    /* Critical styles — inlined so they work even if base.css is slow/fails */
+    :root { color-scheme: dark light; }
+    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { height: 100%; -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; padding: 0;
+      min-height: 100dvh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+    @media (prefers-color-scheme: dark)  { body { background: linear-gradient(180deg,#1b1f2a,#23293a); color:#fff; } }
+    @media (prefers-color-scheme: light) { body { background: linear-gradient(180deg,#f0f2f7,#e4e8f2); color:#1b1f2a; } }
+
+    /* Loading screen — must always be visible */
+    #loadingScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 14px;
+      transition: opacity 0.3s ease;
+    }
+    @media (prefers-color-scheme: dark)  { #loadingScreen { background: #1b1f2a; } }
+    @media (prefers-color-scheme: light) { #loadingScreen { background: #f0f2f7; } }
+    #loadingScreen.fade-out { opacity: 0; pointer-events: none; }
+    .loading-icon { font-size: 40px; animation: pulse 1.5s ease infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .loading-text { font-size: 14px; }
+    @media (prefers-color-scheme: dark)  { .loading-text { color: #8d97ae; } }
+    @media (prefers-color-scheme: light) { .loading-text { color: #5a6480; } }
+
+    /* App shell */
+    #app { display:flex; flex-direction:column; min-height:100dvh;
+      padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+      padding-left:env(safe-area-inset-left,0px); padding-right:env(safe-area-inset-right,0px); }
+    .screen { display:none; flex:1; flex-direction:column; }
+    .screen.active { display:flex; }
+    .screen-scroll { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
+      padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
+      display:flex; flex-direction:column; gap:10px; }
+
+    /* Tab bar */
+    .tab-bar { display:flex; gap:6px; border-radius:14px; padding:5px; }
+    @media (prefers-color-scheme: dark)  { .tab-bar { background:rgba(0,0,0,.25); } }
+    @media (prefers-color-scheme: light) { .tab-bar { background:rgba(0,0,0,.07); } }
+    .tab-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
+      padding:10px 12px; border-radius:10px; font-size:13px; font-weight:600;
+      cursor:pointer; border:1px solid transparent; font-family:inherit;
+      transition:background .15s,color .15s,border-color .15s; min-height:44px; background:none; }
+    @media (prefers-color-scheme: dark)  { .tab-btn { color:#8d97ae; } }
+    @media (prefers-color-scheme: light) { .tab-btn { color:#5a6480; } }
+    .tab-btn.tab-active { background:rgba(255,212,0,.12); color:#ffd400; border-color:rgba(255,212,0,.25); }
+    .tab-btn-water.tab-active { background:rgba(90,169,255,.12); color:#5aa9ff; border-color:rgba(90,169,255,.25); }
+    .module-section.hidden { display:none; }
+
+    /* Welcome */
+    #screenWelcome .screen-scroll { align-items:center; justify-content:center; text-align:center; }
+    .welcome-title { font-size:28px; font-weight:800; margin-bottom:8px; }
+    .welcome-sub { font-size:15px; line-height:1.6; margin-bottom:28px; max-width:320px; }
+    @media (prefers-color-scheme: dark)  { .welcome-sub { color:#c7cedd; } }
+    @media (prefers-color-scheme: light) { .welcome-sub { color:#3a4260; } }
+    .welcome-features { display:flex; flex-direction:column; gap:12px; width:100%; max-width:340px; margin-bottom:28px; }
+    .welcome-feature { display:flex; align-items:flex-start; gap:14px; border-radius:16px; padding:14px; text-align:left; border:1px solid; }
+    @media (prefers-color-scheme: dark)  { .welcome-feature { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.12); } }
+    @media (prefers-color-scheme: light) { .welcome-feature { background:rgba(255,255,255,.85); border-color:rgba(0,0,0,.08); } }
+    .welcome-feature-icon { font-size:24px; margin-top:1px; }
+    .welcome-feature-text { font-size:14px; line-height:1.5; }
+    .welcome-feature-text strong { font-weight:700; display:block; margin-bottom:2px; }
+    .notif-card { width:100%; max-width:340px; border-radius:18px; padding:18px; text-align:left; }
+    @media (prefers-color-scheme: dark)  { .notif-card { background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06)); border:1px solid rgba(255,212,0,.22); } }
+    @media (prefers-color-scheme: light) { .notif-card { background:linear-gradient(135deg,rgba(255,212,0,.15),rgba(255,122,0,.10)); border:1px solid rgba(255,180,0,.35); } }
+
+    /* Water glass mini */
+    .glass-mini { position:relative; width:40px; height:50px; flex-shrink:0; }
+    .glass-mini-rim { position:absolute; top:0; left:-2px; right:-2px; height:2px; background:rgba(90,169,255,.4); border-radius:2px; }
+    .glass-mini-body { position:absolute; inset:0; border:2px solid rgba(90,169,255,.35); border-top:none; border-radius:2px 2px 12px 12px; }
+    .glass-mini-fill { position:absolute; bottom:2px; left:2px; right:2px; border-radius:1px 1px 10px 10px; background:linear-gradient(180deg,rgba(90,169,255,.55),rgba(61,143,224,.75)); transition:height .5s ease; height:0%; }
+
+    /* Goal stepper */
+    .goal-stepper { display:flex; align-items:center; border-radius:12px; overflow:hidden; border:1px solid; }
+    @media (prefers-color-scheme: dark)  { .goal-stepper { background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.10); } }
+    @media (prefers-color-scheme: light) { .goal-stepper { background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.10); } }
+    .stepper-btn { width:36px; height:36px; border:none; background:none; color:#5aa9ff; font-size:18px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; }
+    .stepper-val { min-width:28px; text-align:center; font-size:14px; font-weight:700; color:#5aa9ff; line-height:36px; border-left:1px solid rgba(255,255,255,.08); border-right:1px solid rgba(255,255,255,.08); }
+
+    /* Carousel dots */
+    .carousel-dot { width:10px; height:10px; border-radius:50%; cursor:pointer; transition:background .2s,transform .2s; }
+    @media (prefers-color-scheme: dark)  { .carousel-dot { background:rgba(255,255,255,.22); } }
+    @media (prefers-color-scheme: light) { .carousel-dot { background:rgba(0,0,0,.15); } }
+    .carousel-dot.active { background:#ffd400; transform:scale(1.15); }
+
+    /* Placeholder screens */
+    #screenStretch .screen-scroll, #screenWater .screen-scroll { align-items:center; justify-content:center; text-align:center; }
+  </style>
+</head>
+<body>
+
+<div id="loadingScreen">
+  <div class="loading-icon">🧘</div>
+  <div class="loading-text">Loading…</div>
+</div>
+
+<div id="app">
+
+  <!-- WELCOME -->
+  <div id="screenWelcome" class="screen">
+    <div class="screen-scroll">
+      <div style="font-size:52px;margin-bottom:6px;">🧘💧</div>
+      <div class="welcome-title">Desk Wellness Pack</div>
+      <div class="welcome-sub">Smart reminders for healthier desk habits — stretch breaks and hydration, running quietly in the background.</div>
+      <div class="welcome-features">
+        <div class="welcome-feature">
+          <div class="welcome-feature-icon">🧘</div>
+          <div class="welcome-feature-text"><strong>Smart Stretch</strong>Adaptive guided breaks that remind you to move before you stiffen.</div>
+        </div>
+        <div class="welcome-feature">
+          <div class="welcome-feature-icon">💧</div>
+          <div class="welcome-feature-text"><strong>Water Reminder</strong>Tracks daily glasses and reminds you to drink at your own pace.</div>
+        </div>
+      </div>
+      <div class="notif-card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;">🔔 Allow notifications</div>
+        <div style="font-size:13px;line-height:1.55;margin-bottom:14px;opacity:.75;">The app uses notifications to remind you to stretch and drink water. Without them, reminders won't fire in the background.</div>
+        <button class="btn btn-upgrade" id="requestNotifBtn" style="margin-top:0;font-size:15px;">Allow notifications</button>
+        <div id="notifStatus" style="font-size:12px;margin-top:10px;text-align:center;display:none;"></div>
+      </div>
+      <button class="btn btn-secondary" id="welcomeSkipBtn" style="max-width:340px;width:100%;margin-top:10px;">Skip for now</button>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="screenHome" class="screen">
+    <div class="screen-scroll">
+
+      <div class="card">
+        <div class="title" style="margin-bottom:4px;">Desk Wellness Pack</div>
+        <div class="subtitle">Smart reminders for healthier desk habits</div>
+      </div>
+
+      <div class="card" style="padding:6px;">
+        <div class="tab-bar">
+          <button class="tab-btn tab-active" id="tabStretch">🧘 Smart Stretch</button>
+          <button class="tab-btn tab-btn-water" id="tabWater">💧 Water Reminder</button>
+        </div>
+      </div>
+
+      <!-- STRETCH -->
+      <div id="sectionStretch" class="module-section">
+        <div class="card" style="position:relative;">
+          <div id="stretchProBadge" class="pro-badge-inline hidden">✨ Pro</div>
+          <div class="timer-box">
+            <div class="timer-label" id="timerLabel">Next stretch break</div>
+            <div class="timer-value" id="timerDisplay">Timer Inactive</div>
+          </div>
+          <div class="controls">
+            <button class="btn btn-start" id="startBtn">Start</button>
+            <button class="btn btn-stop" id="stopBtn" disabled>Stop</button>
+          </div>
+        </div>
+
+        <div class="custom-select-wrap" id="customSelectWrap">
+          <div class="custom-select-trigger" id="customSelectTrigger">
+            <span id="customSelectLabel">Every 30 minutes</span>
+            <span class="custom-select-arrow">▼</span>
+          </div>
+          <div class="custom-select-options" id="customSelectOptions">
+            <div class="custom-select-option" data-value="15">Every 15 minutes</div>
+            <div class="custom-select-option" data-value="20">Every 20 minutes</div>
+            <div class="custom-select-option selected" data-value="30">Every 30 minutes</div>
+            <div class="custom-select-option" data-value="45">Every 45 minutes</div>
+            <div class="custom-select-option" data-value="60">Every 60 minutes</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="setting">
+            <div class="setting-text"><div class="label">Smart Stretch</div><div class="sub-label">Adapts stretch type based on your recent behaviour</div></div>
+            <input type="checkbox" id="smartModeToggle" class="toggle" />
+          </div>
+          <div class="setting">
+            <div class="setting-text"><div class="label">Play sound</div><div class="sub-label">Gentle chime when the stretch screen opens</div></div>
+            <input type="checkbox" id="soundToggle" class="toggle" />
+          </div>
+        </div>
+
+        <div class="card upgrade-card" id="upgradeCard">
+          <div class="upgrade-title">✨ Upgrade to Pro</div>
+          <div class="upgrade-sub">One-time purchase. Skip stretches during meetings automatically.</div>
+          <div class="upgrade-features">
+            <div class="upgrade-feature"><div class="upgrade-feature-icon">📅</div><div><div class="label" style="font-size:14px;">Skip during meetings</div><div class="sub-label">Checks Google Calendar — pauses reminders when you're busy</div></div></div>
+          </div>
+          <button class="btn btn-upgrade" id="upgradeBtn">Upgrade — €3.00</button>
+          <button class="btn btn-verify" id="verifyBtn">✓ I've paid — Verify Payment</button>
+          <div class="pending-note" id="pendingNote">Complete your payment in the tab that opened, then tap Verify Payment.</div>
+          <div class="upgrade-price">One-time · No subscription · Instant unlock</div>
+        </div>
+
+        <div class="card hidden" id="proIntegrationsCard">
+          <div class="setting">
+            <div class="setting-text"><div class="label">📅 Skip during meetings</div><div class="sub-label">Checks Google Calendar — skips stretch if you're busy</div></div>
+            <input type="checkbox" id="calendarToggle" class="toggle" />
+          </div>
+          <div class="status-ok" id="calendarStatus">✅ Google Calendar connected</div>
+        </div>
+
+        <div class="card">
+          <div class="label">Weekly stretch activity</div>
+          <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
+            <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;" id="statsCarousel">
+              <div style="flex:0 0 100%;scroll-snap-align:start;padding-right:4px;">
+                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
+                <div class="stats">
+                  <div class="stat"><div class="stat-value" id="lastCompletedCount">0</div><div class="stat-label">Completed</div></div>
+                  <div class="stat"><div class="stat-value" id="lastSnoozedCount">0</div><div class="stat-label">Snoozed</div></div>
+                  <div class="stat"><div class="stat-value" id="lastSkippedCount">0</div><div class="stat-label">Skipped</div></div>
+                </div>
+              </div>
+              <div style="flex:0 0 100%;scroll-snap-align:start;padding-left:4px;">
+                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">This Week</div>
+                <div class="stats">
+                  <div class="stat"><div class="stat-value" id="completedCount">0</div><div class="stat-label">Completed</div></div>
+                  <div class="stat"><div class="stat-value" id="snoozedCount">0</div><div class="stat-label">Snoozed</div></div>
+                  <div class="stat"><div class="stat-value" id="skippedCount">0</div><div class="stat-label">Skipped</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;">
+            <div class="carousel-dot" id="dot0"></div>
+            <div class="carousel-dot active" id="dot1"></div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;opacity:.6;text-align:center;">Resets every week (Sunday) · Swipe to see last week</div>
+        </div>
+      </div><!-- /sectionStretch -->
+
+      <!-- WATER -->
+      <div id="sectionWater" class="module-section hidden">
+        <div class="card" style="position:relative;">
+          <div id="waterProBadge" class="pro-badge-inline hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
+          <div class="timer-box" style="background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.14);">
+            <div class="timer-label" id="waterTimerLabel">Next water reminder</div>
+            <div class="timer-value" id="waterTimerDisplay" style="color:#5aa9ff;">Timer Inactive</div>
+          </div>
+          <div class="controls">
+            <button class="btn btn-start" id="waterStartBtn">Start</button>
+            <button class="btn btn-stop" id="waterStopBtn" disabled>Stop</button>
+          </div>
+        </div>
+
+        <div class="custom-select-wrap" id="waterCustomSelectWrap">
+          <div class="custom-select-trigger" id="waterCustomSelectTrigger" style="border-color:rgba(90,169,255,.25);">
+            <span id="waterCustomSelectLabel">Every 30 minutes</span>
+            <span class="custom-select-arrow">▼</span>
+          </div>
+          <div class="custom-select-options" id="waterCustomSelectOptions" style="border-color:rgba(90,169,255,.3);">
+            <div class="custom-select-option selected" data-value="30">Every 30 minutes</div>
+            <div class="custom-select-option" data-value="45">Every 45 minutes</div>
+            <div class="custom-select-option" data-value="60">Every 60 minutes</div>
+            <div class="custom-select-option" data-value="90">Every 90 minutes</div>
+            <div class="custom-select-option" data-value="120">Every 2 hours</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+            <div class="glass-mini"><div class="glass-mini-rim"></div><div class="glass-mini-body"></div><div class="glass-mini-fill" id="waterMiniGlassFill"></div></div>
+            <div>
+              <div style="font-size:24px;font-weight:800;color:#5aa9ff;line-height:1;"><span id="waterGlassCount">0</span><span style="font-size:13px;font-weight:400;opacity:.65;">/ <span id="waterGoalDisplay">8</span></span></div>
+              <div style="font-size:11px;opacity:.6;margin-top:3px;">glasses today</div>
+            </div>
+          </div>
+          <div id="waterDotsContainer" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="setting">
+            <div class="setting-text"><div class="label">Play sound</div><div class="sub-label">Gentle chime when the water screen opens</div></div>
+            <input type="checkbox" id="waterSoundToggle" class="toggle toggle-blue" />
+          </div>
+          <div class="setting" id="waterGoalSetting">
+            <div class="setting-text">
+              <div class="label">Daily goal <span id="waterGoalLockIcon" style="font-size:11px;opacity:.5;">🔒</span></div>
+              <div class="sub-label" id="waterGoalSubLabel">Upgrade to Pro to set your own goal</div>
+            </div>
+            <div class="goal-stepper" id="waterGoalStepper" style="opacity:.4;pointer-events:none;">
+              <button class="stepper-btn" id="waterGoalMinus">−</button>
+              <div class="stepper-val" id="waterGoalValue">8</div>
+              <button class="stepper-btn" id="waterGoalPlus">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card upgrade-card hidden" id="waterUpgradeCard">
+          <div class="upgrade-title">💧 Upgrade Water to Pro</div>
+          <div class="upgrade-sub">One-time purchase. Unlock meeting detection and custom goals.</div>
+          <div class="upgrade-features">
+            <div class="upgrade-feature"><div class="upgrade-feature-icon">📅</div><div><div class="label" style="font-size:14px;">Skip during meetings</div><div class="sub-label">Pauses water reminders during Google Calendar events</div></div></div>
+            <div class="upgrade-feature"><div class="upgrade-feature-icon">🎯</div><div><div class="label" style="font-size:14px;">Custom daily glass goal</div><div class="sub-label">Set your own target, not locked to 8 glasses</div></div></div>
+          </div>
+          <button class="btn btn-upgrade" id="waterUpgradeBtn">Upgrade — €5.00</button>
+          <button class="btn btn-verify" id="waterVerifyBtn">✓ I've paid — Verify Payment</button>
+          <div class="pending-note" id="waterPendingNote">Complete your payment in the tab that opened, then tap Verify Payment.</div>
+          <div class="upgrade-price">One-time · No subscription · Instant unlock</div>
+        </div>
+
+        <div class="card hidden" id="waterProCard" style="border-color:rgba(90,169,255,.2);background:rgba(90,169,255,.04);">
+          <div class="setting">
+            <div class="setting-text"><div class="label">📅 Skip during meetings</div><div class="sub-label">Pauses water reminders during Google Calendar events</div></div>
+            <input type="checkbox" id="waterCalendarToggle" class="toggle toggle-blue" />
+          </div>
+          <div class="status-ok" id="waterCalendarStatus">✅ Google Calendar connected</div>
+        </div>
+      </div><!-- /sectionWater -->
+
+    </div>
+  </div><!-- /screenHome -->
+
+  <!-- STRETCH BREAK (Week 2) -->
+  <div id="screenStretch" class="screen">
+    <div class="screen-scroll">
+      <div style="font-size:48px;margin-bottom:12px;">🧘</div>
+      <div class="title" style="margin-bottom:8px;">Stretch Time</div>
+      <div class="subtitle" style="margin-bottom:32px;">Full stretch screen — Week 2</div>
+      <button class="btn btn-start" id="stretchBackBtn" style="width:100%;max-width:280px;">← Back</button>
+    </div>
+  </div>
+
+  <!-- WATER SCREEN (Week 2) -->
+  <div id="screenWater" class="screen">
+    <div class="screen-scroll">
+      <div style="font-size:48px;margin-bottom:12px;">💧</div>
+      <div class="title" style="margin-bottom:8px;">Drink Water</div>
+      <div class="subtitle" style="margin-bottom:32px;">Full water screen — Week 2</div>
+      <button class="btn btn-start" id="waterBackBtn" style="width:100%;max-width:280px;background:#5aa9ff;">← Back</button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { navigate, SCREENS } from './js/app.js';
+  import { initHome } from './js/home.js';
+
+  document.getElementById('requestNotifBtn')?.addEventListener('click', async () => {
+    const status = document.getElementById('notifStatus');
+    if (!('Notification' in window)) {
+      status.textContent = 'Notifications not supported in this browser.';
+      status.style.color = '#ff8a80'; status.style.display = 'block'; return;
+    }
+    const perm = await Notification.requestPermission();
+    localStorage.setItem('notificationPermission', JSON.stringify(perm));
+    status.textContent = perm === 'granted' ? '✅ Notifications allowed' : 'Blocked — enable in browser settings.';
+    status.style.color = perm === 'granted' ? '#34c759' : '#ff8a80';
+    status.style.display = 'block';
+    setTimeout(() => {
+      localStorage.setItem('hasSeenWelcome', JSON.stringify(true));
+      navigate(SCREENS.HOME); initHome();
+    }, 1000);
+  });
+
+  document.getElementById('welcomeSkipBtn')?.addEventListener('click', () => {
+    localStorage.setItem('hasSeenWelcome', JSON.stringify(true));
+    navigate(SCREENS.HOME); initHome();
+  });
+
+  document.getElementById('stretchBackBtn')?.addEventListener('click', () => navigate(SCREENS.HOME));
+  document.getElementById('waterBackBtn')?.addEventListener('click', () => navigate(SCREENS.HOME));
+
+  document.addEventListener('screenchange', (e) => {
+    if (e.detail.screen === SCREENS.HOME) initHome();
+  });
+</script>
+</body>
+</html>
