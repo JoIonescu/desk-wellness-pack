@@ -504,8 +504,6 @@ const storage = {
 // Architecture: Web Push via Vercel backend + Upstash Redis
 // Cron job fires every minute, sends push to SW, SW shows notification.
 // Works whether app is open, backgrounded, or fully killed.
-
-const BACKEND_URL = 'https://desk-wellness-pack.vercel.app';
 let pushSubscription = null;
 
 // Convert base64 VAPID public key to Uint8Array for subscribe()
