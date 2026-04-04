@@ -1031,7 +1031,45 @@ function boot() {
   if (loader) { loader.classList.add('fade-out'); setTimeout(() => loader.remove(), 350); }
 }
 
-boot();
+// ── Failsafe ─────────────────────────────────────────────────────
+// If boot() or any JS crashes, force the app visible after 3 seconds
+// so the user isn't stuck on a loading screen forever.
+const _failsafe = setTimeout(() => {
+  const loader = document.getElementById('loadingScreen');
+  if (loader) loader.style.display = 'none';
+  const home = document.getElementById('screenHome');
+  if (home) home.classList.add('active');
+  console.warn('[failsafe] forced app visible after timeout');
+}, 3000);
+
+// Catch any uncaught JS errors and show them on screen
+window.addEventListener('error', (e) => {
+  clearTimeout(_failsafe);
+  const loader = document.getElementById('loadingScreen');
+  if (loader) {
+    loader.innerHTML = '<div style="padding:24px;color:#ff8a80;font-size:13px;font-family:monospace;max-width:320px;text-align:left;">'
+      + '<div style="font-size:16px;margin-bottom:12px;">⚠️ JS Error</div>'
+      + '<div>' + (e.message || 'Unknown error') + '</div>'
+      + '<div style="margin-top:8px;opacity:0.6;">' + (e.filename ? e.filename.split('/').pop() : '') + ':' + e.lineno + '</div>'
+      + '</div>';
+  }
+  console.error('[boot error]', e.message, e.filename, e.lineno);
+});
+
+try {
+  boot();
+  clearTimeout(_failsafe);
+} catch(e) {
+  clearTimeout(_failsafe);
+  const loader = document.getElementById('loadingScreen');
+  if (loader) {
+    loader.innerHTML = '<div style="padding:24px;color:#ff8a80;font-size:13px;font-family:monospace;max-width:320px;text-align:left;">'
+      + '<div style="font-size:16px;margin-bottom:12px;">⚠️ Boot Error</div>'
+      + '<div>' + e.message + '</div>'
+      + '</div>';
+  }
+  console.error('[boot] crashed:', e);
+}
 </script>
 </body>
 </html>
