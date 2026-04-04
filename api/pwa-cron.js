@@ -1,40 +1,23 @@
-/**
- * api/pwa-cron.js
- *
- * Called by cron-job.org every minute.
- * Checks all active subscriptions, fires push notifications for any that are due,
- * then reschedules them.
- *
- * Protected by Authorization: Bearer <CRON_SECRET> header.
- */
+const { Redis } = require('@upstash/redis');
+const webpush = require('web-push');
 
-import { Redis } from '@upstash/redis';
-import webpush from 'web-push';
-
-const redis = Redis.fromEnv();
-
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT,
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
-
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Auth check
-  const auth = req.headers['authorization'];
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT,
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
 
+  const redis = Redis.fromEnv();
   const now = Date.now();
   const results = { checked: 0, fired: 0, errors: 0, skipped: 0 };
 
   try {
-    // Get all active subscription keys
     const keys = await redis.smembers('active_subs');
     if (!keys || keys.length === 0) {
       return res.status(200).json({ ok: true, message: 'No active subscriptions', ...results });
@@ -45,63 +28,51 @@ export default async function handler(req, res) {
     for (const key of keys) {
       try {
         const raw = await redis.get(key);
-        if (!raw) {
-          // Key expired or missing — clean up index
-          await redis.srem('active_subs', key);
-          continue;
-        }
+        if (!raw) { await redis.srem('active_subs', key); continue; }
 
         const record = typeof raw === 'string' ? JSON.parse(raw) : raw;
         const { subscription, schedule, installationId } = record;
-
-        if (!subscription?.endpoint) continue;
+        if (!subscription || !subscription.endpoint) continue;
 
         let updated = false;
 
-        // ── Check stretch ──────────────────────────────────────────
+        // Check stretch
         if (schedule.stretchEnabled && schedule.nextStretchTime && now >= schedule.nextStretchTime) {
           const payload = JSON.stringify({
-            type:     'stretch',
-            title:    'Time to stretch! 🧘',
-            body:     `You've been at your desk for ${schedule.stretchInterval} min. Take a quick break.`,
-            screen:   'stretch',
-            icon:     '/assets/icons/icon-192.png',
-            badge:    '/assets/icons/icon-192.png',
-            tag:      'stretch-reminder',
+            type:  'stretch',
+            title: 'Time to stretch! 🧘',
+            body:  `You've been at your desk for ${schedule.stretchInterval} min. Take a quick break.`,
+            screen: 'stretch',
+            icon:  '/assets/icons/icon-192.png',
+            badge: '/assets/icons/icon-192.png',
+            tag:   'stretch-reminder',
           });
-
           try {
             await webpush.sendNotification(subscription, payload);
             results.fired++;
-            // Reschedule
             schedule.nextStretchTime = now + schedule.stretchInterval * 60 * 1000;
             updated = true;
             console.log(`[cron] stretch fired for ${installationId}`);
           } catch (pushErr) {
-            console.error(`[cron] stretch push failed for ${installationId}:`, pushErr.statusCode, pushErr.body);
+            console.error(`[cron] stretch push failed:`, pushErr.statusCode);
             if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
-              // Subscription expired — clean up
-              await redis.del(key);
-              await redis.srem('active_subs', key);
-              results.errors++;
-              continue;
+              await redis.del(key); await redis.srem('active_subs', key);
             }
             results.errors++;
           }
         }
 
-        // ── Check water ────────────────────────────────────────────
+        // Check water
         if (schedule.waterEnabled && schedule.nextWaterTime && now >= schedule.nextWaterTime) {
           const payload = JSON.stringify({
-            type:   'water',
-            title:  'Drink some water! 💧',
-            body:   'Stay hydrated — time for a glass of water.',
+            type:  'water',
+            title: 'Drink some water! 💧',
+            body:  'Stay hydrated — time for a glass of water.',
             screen: 'water',
-            icon:   '/assets/icons/icon-192.png',
-            badge:  '/assets/icons/icon-192.png',
-            tag:    'water-reminder',
+            icon:  '/assets/icons/icon-192.png',
+            badge: '/assets/icons/icon-192.png',
+            tag:   'water-reminder',
           });
-
           try {
             await webpush.sendNotification(subscription, payload);
             results.fired++;
@@ -109,18 +80,14 @@ export default async function handler(req, res) {
             updated = true;
             console.log(`[cron] water fired for ${installationId}`);
           } catch (pushErr) {
-            console.error(`[cron] water push failed for ${installationId}:`, pushErr.statusCode, pushErr.body);
+            console.error(`[cron] water push failed:`, pushErr.statusCode);
             if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
-              await redis.del(key);
-              await redis.srem('active_subs', key);
-              results.errors++;
-              continue;
+              await redis.del(key); await redis.srem('active_subs', key);
             }
             results.errors++;
           }
         }
 
-        // Save updated schedule back if anything fired
         if (updated) {
           record.schedule = schedule;
           record.updatedAt = now;
@@ -135,11 +102,11 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log(`[cron] done — checked:${results.checked} fired:${results.fired} errors:${results.errors} skipped:${results.skipped}`);
+    console.log(`[cron] done — checked:${results.checked} fired:${results.fired} errors:${results.errors}`);
     return res.status(200).json({ ok: true, ...results });
 
   } catch (err) {
-    console.error('[cron] fatal error:', err);
+    console.error('[cron] fatal:', err);
     return res.status(500).json({ error: 'Internal server error', detail: err.message });
   }
-}
+};
