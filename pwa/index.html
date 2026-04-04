@@ -796,10 +796,21 @@ document.getElementById('requestNotifBtn')?.addEventListener('click', async () =
   }
   const perm = await Notification.requestPermission();
   storage.set('notificationPermission', perm);
-  status.textContent = perm === 'granted' ? "✅ You're all set!" : 'Blocked — go to Settings → Chrome → Notifications to enable.';
-  status.style.color = perm === 'granted' ? 'var(--green)' : 'var(--red)';
+  if (perm === 'granted') {
+    status.textContent = "✅ You're all set! Notifications enabled.";
+    status.style.color = 'var(--green)';
+    // Check if Samsung/Xiaomi — known to kill background processes aggressively
+    const isSamsung = /Samsung/i.test(navigator.userAgent);
+    const isXiaomi  = /Xiaomi|MIUI/i.test(navigator.userAgent);
+    if (isSamsung || isXiaomi) {
+      status.textContent += ' One more step: go to Settings → Battery → App battery usage → find Chrome → set to "Unrestricted". This lets reminders fire when your phone is locked.';
+    }
+  } else {
+    status.textContent = 'Notifications blocked. Go to Settings → Apps → Chrome → Notifications to enable.';
+    status.style.color = 'var(--red)';
+  }
   status.style.display = 'block';
-  setTimeout(() => { storage.set('hasSeenWelcome', true); navigate(SCREENS.HOME); }, 1200);
+  setTimeout(() => { storage.set('hasSeenWelcome', true); navigate(SCREENS.HOME); }, perm === 'granted' ? 1500 : 3000);
 });
 
 document.getElementById('welcomeSkipBtn')?.addEventListener('click', () => {
@@ -810,11 +821,46 @@ document.getElementById('welcomeSkipBtn')?.addEventListener('click', () => {
 document.getElementById('stretchBackBtn')?.addEventListener('click', () => navigate(SCREENS.HOME));
 document.getElementById('waterBackBtn')?.addEventListener('click',   () => navigate(SCREENS.HOME));
 
-// ── Service Worker ────────────────────────────────────────────────
+// ── Service Worker + Periodic Background Sync ────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./service-worker.js', { scope: './' })
-    .then(r => console.log('[SW] registered', r.scope))
+    .then(async reg => {
+      console.log('[SW] registered', reg.scope);
+
+      // Register Periodic Background Sync (Android Chrome)
+      // This wakes the SW every ~5 min to check if a reminder is due
+      if ('periodicSync' in reg) {
+        try {
+          const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+          if (status.state === 'granted') {
+            await reg.periodicSync.register('check-reminders', {
+              minInterval: 5 * 60 * 1000 // 5 minutes minimum
+            });
+            console.log('[PBS] registered check-reminders');
+          } else {
+            console.log('[PBS] permission not granted:', status.state);
+          }
+        } catch (e) {
+          console.warn('[PBS] registration failed:', e);
+        }
+      } else {
+        console.log('[PBS] not supported in this browser');
+      }
+    })
     .catch(e => console.warn('[SW] registration failed', e));
+
+  // Listen for messages from SW (navigate on notification tap)
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    const { type, screen } = event.data || {};
+    if (type === 'NAVIGATE' && screen) {
+      navigate(SCREENS[screen.toUpperCase()] || SCREENS.HOME);
+    }
+    if (type === 'SNOOZED') {
+      // Update countdown display after snooze
+      const snoozeEnd = Date.now() + 5 * 60000;
+      storage.set('nextStretchTime', snoozeEnd);
+    }
+  });
 }
 
 // ── Boot ──────────────────────────────────────────────────────────
