@@ -490,17 +490,118 @@ const storage = {
   }
 };
 
-// ── Notifications (stubs — full impl Day 3-4) ─────────────────────
+// ── Notification system — three strategies ───────────────────────
+// 1. TimestampTrigger  — schedules exact future wakeup (best, survives kill)
+// 2. SW showNotification — works when app is backgrounded but not killed
+// 3. Page setTimeout watchdog — last resort while page is alive
+
+let swReg = null;
+async function getSWReg() {
+  if (swReg) return swReg;
+  if ('serviceWorker' in navigator) swReg = await navigator.serviceWorker.ready;
+  return swReg;
+}
+
+function sendSW(type, data) {
+  if (navigator.serviceWorker?.controller)
+    navigator.serviceWorker.controller.postMessage({ type, data });
+}
+
+async function scheduleNotification(type, intervalMin) {
+  if (Notification.permission !== 'granted') return;
+  const isStretch = type === 'stretch';
+  const fireAt    = Date.now() + intervalMin * 60000;
+  const title     = isStretch ? 'Time to stretch! \u{1F9D8}' : 'Drink some water! \u{1F4A7}';
+  const body      = isStretch
+    ? "You've been at your desk for " + intervalMin + " min. Take a quick break."
+    : 'Stay hydrated — time for a glass of water.';
+  const opts = {
+    body, icon: './assets/icons/icon-192.png', badge: './assets/icons/icon-192.png',
+    vibrate: [200, 100, 200], data: { screen: type },
+    tag: isStretch ? 'stretch-reminder' : 'water-reminder',
+    actions: isStretch
+      ? [{ action:'open', title:'Start stretch' }, { action:'snooze', title:'Snooze 5 min' }]
+      : [{ action:'open', title:'Log a glass'   }, { action:'skip',  title:'Skip'         }],
+  };
+  const reg = await getSWReg();
+  if (!reg) return;
+
+  // Strategy 1: Notification Triggers — schedules future notification, survives app kill
+  if (typeof TimestampTrigger !== 'undefined') {
+    try {
+      await reg.showNotification(title, { ...opts, showTrigger: new TimestampTrigger(fireAt) });
+      console.log('[notif] TimestampTrigger set for', new Date(fireAt).toLocaleTimeString());
+      return;
+    } catch(e) { console.warn('[notif] TimestampTrigger failed:', e.message); }
+  }
+
+  // Strategy 2: Tell SW to store schedule (PBS will fire it when it wakes)
+  sendSW(isStretch ? 'SCHEDULE_STRETCH' : 'SCHEDULE_WATER', { interval: intervalMin });
+  console.log('[notif] scheduled via SW message (PBS fallback)');
+}
+
+async function cancelScheduledNotification(type) {
+  const reg = await getSWReg();
+  if (reg && 'getNotifications' in reg) {
+    const tag = type === 'stretch' ? 'stretch-reminder' : 'water-reminder';
+    const pending = await reg.getNotifications({ tag });
+    pending.forEach(n => n.close());
+  }
+  sendSW(type === 'stretch' ? 'CANCEL_STRETCH' : 'CANCEL_WATER', {});
+}
+
+// Strategy 3: watchdog setTimeout — fires via SW showNotification while page is alive
+// reg.showNotification() works even when page is backgrounded (just not killed)
+let stretchWatchdog = null;
+let waterWatchdog   = null;
+
+function startWatchdog(type, intervalMin) {
+  const isStretch = type === 'stretch';
+  clearTimeout(isStretch ? stretchWatchdog : waterWatchdog);
+  const t = setTimeout(async () => {
+    if (!storage.get(isStretch ? 'stretchEnabled' : 'waterEnabled')) return;
+    if (Notification.permission !== 'granted') return;
+    const reg = await getSWReg();
+    if (!reg) return;
+    const title = isStretch ? 'Time to stretch! \u{1F9D8}' : 'Drink some water! \u{1F4A7}';
+    const body  = isStretch
+      ? "You've been at your desk for " + intervalMin + " min. Take a quick break."
+      : 'Stay hydrated — time for a glass of water.';
+    try {
+      await reg.showNotification(title, {
+        body, tag: isStretch ? 'stretch-reminder' : 'water-reminder',
+        icon: './assets/icons/icon-192.png', vibrate: [200, 100, 200],
+        data: { screen: type },
+      });
+      console.log('[notif] watchdog fired via reg.showNotification');
+    } catch(e) { console.warn('[notif] watchdog showNotification failed:', e); }
+    // Reschedule
+    if (isStretch && storage.get('stretchEnabled')) scheduleStretch(intervalMin);
+    if (!isStretch && storage.get('waterEnabled'))  scheduleWater(intervalMin);
+  }, intervalMin * 60000);
+  if (isStretch) stretchWatchdog = t; else waterWatchdog = t;
+}
+
 function scheduleStretch(intervalMin) {
-  const fireAt = Date.now() + intervalMin * 60000;
-  storage.set('nextStretchTime', fireAt);
+  storage.set('nextStretchTime', Date.now() + intervalMin * 60000);
+  scheduleNotification('stretch', intervalMin);
+  startWatchdog('stretch', intervalMin);
 }
-function cancelStretch() { storage.set('nextStretchTime', null); }
+function cancelStretch() {
+  storage.set('nextStretchTime', null);
+  clearTimeout(stretchWatchdog); stretchWatchdog = null;
+  cancelScheduledNotification('stretch');
+}
 function scheduleWater(intervalMin) {
-  const fireAt = Date.now() + intervalMin * 60000;
-  storage.set('nextWaterTime', fireAt);
+  storage.set('nextWaterTime', Date.now() + intervalMin * 60000);
+  scheduleNotification('water', intervalMin);
+  startWatchdog('water', intervalMin);
 }
-function cancelWater() { storage.set('nextWaterTime', null); }
+function cancelWater() {
+  storage.set('nextWaterTime', null);
+  clearTimeout(waterWatchdog); waterWatchdog = null;
+  cancelScheduledNotification('water');
+}
 
 // ── Screen router ─────────────────────────────────────────────────
 const SCREENS = { WELCOME:'screenWelcome', HOME:'screenHome', STRETCH:'screenStretch', WATER:'screenWater' };
