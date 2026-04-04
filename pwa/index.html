@@ -258,6 +258,16 @@
         <div style="font-size:14px;color:var(--muted);">Smart reminders for healthier desk habits</div>
       </div>
 
+      <!-- Background tip — shown until dismissed -->
+      <div class="card" id="bgTipCard" style="padding:12px 14px;background:rgba(255,212,0,.06);border-color:rgba(255,212,0,.18);display:flex;align-items:flex-start;gap:10px;">
+        <div style="font-size:18px;flex-shrink:0;">💡</div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Keep app in recent apps</div>
+          <div style="font-size:11px;opacity:.65;line-height:1.5;">Reminders work when the app is running in the background. If you swipe it away, a push notification server is needed — coming soon.</div>
+        </div>
+        <button id="bgTipClose" style="border:none;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;">×</button>
+      </div>
+
       <div class="card" style="padding:6px;">
         <div class="tab-bar">
           <button class="tab-btn tab-active" id="tabStretch">🧘 Smart Stretch</button>
@@ -490,119 +500,144 @@ const storage = {
   }
 };
 
-// ── Notification system — three strategies ───────────────────────
-// 1. TimestampTrigger  — schedules exact future wakeup (best, survives kill)
-// 2. SW showNotification — works when app is backgrounded but not killed
-// 3. Page setTimeout watchdog — last resort while page is alive
+// ── Push notification system ─────────────────────────────────────
+// Architecture: Web Push via Vercel backend + Upstash Redis
+// Cron job fires every minute, sends push to SW, SW shows notification.
+// Works whether app is open, backgrounded, or fully killed.
 
-let swReg = null;
-async function getSWReg() {
-  if (swReg) return swReg;
-  if ('serviceWorker' in navigator) swReg = await navigator.serviceWorker.ready;
-  return swReg;
+const BACKEND_URL = 'https://desk-wellness-pack.vercel.app';
+let pushSubscription = null;
+
+// Convert base64 VAPID public key to Uint8Array for subscribe()
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
-function sendSW(type, data) {
-  if (navigator.serviceWorker?.controller)
-    navigator.serviceWorker.controller.postMessage({ type, data });
+async function getPushSubscription(reg) {
+  // Return existing subscription if we have one
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) { pushSubscription = existing; return existing; }
+
+  // Fetch VAPID public key from server
+  let vapidPublicKey;
+  try {
+    const resp = await fetch(`${BACKEND_URL}/api/pwa-vapid-public-key`);
+    const data = await resp.json();
+    vapidPublicKey = data.publicKey;
+  } catch(e) {
+    console.error('[push] could not fetch VAPID key:', e);
+    return null;
+  }
+
+  // Subscribe to push
+  try {
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly:      true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
+    pushSubscription = sub;
+    console.log('[push] subscribed:', sub.endpoint.slice(0, 60) + '...');
+    return sub;
+  } catch(e) {
+    console.error('[push] subscribe failed:', e);
+    return null;
+  }
 }
 
-async function scheduleNotification(type, intervalMin) {
-  if (Notification.permission !== 'granted') return;
-  const isStretch = type === 'stretch';
-  const fireAt    = Date.now() + intervalMin * 60000;
-  const title     = isStretch ? 'Time to stretch! \u{1F9D8}' : 'Drink some water! \u{1F4A7}';
-  const body      = isStretch
-    ? "You've been at your desk for " + intervalMin + " min. Take a quick break."
-    : 'Stay hydrated — time for a glass of water.';
-  const opts = {
-    body, icon: './assets/icons/icon-192.png', badge: './assets/icons/icon-192.png',
-    vibrate: [200, 100, 200], data: { screen: type },
-    tag: isStretch ? 'stretch-reminder' : 'water-reminder',
-    actions: isStretch
-      ? [{ action:'open', title:'Start stretch' }, { action:'snooze', title:'Snooze 5 min' }]
-      : [{ action:'open', title:'Log a glass'   }, { action:'skip',  title:'Skip'         }],
+async function sendScheduleToServer(schedule) {
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await getPushSubscription(reg);
+  if (!sub) {
+    console.warn('[push] no subscription — cannot send schedule to server');
+    return false;
+  }
+
+  let id = storage.get('installationId');
+  if (!id) { id = 'pwa-' + Math.random().toString(36).slice(2, 15); storage.set('installationId', id); }
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/api/pwa-subscribe`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        action:         'subscribe',
+        subscription:   sub.toJSON(),
+        installationId: id,
+        schedule,
+      }),
+    });
+    const data = await resp.json();
+    console.log('[push] schedule saved to server:', data);
+    return true;
+  } catch(e) {
+    console.error('[push] sendScheduleToServer failed:', e);
+    return false;
+  }
+}
+
+async function cancelOnServer(type) {
+  const id = storage.get('installationId');
+  if (!id || !pushSubscription) return;
+
+  const schedule = {
+    stretchEnabled:  type === 'water' ? (storage.get('stretchEnabled') ?? false) : false,
+    stretchInterval: storage.get('stretchInterval') ?? 30,
+    waterEnabled:    type === 'stretch' ? (storage.get('waterEnabled') ?? false) : false,
+    waterInterval:   storage.get('waterInterval') ?? 30,
   };
-  const reg = await getSWReg();
-  if (!reg) return;
 
-  // Strategy 1: Notification Triggers — schedules future notification, survives app kill
-  if (typeof TimestampTrigger !== 'undefined') {
-    try {
-      await reg.showNotification(title, { ...opts, showTrigger: new TimestampTrigger(fireAt) });
-      console.log('[notif] TimestampTrigger set for', new Date(fireAt).toLocaleTimeString());
-      return;
-    } catch(e) { console.warn('[notif] TimestampTrigger failed:', e.message); }
+  try {
+    await fetch(`${BACKEND_URL}/api/pwa-subscribe`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        action:         'update',
+        subscription:   pushSubscription.toJSON(),
+        installationId: id,
+        schedule,
+      }),
+    });
+  } catch(e) {
+    console.error('[push] cancelOnServer failed:', e);
   }
-
-  // Strategy 2: Tell SW to store schedule (PBS will fire it when it wakes)
-  sendSW(isStretch ? 'SCHEDULE_STRETCH' : 'SCHEDULE_WATER', { interval: intervalMin });
-  console.log('[notif] scheduled via SW message (PBS fallback)');
 }
 
-async function cancelScheduledNotification(type) {
-  const reg = await getSWReg();
-  if (reg && 'getNotifications' in reg) {
-    const tag = type === 'stretch' ? 'stretch-reminder' : 'water-reminder';
-    const pending = await reg.getNotifications({ tag });
-    pending.forEach(n => n.close());
-  }
-  sendSW(type === 'stretch' ? 'CANCEL_STRETCH' : 'CANCEL_WATER', {});
-}
-
-// Strategy 3: watchdog setTimeout — fires via SW showNotification while page is alive
-// reg.showNotification() works even when page is backgrounded (just not killed)
-let stretchWatchdog = null;
-let waterWatchdog   = null;
-
-function startWatchdog(type, intervalMin) {
-  const isStretch = type === 'stretch';
-  clearTimeout(isStretch ? stretchWatchdog : waterWatchdog);
-  const t = setTimeout(async () => {
-    if (!storage.get(isStretch ? 'stretchEnabled' : 'waterEnabled')) return;
-    if (Notification.permission !== 'granted') return;
-    const reg = await getSWReg();
-    if (!reg) return;
-    const title = isStretch ? 'Time to stretch! \u{1F9D8}' : 'Drink some water! \u{1F4A7}';
-    const body  = isStretch
-      ? "You've been at your desk for " + intervalMin + " min. Take a quick break."
-      : 'Stay hydrated — time for a glass of water.';
-    try {
-      await reg.showNotification(title, {
-        body, tag: isStretch ? 'stretch-reminder' : 'water-reminder',
-        icon: './assets/icons/icon-192.png', vibrate: [200, 100, 200],
-        data: { screen: type },
-      });
-      console.log('[notif] watchdog fired via reg.showNotification');
-    } catch(e) { console.warn('[notif] watchdog showNotification failed:', e); }
-    // Reschedule
-    if (isStretch && storage.get('stretchEnabled')) scheduleStretch(intervalMin);
-    if (!isStretch && storage.get('waterEnabled'))  scheduleWater(intervalMin);
-  }, intervalMin * 60000);
-  if (isStretch) stretchWatchdog = t; else waterWatchdog = t;
-}
-
+// Called when Start is pressed for stretch
 function scheduleStretch(intervalMin) {
   storage.set('nextStretchTime', Date.now() + intervalMin * 60000);
-  scheduleNotification('stretch', intervalMin);
-  startWatchdog('stretch', intervalMin);
-}
-function cancelStretch() {
-  storage.set('nextStretchTime', null);
-  clearTimeout(stretchWatchdog); stretchWatchdog = null;
-  cancelScheduledNotification('stretch');
-}
-function scheduleWater(intervalMin) {
-  storage.set('nextWaterTime', Date.now() + intervalMin * 60000);
-  scheduleNotification('water', intervalMin);
-  startWatchdog('water', intervalMin);
-}
-function cancelWater() {
-  storage.set('nextWaterTime', null);
-  clearTimeout(waterWatchdog); waterWatchdog = null;
-  cancelScheduledNotification('water');
+  const schedule = {
+    stretchEnabled:  true,
+    stretchInterval: intervalMin,
+    waterEnabled:    storage.get('waterEnabled')   ?? false,
+    waterInterval:   storage.get('waterInterval')  ?? 30,
+  };
+  sendScheduleToServer(schedule);
 }
 
+function cancelStretch() {
+  storage.set('nextStretchTime', null);
+  cancelOnServer('stretch');
+}
+
+// Called when Start is pressed for water
+function scheduleWater(intervalMin) {
+  storage.set('nextWaterTime', Date.now() + intervalMin * 60000);
+  const schedule = {
+    stretchEnabled:  storage.get('stretchEnabled')  ?? false,
+    stretchInterval: storage.get('stretchInterval') ?? 30,
+    waterEnabled:    true,
+    waterInterval:   intervalMin,
+  };
+  sendScheduleToServer(schedule);
+}
+
+function cancelWater() {
+  storage.set('nextWaterTime', null);
+  cancelOnServer('water');
+}
 // ── Screen router ─────────────────────────────────────────────────
 const SCREENS = { WELCOME:'screenWelcome', HOME:'screenHome', STRETCH:'screenStretch', WATER:'screenWater' };
 
@@ -922,48 +957,60 @@ document.getElementById('welcomeSkipBtn')?.addEventListener('click', () => {
 document.getElementById('stretchBackBtn')?.addEventListener('click', () => navigate(SCREENS.HOME));
 document.getElementById('waterBackBtn')?.addEventListener('click',   () => navigate(SCREENS.HOME));
 
-// ── Service Worker + Periodic Background Sync ────────────────────
+// Dismiss background tip
+document.getElementById('bgTipClose')?.addEventListener('click', () => {
+  const card = document.getElementById('bgTipCard');
+  if (card) card.style.display = 'none';
+  storage.set('bgTipDismissed', true);
+});
+if (storage.get('bgTipDismissed')) {
+  const card = document.getElementById('bgTipCard');
+  if (card) card.style.display = 'none';
+}
+
+// ── Service Worker ───────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./service-worker.js', { scope: './' })
-    .then(async reg => {
-      console.log('[SW] registered', reg.scope);
-
-      // Register Periodic Background Sync (Android Chrome)
-      // This wakes the SW every ~5 min to check if a reminder is due
-      if ('periodicSync' in reg) {
-        try {
-          const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
-          if (status.state === 'granted') {
-            await reg.periodicSync.register('check-reminders', {
-              minInterval: 5 * 60 * 1000 // 5 minutes minimum
-            });
-            console.log('[PBS] registered check-reminders');
-          } else {
-            console.log('[PBS] permission not granted:', status.state);
-          }
-        } catch (e) {
-          console.warn('[PBS] registration failed:', e);
-        }
-      } else {
-        console.log('[PBS] not supported in this browser');
-      }
+    .then(reg => {
+      console.log('[SW] registered, scope:', reg.scope);
     })
-    .catch(e => console.warn('[SW] registration failed', e));
+    .catch(e => console.error('[SW] registration failed:', e));
 
-  // Listen for messages from SW (navigate on notification tap)
+  // Listen for NAVIGATE messages from SW (notification tap → open right screen)
   navigator.serviceWorker.addEventListener('message', (event) => {
     const { type, screen } = event.data || {};
     if (type === 'NAVIGATE' && screen) {
       navigate(SCREENS[screen.toUpperCase()] || SCREENS.HOME);
     }
-    if (type === 'SNOOZED') {
-      // Update countdown display after snooze
-      const snoozeEnd = Date.now() + 5 * 60000;
-      storage.set('nextStretchTime', snoozeEnd);
-    }
   });
 }
+// ── Visibility change — catch missed reminders when app reopens ───
+// If the app was swiped away and reopened, the setTimeout won't have fired.
+// This checks if any reminder is overdue and fires it immediately.
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  const now = Date.now();
 
+  if (storage.get('stretchEnabled')) {
+    const next = storage.get('nextStretchTime');
+    const interval = storage.get('stretchInterval') ?? 30;
+    if (next && now >= next) {
+      console.log('[notif] overdue stretch — firing on reopen');
+      await fireNotification('stretch', interval);
+      scheduleStretch(interval); // restart fresh timer
+    }
+  }
+
+  if (storage.get('waterEnabled')) {
+    const next = storage.get('nextWaterTime');
+    const interval = storage.get('waterInterval') ?? 30;
+    if (next && now >= next) {
+      console.log('[notif] overdue water — firing on reopen');
+      await fireNotification('water', interval);
+      scheduleWater(interval);
+    }
+  }
+});
 // ── Boot ──────────────────────────────────────────────────────────
 function boot() {
   storage.initDefaults();
