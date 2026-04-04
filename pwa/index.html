@@ -135,13 +135,28 @@
           <div class="welcome-feature-text"><strong>Water Reminder</strong>Tracks daily glasses and reminds you to drink at your own pace.</div>
         </div>
       </div>
-      <div class="notif-card">
+      <!-- Android: normal notification permission -->
+      <div class="notif-card" id="notifCardAndroid">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">🔔 Allow notifications</div>
         <div style="font-size:13px;line-height:1.55;margin-bottom:14px;opacity:.75;">The app uses notifications to remind you to stretch and drink water. Without them, reminders won't fire in the background.</div>
         <button class="btn btn-upgrade" id="requestNotifBtn" style="margin-top:0;font-size:15px;">Allow notifications</button>
         <div id="notifStatus" style="font-size:12px;margin-top:10px;text-align:center;display:none;"></div>
       </div>
-      <button class="btn btn-secondary" id="welcomeSkipBtn" style="max-width:340px;width:100%;margin-top:10px;">Skip for now</button>
+
+      <!-- iOS: must add to Home Screen first -->
+      <div class="notif-card" id="notifCardIOS" style="display:none;">
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📲 Add to Home Screen first</div>
+        <div style="font-size:13px;line-height:1.6;margin-bottom:14px;opacity:.75;">Notifications on iPhone require the app to be installed.<br><br>Tap <strong>Share →</strong> then <strong>"Add to Home Screen"</strong>, then open it from your home screen.</div>
+        <div style="font-size:12px;opacity:.5;text-align:center;">Or use an Android device for the full experience</div>
+      </div>
+
+      <!-- Desktop browser -->
+      <div class="notif-card" id="notifCardDesktop" style="display:none;border-color:rgba(90,169,255,.3);background:rgba(90,169,255,.06);">
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📱 Best on Android</div>
+        <div style="font-size:13px;line-height:1.6;opacity:.75;">Open this URL in Chrome for Android and add it to your home screen for the full experience.</div>
+      </div>
+
+      <button class="btn btn-secondary" id="welcomeSkipBtn" style="max-width:340px;width:100%;margin-top:10px;">Continue anyway</button>
     </div>
   </div>
 
@@ -358,21 +373,41 @@
   import { navigate, SCREENS } from './js/app.js';
   import { initHome } from './js/home.js';
 
+  // ── Platform detection ──────────────────────────────────────────
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  const isAndroid = /Android/.test(ua);
+  const isMobile = isIOS || isAndroid;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                    || window.navigator.standalone === true;
+
+  // Show the right notification card
+  if (isIOS && !isStandalone) {
+    // iPhone in browser — must install first
+    document.getElementById('notifCardAndroid').style.display = 'none';
+    document.getElementById('notifCardIOS').style.display = 'block';
+  } else if (!isMobile) {
+    // Desktop browser
+    document.getElementById('notifCardAndroid').style.display = 'none';
+    document.getElementById('notifCardDesktop').style.display = 'block';
+  }
+  // Android (or iOS standalone): show normal permission card
+
   document.getElementById('requestNotifBtn')?.addEventListener('click', async () => {
     const status = document.getElementById('notifStatus');
     if (!('Notification' in window)) {
-      status.textContent = 'Notifications not supported in this browser.';
+      status.textContent = 'Notifications not supported. Try adding to Home Screen first.';
       status.style.color = '#ff8a80'; status.style.display = 'block'; return;
     }
     const perm = await Notification.requestPermission();
     localStorage.setItem('notificationPermission', JSON.stringify(perm));
-    status.textContent = perm === 'granted' ? '✅ Notifications allowed' : 'Blocked — enable in browser settings.';
+    status.textContent = perm === 'granted' ? '✅ Notifications allowed — you're all set!' : 'Blocked. Enable in Settings → Chrome → Notifications.';
     status.style.color = perm === 'granted' ? '#34c759' : '#ff8a80';
     status.style.display = 'block';
     setTimeout(() => {
       localStorage.setItem('hasSeenWelcome', JSON.stringify(true));
       navigate(SCREENS.HOME); initHome();
-    }, 1000);
+    }, 1200);
   });
 
   document.getElementById('welcomeSkipBtn')?.addEventListener('click', () => {
