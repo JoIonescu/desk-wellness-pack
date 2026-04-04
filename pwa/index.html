@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="color-scheme" content="dark light" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#1b1f2a" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b1f2a" />
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f2f7" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -13,1061 +13,590 @@
   <title>Desk Wellness Pack</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
-
   <style>
-    /* ── Reset & base ── */
-    :root {
-      color-scheme: dark light;
-      --yellow: #ffd400; --orange: #ff7a00; --green: #34c759;
-      --red: #ff8a80; --blue: #5aa9ff; --blue2: #3d8fe0;
-      --touch-min: 48px;
-    }
-    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html { height: 100%; -webkit-text-size-adjust: 100%; }
-    body {
-      margin: 0; padding: 0; min-height: 100dvh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      -webkit-font-smoothing: antialiased; overscroll-behavior: none;
-    }
-
-    /* ── Colour modes ── */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-1:#1b1f2a; --bg-2:#23293a;
-        --panel:rgba(255,255,255,.08); --panel-border:rgba(255,255,255,.12);
-        --text:#fff; --muted:#8d97ae; --muted2:#c7cedd;
-        --stat-bg:rgba(255,255,255,.06); --stat-border:rgba(255,255,255,.08);
-        --select-bg:#1e2535; --setting-border:rgba(255,255,255,.07);
-        --timer-bg:rgba(255,255,255,.06); --timer-border:rgba(255,255,255,.08);
-        --toggle-off:rgba(255,255,255,.18);
-      }
-      body { background: linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:#fff; }
-      #loadingScreen { background:#1b1f2a; }
-    }
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg-1:#f0f2f7; --bg-2:#e4e8f2;
-        --panel:rgba(255,255,255,.85); --panel-border:rgba(0,0,0,.08);
-        --text:#1b1f2a; --muted:#5a6480; --muted2:#3a4260;
-        --stat-bg:rgba(0,0,0,.04); --stat-border:rgba(0,0,0,.06);
-        --select-bg:#fff; --setting-border:rgba(0,0,0,.07);
-        --timer-bg:rgba(0,0,0,.04); --timer-border:rgba(0,0,0,.08);
-        --toggle-off:rgba(0,0,0,.15);
-      }
-      body { background: linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:#1b1f2a; }
-      #loadingScreen { background:#f0f2f7; }
-    }
-
-    /* ── Loading ── */
-    #loadingScreen {
-      position:fixed; inset:0; z-index:9999;
-      display:flex; align-items:center; justify-content:center;
-      flex-direction:column; gap:14px; transition:opacity .3s ease;
-    }
-    #loadingScreen.fade-out { opacity:0; pointer-events:none; }
-    .loading-icon { font-size:40px; animation:pulse 1.5s ease infinite; }
-    .loading-text { font-size:14px; color:var(--muted); }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-    /* ── App shell ── */
-    #app { display:flex; flex-direction:column; min-height:100dvh;
-      padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
-      padding-left:env(safe-area-inset-left,0px); padding-right:env(safe-area-inset-right,0px); }
-    .screen { display:none; flex:1; flex-direction:column; }
+    :root { color-scheme: dark light; --yellow:#ffd400; --orange:#ff7a00; --green:#34c759; --red:#ff8a80; --blue:#5aa9ff; --blue2:#3d8fe0; }
+    *,*::before,*::after { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html { height:100%; -webkit-text-size-adjust:100%; }
+    body { margin:0; padding:0; min-height:100dvh; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; overscroll-behavior:none; }
+    @media (prefers-color-scheme:dark)  { :root{--bg1:#1b1f2a;--bg2:#23293a;--panel:rgba(255,255,255,.08);--pborder:rgba(255,255,255,.12);--text:#fff;--muted:#8d97ae;--muted2:#c7cedd;--statbg:rgba(255,255,255,.06);--statb:rgba(255,255,255,.08);--selbg:#1e2535;--setborder:rgba(255,255,255,.07);--timbg:rgba(255,255,255,.06);--timb:rgba(255,255,255,.08);--toggleoff:rgba(255,255,255,.18);} body{background:linear-gradient(180deg,#1b1f2a,#23293a);color:#fff;} #ls{background:#1b1f2a;} }
+    @media (prefers-color-scheme:light) { :root{--bg1:#f0f2f7;--bg2:#e4e8f2;--panel:rgba(255,255,255,.85);--pborder:rgba(0,0,0,.08);--text:#1b1f2a;--muted:#5a6480;--muted2:#3a4260;--statbg:rgba(0,0,0,.04);--statb:rgba(0,0,0,.06);--selbg:#fff;--setborder:rgba(0,0,0,.07);--timbg:rgba(0,0,0,.04);--timb:rgba(0,0,0,.08);--toggleoff:rgba(0,0,0,.15);} body{background:linear-gradient(180deg,#f0f2f7,#e4e8f2);color:#1b1f2a;} #ls{background:#f0f2f7;} }
+    #ls { position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .3s; }
+    #ls.out { opacity:0;pointer-events:none; }
+    .spin { font-size:40px;animation:pulse 1.5s ease infinite; }
+    .spin-txt { font-size:14px;color:var(--muted); }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+    #app { display:flex;flex-direction:column;min-height:100dvh;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px); }
+    .screen { display:none;flex:1;flex-direction:column; }
     .screen.active { display:flex; }
-    .screen-scroll { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
-      padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
-      display:flex; flex-direction:column; gap:10px; }
-
-    /* ── Card ── */
-    .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:20px; padding:16px; box-shadow:0 4px 16px rgba(0,0,0,.12); }
-
-    /* ── Buttons ── */
-    .btn { display:flex; align-items:center; justify-content:center; border:none; border-radius:16px;
-      padding:0 20px; height:var(--touch-min); font-size:15px; font-weight:800; font-family:inherit;
-      cursor:pointer; transition:transform .15s,opacity .15s; -webkit-user-select:none; user-select:none; }
-    .btn:active { transform:scale(.97); }
-    .btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
-    .btn-start { background:var(--green); color:#0f1b12; flex:1; }
-    .btn-stop  { background:var(--red);   color:#2b1010; flex:1; }
-    .btn-upgrade { background:linear-gradient(135deg,var(--yellow),var(--orange)); color:#1b1f2a; width:100%; margin-top:14px; font-size:16px; height:52px; border-radius:16px; }
-    .btn-verify  { background:var(--blue); color:#0a1220; width:100%; margin-top:10px; font-size:14px; height:48px; border-radius:14px; display:none; }
-    .btn-secondary { background:rgba(128,128,128,.15); border:1px solid rgba(128,128,128,.2); color:var(--muted); width:100%; font-size:14px; }
-    .controls { display:flex; gap:10px; margin-top:12px; }
-
-    /* ── Toggle ── */
-    .toggle { appearance:none; -webkit-appearance:none; width:44px; min-width:44px; height:26px;
-      border-radius:100px; border:none; background:var(--toggle-off); cursor:pointer;
-      position:relative; transition:background .2s; flex-shrink:0; margin:0; }
-    .toggle::after { content:""; position:absolute; width:20px; height:20px; border-radius:50%;
-      background:rgba(255,255,255,.7); top:3px; left:3px; transition:transform .2s,background .2s; }
-    .toggle:checked { background:var(--yellow); }
-    .toggle:checked::after { background:#1b1f2a; transform:translateX(18px); }
-    .toggle-blue:checked { background:var(--blue); }
-    .toggle-blue:checked::after { background:#081726; }
-
-    /* ── Setting row ── */
-    .setting { display:flex; align-items:flex-start; justify-content:space-between;
-      gap:12px; padding:10px 0; min-height:var(--touch-min); }
-    .setting+.setting { border-top:1px solid var(--setting-border); }
-    .setting-text { flex:1; min-width:0; }
-    .label { font-size:15px; font-weight:600; line-height:1.3; }
-    .sub-label { font-size:12px; color:var(--muted); margin-top:3px; line-height:1.45; }
-
-    /* ── Timer box ── */
-    .timer-box { display:flex; flex-direction:column; align-items:center; justify-content:center;
-      min-height:88px; border-radius:16px; background:var(--timer-bg); border:1px solid var(--timer-border);
-      text-align:center; padding:16px; }
-    .timer-label { font-size:12px; color:var(--muted); margin-bottom:6px; }
-    .timer-value { font-size:32px; font-weight:800; line-height:1; color:var(--yellow); }
-
-    /* ── Custom select ── */
-    .custom-select-wrap { width:100%; user-select:none; }
-    .custom-select-trigger { display:flex; align-items:center; justify-content:space-between;
-      padding:0 16px; height:var(--touch-min); border-radius:14px;
-      border:1px solid var(--panel-border); background:var(--panel);
-      color:var(--text); font-size:15px; font-weight:600; cursor:pointer; }
-    .custom-select-trigger.open { border-radius:14px 14px 0 0; border-color:rgba(255,212,0,.5); border-bottom-color:transparent; }
-    .custom-select-arrow { font-size:11px; color:var(--muted); transition:transform .2s; }
-    .custom-select-trigger.open .custom-select-arrow { transform:rotate(180deg); }
-    .custom-select-options { width:100%; background:var(--select-bg); border:1px solid rgba(255,212,0,.3);
-      border-top:none; border-radius:0 0 14px 14px; overflow:hidden; max-height:0; opacity:0; transition:max-height .22s,opacity .18s; }
-    .custom-select-options.open { max-height:280px; opacity:1; }
-    .custom-select-option { padding:14px 16px; font-size:14px; color:var(--muted); cursor:pointer;
-      border-top:1px solid var(--setting-border); }
-    .custom-select-option.selected { color:var(--yellow); font-weight:700; }
-
-    /* ── Stats ── */
-    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-    .stat { background:var(--stat-bg); border:1px solid var(--stat-border); border-radius:14px; padding:12px 8px; text-align:center; }
-    .stat-value { font-size:22px; font-weight:800; margin-bottom:4px; }
-    .stat-label { font-size:11px; color:var(--muted); }
-
-    /* ── Upgrade card ── */
-    .upgrade-card { background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06)); border:1px solid rgba(255,212,0,.22); }
-    .upgrade-title { font-size:17px; font-weight:800; margin-bottom:4px; }
-    .upgrade-sub { font-size:13px; color:var(--muted); line-height:1.5; }
-    .upgrade-features { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
-    .upgrade-feature { display:flex; align-items:flex-start; gap:12px; }
-    .upgrade-feature-icon { font-size:20px; min-width:28px; }
-    .upgrade-price { margin-top:8px; font-size:12px; color:var(--muted); text-align:center; }
-    .pending-note { display:none; font-size:13px; color:var(--muted); text-align:center; margin-top:12px; line-height:1.5; }
-
-    /* ── Misc ── */
-    .status-ok { font-size:12px; color:var(--green); margin-top:6px; display:none; }
-    .pro-badge-inline { position:absolute; top:0; right:0; font-size:9px; font-weight:800;
-      padding:3px 9px; border-radius:100px; background:linear-gradient(90deg,var(--yellow),var(--orange)); color:#1b1f2a; }
-    .hidden { display:none !important; }
-
-    /* ── Tabs ── */
-    .tab-bar { display:flex; gap:6px; border-radius:14px; padding:5px; background:rgba(0,0,0,.2); }
-    .tab-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
-      padding:10px 12px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;
-      border:1px solid transparent; font-family:inherit; background:none; color:var(--muted); min-height:44px; }
-    .tab-btn.tab-active { background:rgba(255,212,0,.12); color:var(--yellow); border-color:rgba(255,212,0,.25); }
-    .tab-btn-water.tab-active { background:rgba(90,169,255,.12); color:var(--blue); border-color:rgba(90,169,255,.25); }
-    .module-section.hidden { display:none; }
-
-    /* ── Water glass mini ── */
-    .glass-mini { position:relative; width:40px; height:50px; flex-shrink:0; }
-    .glass-mini-rim { position:absolute; top:0; left:-2px; right:-2px; height:2px; background:rgba(90,169,255,.4); border-radius:2px; }
-    .glass-mini-body { position:absolute; inset:0; border:2px solid rgba(90,169,255,.35); border-top:none; border-radius:2px 2px 12px 12px; }
-    .glass-mini-fill { position:absolute; bottom:2px; left:2px; right:2px; border-radius:1px 1px 10px 10px; background:linear-gradient(180deg,rgba(90,169,255,.55),rgba(61,143,224,.75)); transition:height .5s ease; height:0%; }
-
-    /* ── Goal stepper ── */
-    .goal-stepper { display:flex; align-items:center; border-radius:12px; overflow:hidden; border:1px solid var(--panel-border); background:var(--stat-bg); }
-    .stepper-btn { width:36px; height:36px; border:none; background:none; color:var(--blue); font-size:18px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; }
-    .stepper-val { min-width:28px; text-align:center; font-size:14px; font-weight:700; color:var(--blue); line-height:36px; border-left:1px solid var(--panel-border); border-right:1px solid var(--panel-border); }
-
-    /* ── Welcome ── */
-    #screenWelcome .screen-scroll { align-items:center; text-align:center; }
-    .welcome-title { font-size:28px; font-weight:800; margin-bottom:8px; }
-    .welcome-sub { font-size:15px; line-height:1.6; margin-bottom:24px; max-width:320px; color:var(--muted2); }
-    .welcome-features { display:flex; flex-direction:column; gap:12px; width:100%; max-width:340px; margin-bottom:24px; }
-    .welcome-feature { display:flex; align-items:flex-start; gap:14px; border-radius:16px; padding:14px; text-align:left; background:var(--panel); border:1px solid var(--panel-border); }
-    .welcome-feature-icon { font-size:24px; margin-top:1px; }
-    .welcome-feature-text { font-size:14px; line-height:1.5; }
-    .welcome-feature-text strong { font-weight:700; display:block; margin-bottom:2px; }
-    .notif-card { width:100%; max-width:340px; border-radius:18px; padding:18px; text-align:left; background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06)); border:1px solid rgba(255,212,0,.22); }
-    .notif-card-blue { background:rgba(90,169,255,.06); border-color:rgba(90,169,255,.25); }
-
-    /* ── Carousel dots ── */
-    .carousel-dot { width:10px; height:10px; border-radius:50%; cursor:pointer; background:var(--stat-bg); border:1px solid var(--panel-border); transition:background .2s,transform .2s; }
-    .carousel-dot.active { background:var(--yellow); border-color:var(--yellow); transform:scale(1.15); }
-
-    /* ── Placeholder screens ── */
-    #screenStretch .screen-scroll, #screenWater .screen-scroll { align-items:center; justify-content:center; text-align:center; }
+    .scr { flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px; }
+    .card { background:var(--panel);border:1px solid var(--pborder);border-radius:20px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.12); }
+    .btn { display:flex;align-items:center;justify-content:center;border:none;border-radius:16px;padding:0 20px;height:48px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;transition:transform .15s,opacity .15s;-webkit-user-select:none;user-select:none; }
+    .btn:active{transform:scale(.97)} .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+    .btn-start{background:var(--green);color:#0f1b12;flex:1} .btn-stop{background:var(--red);color:#2b1010;flex:1}
+    .btn-up{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#1b1f2a;width:100%;margin-top:14px;font-size:16px;height:52px;border-radius:16px;}
+    .btn-verify{background:var(--blue);color:#0a1220;width:100%;margin-top:10px;font-size:14px;height:48px;border-radius:14px;display:none;}
+    .btn-sec{background:rgba(128,128,128,.15);border:1px solid rgba(128,128,128,.2);color:var(--muted);width:100%;font-size:14px;}
+    .ctrls{display:flex;gap:10px;margin-top:12px;}
+    .toggle{appearance:none;-webkit-appearance:none;width:44px;min-width:44px;height:26px;border-radius:100px;border:none;background:var(--toggleoff);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;margin:0;}
+    .toggle::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.7);top:3px;left:3px;transition:transform .2s,background .2s;}
+    .toggle:checked{background:var(--yellow)} .toggle:checked::after{background:#1b1f2a;transform:translateX(18px)}
+    .toggle-b:checked{background:var(--blue)} .toggle-b:checked::after{background:#081726}
+    .row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;min-height:48px;}
+    .row+.row{border-top:1px solid var(--setborder)} .rt{flex:1;min-width:0;}
+    .lbl{font-size:15px;font-weight:600;line-height:1.3} .sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+    .tbox{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:88px;border-radius:16px;background:var(--timbg);border:1px solid var(--timb);text-align:center;padding:16px;}
+    .tlbl{font-size:12px;color:var(--muted);margin-bottom:6px} .tval{font-size:32px;font-weight:800;line-height:1;color:var(--yellow)}
+    .sel-wrap{width:100%;user-select:none}
+    .sel-trig{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:48px;border-radius:14px;border:1px solid var(--pborder);background:var(--panel);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;}
+    .sel-trig.open{border-radius:14px 14px 0 0;border-color:rgba(255,212,0,.5);border-bottom-color:transparent;}
+    .sel-arr{font-size:11px;color:var(--muted);transition:transform .2s} .sel-trig.open .sel-arr{transform:rotate(180deg)}
+    .sel-opts{width:100%;background:var(--selbg);border:1px solid rgba(255,212,0,.3);border-top:none;border-radius:0 0 14px 14px;overflow:hidden;max-height:0;opacity:0;transition:max-height .22s,opacity .18s;}
+    .sel-opts.open{max-height:280px;opacity:1}
+    .sel-opt{padding:14px 16px;font-size:14px;color:var(--muted);cursor:pointer;border-top:1px solid var(--setborder);}
+    .sel-opt.selected{color:var(--yellow);font-weight:700}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .stat{background:var(--statbg);border:1px solid var(--statb);border-radius:14px;padding:12px 8px;text-align:center}
+    .sv{font-size:22px;font-weight:800;margin-bottom:4px} .sl{font-size:11px;color:var(--muted)}
+    .ucard{background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06));border:1px solid rgba(255,212,0,.22);}
+    .utitle{font-size:17px;font-weight:800;margin-bottom:4px} .usub{font-size:13px;color:var(--muted);line-height:1.5}
+    .ufeats{display:flex;flex-direction:column;gap:10px;margin-top:12px} .ufeat{display:flex;align-items:flex-start;gap:12px} .ufi{font-size:20px;min-width:28px}
+    .uprice{margin-top:8px;font-size:12px;color:var(--muted);text-align:center} .pnote{display:none;font-size:13px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5}
+    .sok{font-size:12px;color:var(--green);margin-top:6px;display:none}
+    .pbi{position:absolute;top:0;right:0;font-size:9px;font-weight:800;padding:3px 9px;border-radius:100px;background:linear-gradient(90deg,var(--yellow),var(--orange));color:#1b1f2a}
+    .hidden{display:none!important}
+    .tabbar{display:flex;gap:6px;border-radius:14px;padding:5px;background:rgba(0,0,0,.2)}
+    .tabbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;background:none;color:var(--muted);min-height:44px;}
+    .tabbtn.act{background:rgba(255,212,0,.12);color:var(--yellow);border-color:rgba(255,212,0,.25)}
+    .tabbtn-w.act{background:rgba(90,169,255,.12);color:var(--blue);border-color:rgba(90,169,255,.25)}
+    .modsec.hidden{display:none}
+    .gmini{position:relative;width:40px;height:50px;flex-shrink:0}
+    .gmini-rim{position:absolute;top:0;left:-2px;right:-2px;height:2px;background:rgba(90,169,255,.4);border-radius:2px}
+    .gmini-body{position:absolute;inset:0;border:2px solid rgba(90,169,255,.35);border-top:none;border-radius:2px 2px 12px 12px}
+    .gmini-fill{position:absolute;bottom:2px;left:2px;right:2px;border-radius:1px 1px 10px 10px;background:linear-gradient(180deg,rgba(90,169,255,.55),rgba(61,143,224,.75));transition:height .5s ease;height:0%}
+    .stepper{display:flex;align-items:center;border-radius:12px;overflow:hidden;border:1px solid var(--pborder);background:var(--statbg)}
+    .stepbtn{width:36px;height:36px;border:none;background:none;color:var(--blue);font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+    .stepval{min-width:28px;text-align:center;font-size:14px;font-weight:700;color:var(--blue);line-height:36px;border-left:1px solid var(--pborder);border-right:1px solid var(--pborder)}
+    #sw .scr{align-items:center;text-align:center} #sw2 .scr{align-items:center;text-align:center}
+    #wl .scr{align-items:center;text-align:center}
+    .wfeat{display:flex;align-items:flex-start;gap:14px;border-radius:16px;padding:14px;text-align:left;background:var(--panel);border:1px solid var(--pborder)}
+    .wfeat-icon{font-size:24px;margin-top:1px} .wfeat-txt{font-size:14px;line-height:1.5}
+    .wfeat-txt strong{font-weight:700;display:block;margin-bottom:2px}
+    .ncard{width:100%;max-width:340px;border-radius:18px;padding:18px;text-align:left;background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06));border:1px solid rgba(255,212,0,.22)}
+    .ncard-blue{background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.25)}
+    .cdot{width:10px;height:10px;border-radius:50%;cursor:pointer;background:var(--statbg);border:1px solid var(--pborder);transition:background .2s,transform .2s}
+    .cdot.act{background:var(--yellow);border-color:var(--yellow);transform:scale(1.15)}
   </style>
 </head>
 <body>
 
-<div id="loadingScreen">
-  <div class="loading-icon">🧘</div>
-  <div class="loading-text">Loading…</div>
+<div id="ls">
+  <div class="spin">🧘</div>
+  <div class="spin-txt">Loading…</div>
 </div>
 
 <div id="app">
 
-  <!-- ═══ WELCOME ═══ -->
-  <div id="screenWelcome" class="screen">
-    <div class="screen-scroll">
+  <!-- WELCOME -->
+  <div id="wl" class="screen">
+    <div class="scr" style="align-items:center;text-align:center;">
       <div style="font-size:52px;margin-bottom:6px;">🧘💧</div>
-      <div class="welcome-title">Desk Wellness Pack</div>
-      <div class="welcome-sub">Smart reminders for healthier desk habits — stretch breaks and hydration, running quietly in the background.</div>
-      <div class="welcome-features">
-        <div class="welcome-feature">
-          <div class="welcome-feature-icon">🧘</div>
-          <div class="welcome-feature-text"><strong>Smart Stretch</strong>Adaptive guided breaks that remind you to move before you stiffen.</div>
-        </div>
-        <div class="welcome-feature">
-          <div class="welcome-feature-icon">💧</div>
-          <div class="welcome-feature-text"><strong>Water Reminder</strong>Tracks daily glasses and reminds you to drink at your own pace.</div>
-        </div>
+      <div style="font-size:28px;font-weight:800;margin-bottom:8px;">Desk Wellness Pack</div>
+      <div style="font-size:15px;line-height:1.6;margin-bottom:24px;max-width:320px;color:var(--muted2);">Smart reminders for healthier desk habits — stretch breaks and hydration, running quietly in the background.</div>
+      <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;margin-bottom:24px;">
+        <div class="wfeat"><div class="wfeat-icon">🧘</div><div class="wfeat-txt"><strong>Smart Stretch</strong>Adaptive guided breaks that remind you to move before you stiffen.</div></div>
+        <div class="wfeat"><div class="wfeat-icon">💧</div><div class="wfeat-txt"><strong>Water Reminder</strong>Tracks daily glasses and reminds you to drink at your own pace.</div></div>
       </div>
-
-      <!-- Android: normal permission button -->
-      <div class="notif-card" id="notifCardAndroid">
+      <div class="ncard" id="nc-android">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">🔔 Allow notifications</div>
         <div style="font-size:13px;line-height:1.55;margin-bottom:14px;opacity:.75;">The app uses notifications to remind you to stretch and drink water. Without them, reminders won't fire in the background.</div>
-        <button class="btn btn-upgrade" id="requestNotifBtn" style="margin-top:0;">Allow notifications</button>
+        <button class="btn btn-up" id="notifBtn" style="margin-top:0;">Allow notifications</button>
         <div id="notifStatus" style="font-size:12px;margin-top:10px;text-align:center;display:none;"></div>
       </div>
-
-      <!-- iOS in browser: must install first -->
-      <div class="notif-card" id="notifCardIOS" style="display:none;">
+      <div class="ncard" id="nc-ios" style="display:none;">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📲 Add to Home Screen first</div>
-        <div style="font-size:13px;line-height:1.6;opacity:.75;">Tap <strong>Share</strong> → <strong>"Add to Home Screen"</strong>, then open the app from your home screen — notifications will work from there.</div>
+        <div style="font-size:13px;line-height:1.6;opacity:.75;">Tap <strong>Share</strong> → <strong>Add to Home Screen</strong>, then open the app from your home screen.</div>
       </div>
-
-      <!-- Desktop -->
-      <div class="notif-card notif-card-blue" id="notifCardDesktop" style="display:none;">
+      <div class="ncard ncard-blue" id="nc-desktop" style="display:none;">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📱 Best on Android</div>
         <div style="font-size:13px;line-height:1.6;opacity:.75;">Open this URL in Chrome for Android and add it to your home screen for the full experience.</div>
       </div>
-
-      <button class="btn btn-secondary" id="welcomeSkipBtn" style="max-width:340px;width:100%;margin-top:10px;">Continue anyway</button>
+      <button class="btn btn-sec" id="skipBtn" style="max-width:340px;width:100%;margin-top:10px;">Continue anyway</button>
     </div>
   </div>
 
-  <!-- ═══ HOME ═══ -->
-  <div id="screenHome" class="screen">
-    <div class="screen-scroll">
+  <!-- HOME -->
+  <div id="hm" class="screen">
+    <div class="scr">
 
       <div class="card">
         <div style="font-size:22px;font-weight:800;margin-bottom:4px;">Desk Wellness Pack</div>
         <div style="font-size:14px;color:var(--muted);">Smart reminders for healthier desk habits</div>
       </div>
 
-      <!-- Background tip — shown until dismissed -->
-      <div class="card" id="bgTipCard" style="padding:12px 14px;background:rgba(255,212,0,.06);border-color:rgba(255,212,0,.18);display:flex;align-items:flex-start;gap:10px;">
-        <div style="font-size:18px;flex-shrink:0;">💡</div>
-        <div style="flex:1;">
-          <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Keep app in recent apps</div>
-          <div style="font-size:11px;opacity:.65;line-height:1.5;">Reminders work when the app is running in the background. If you swipe it away, a push notification server is needed — coming soon.</div>
-        </div>
-        <button id="bgTipClose" style="border:none;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;">×</button>
-      </div>
-
       <div class="card" style="padding:6px;">
-        <div class="tab-bar">
-          <button class="tab-btn tab-active" id="tabStretch">🧘 Smart Stretch</button>
-          <button class="tab-btn tab-btn-water" id="tabWater">💧 Water Reminder</button>
+        <div class="tabbar">
+          <button class="tabbtn act" id="tabS">🧘 Smart Stretch</button>
+          <button class="tabbtn tabbtn-w" id="tabW">💧 Water Reminder</button>
         </div>
       </div>
 
       <!-- STRETCH -->
-      <div id="sectionStretch" class="module-section">
+      <div id="secS" class="modsec">
         <div class="card" style="position:relative;">
-          <div id="stretchProBadge" class="pro-badge-inline hidden">✨ Pro</div>
-          <div class="timer-box">
-            <div class="timer-label" id="timerLabel">Next stretch break</div>
-            <div class="timer-value" id="timerDisplay">Timer Inactive</div>
+          <div id="spb" class="pbi hidden">✨ Pro</div>
+          <div class="tbox">
+            <div class="tlbl" id="tLbl">Next stretch break</div>
+            <div class="tval" id="tVal">Timer Inactive</div>
           </div>
-          <div class="controls">
-            <button class="btn btn-start" id="startBtn">Start</button>
-            <button class="btn btn-stop" id="stopBtn" disabled>Stop</button>
-          </div>
-        </div>
-
-        <div class="custom-select-wrap" id="customSelectWrap">
-          <div class="custom-select-trigger" id="customSelectTrigger">
-            <span id="customSelectLabel">Every 30 minutes</span>
-            <span class="custom-select-arrow">▼</span>
-          </div>
-          <div class="custom-select-options" id="customSelectOptions">
-            <div class="custom-select-option" data-value="15">Every 15 minutes</div>
-            <div class="custom-select-option" data-value="20">Every 20 minutes</div>
-            <div class="custom-select-option selected" data-value="30">Every 30 minutes</div>
-            <div class="custom-select-option" data-value="45">Every 45 minutes</div>
-            <div class="custom-select-option" data-value="60">Every 60 minutes</div>
+          <div class="ctrls">
+            <button class="btn btn-start" id="startS">Start</button>
+            <button class="btn btn-stop" id="stopS" disabled>Stop</button>
           </div>
         </div>
-
+        <div class="sel-wrap" id="selS">
+          <div class="sel-trig" id="selStrig"><span id="selSlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
+          <div class="sel-opts" id="selSopts">
+            <div class="sel-opt" data-value="15">Every 15 minutes</div>
+            <div class="sel-opt" data-value="20">Every 20 minutes</div>
+            <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
+            <div class="sel-opt" data-value="45">Every 45 minutes</div>
+            <div class="sel-opt" data-value="60">Every 60 minutes</div>
+          </div>
+        </div>
         <div class="card">
-          <div class="setting">
-            <div class="setting-text"><div class="label">Smart Stretch</div><div class="sub-label">Adapts stretch type based on your recent behaviour</div></div>
-            <input type="checkbox" id="smartModeToggle" class="toggle" />
-          </div>
-          <div class="setting">
-            <div class="setting-text"><div class="label">Play sound</div><div class="sub-label">Gentle chime when the stretch screen opens</div></div>
-            <input type="checkbox" id="soundToggle" class="toggle" />
-          </div>
+          <div class="row"><div class="rt"><div class="lbl">Smart Stretch</div><div class="sub">Adapts stretch type based on your recent behaviour</div></div><input type="checkbox" id="smartTog" class="toggle" /></div>
+          <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the stretch screen opens</div></div><input type="checkbox" id="soundTog" class="toggle" /></div>
         </div>
-
-        <div class="card upgrade-card" id="upgradeCard">
-          <div class="upgrade-title">✨ Upgrade to Pro</div>
-          <div class="upgrade-sub">One-time purchase. Skip stretches during meetings automatically.</div>
-          <div class="upgrade-features">
-            <div class="upgrade-feature"><div class="upgrade-feature-icon">📅</div><div><div class="label" style="font-size:14px;">Skip during meetings</div><div class="sub-label">Checks Google Calendar — pauses reminders when you're busy</div></div></div>
-          </div>
-          <button class="btn btn-upgrade" id="upgradeBtn">Upgrade — €3.00</button>
-          <button class="btn btn-verify" id="verifyBtn">✓ I've paid — Verify Payment</button>
-          <div class="pending-note" id="pendingNote">Complete your payment then tap Verify.</div>
-          <div class="upgrade-price">One-time · No subscription · Instant unlock</div>
+        <div class="card ucard" id="uCardS">
+          <div class="utitle">✨ Upgrade to Pro</div>
+          <div class="usub">One-time purchase. Skip stretches during meetings automatically.</div>
+          <div class="ufeats"><div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Checks Google Calendar — pauses reminders when you're busy</div></div></div></div>
+          <button class="btn btn-up" id="upgS">Upgrade — €3.00</button>
+          <button class="btn btn-verify" id="verS">✓ I've paid — Verify Payment</button>
+          <div class="pnote" id="pnoteS">Complete payment then tap Verify.</div>
+          <div class="uprice">One-time · No subscription · Instant unlock</div>
         </div>
-
-        <div class="card hidden" id="proIntegrationsCard">
-          <div class="setting">
-            <div class="setting-text"><div class="label">📅 Skip during meetings</div><div class="sub-label">Checks Google Calendar — skips stretch if you're busy</div></div>
-            <input type="checkbox" id="calendarToggle" class="toggle" />
-          </div>
-          <div class="status-ok" id="calendarStatus">✅ Google Calendar connected</div>
+        <div class="card hidden" id="proS">
+          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Checks Google Calendar — skips stretch if you're busy</div></div><input type="checkbox" id="calTog" class="toggle" /></div>
+          <div class="sok" id="calSok">✅ Google Calendar connected</div>
         </div>
-
         <div class="card">
-          <div class="label">Weekly stretch activity</div>
+          <div class="lbl">Weekly stretch activity</div>
           <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
-            <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;" id="statsCarousel">
+            <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
               <div style="flex:0 0 100%;scroll-snap-align:start;">
                 <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
                 <div class="stats">
-                  <div class="stat"><div class="stat-value" id="lastCompletedCount">0</div><div class="stat-label">Completed</div></div>
-                  <div class="stat"><div class="stat-value" id="lastSnoozedCount">0</div><div class="stat-label">Snoozed</div></div>
-                  <div class="stat"><div class="stat-value" id="lastSkippedCount">0</div><div class="stat-label">Skipped</div></div>
+                  <div class="stat"><div class="sv" id="lcC">0</div><div class="sl">Completed</div></div>
+                  <div class="stat"><div class="sv" id="lsC">0</div><div class="sl">Snoozed</div></div>
+                  <div class="stat"><div class="sv" id="lkC">0</div><div class="sl">Skipped</div></div>
                 </div>
               </div>
               <div style="flex:0 0 100%;scroll-snap-align:start;">
                 <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">This Week</div>
                 <div class="stats">
-                  <div class="stat"><div class="stat-value" id="completedCount">0</div><div class="stat-label">Completed</div></div>
-                  <div class="stat"><div class="stat-value" id="snoozedCount">0</div><div class="stat-label">Snoozed</div></div>
-                  <div class="stat"><div class="stat-value" id="skippedCount">0</div><div class="stat-label">Skipped</div></div>
+                  <div class="stat"><div class="sv" id="cC">0</div><div class="sl">Completed</div></div>
+                  <div class="stat"><div class="sv" id="sC">0</div><div class="sl">Snoozed</div></div>
+                  <div class="stat"><div class="sv" id="kC">0</div><div class="sl">Skipped</div></div>
                 </div>
               </div>
             </div>
           </div>
-          <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;">
-            <div class="carousel-dot" id="dot0"></div>
-            <div class="carousel-dot active" id="dot1"></div>
-          </div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;"><div class="cdot" id="d0"></div><div class="cdot act" id="d1"></div></div>
           <div style="margin-top:8px;font-size:11px;opacity:.5;text-align:center;">Resets every Sunday · Swipe to see last week</div>
         </div>
-      </div><!-- /sectionStretch -->
+      </div>
 
       <!-- WATER -->
-      <div id="sectionWater" class="module-section hidden">
+      <div id="secW" class="modsec hidden">
         <div class="card" style="position:relative;">
-          <div id="waterProBadge" class="pro-badge-inline hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
-          <div class="timer-box" style="background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.14);">
-            <div class="timer-label" id="waterTimerLabel">Next water reminder</div>
-            <div class="timer-value" id="waterTimerDisplay" style="color:var(--blue);">Timer Inactive</div>
+          <div id="wpb" class="pbi hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
+          <div class="tbox" style="background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.14);">
+            <div class="tlbl" id="wLbl">Next water reminder</div>
+            <div class="tval" id="wVal" style="color:var(--blue);">Timer Inactive</div>
           </div>
-          <div class="controls">
-            <button class="btn btn-start" id="waterStartBtn">Start</button>
-            <button class="btn btn-stop" id="waterStopBtn" disabled>Stop</button>
-          </div>
-        </div>
-
-        <div class="custom-select-wrap" id="waterCustomSelectWrap">
-          <div class="custom-select-trigger" id="waterCustomSelectTrigger" style="border-color:rgba(90,169,255,.25);">
-            <span id="waterCustomSelectLabel">Every 30 minutes</span>
-            <span class="custom-select-arrow">▼</span>
-          </div>
-          <div class="custom-select-options" id="waterCustomSelectOptions" style="border-color:rgba(90,169,255,.3);">
-            <div class="custom-select-option selected" data-value="30">Every 30 minutes</div>
-            <div class="custom-select-option" data-value="45">Every 45 minutes</div>
-            <div class="custom-select-option" data-value="60">Every 60 minutes</div>
-            <div class="custom-select-option" data-value="90">Every 90 minutes</div>
-            <div class="custom-select-option" data-value="120">Every 2 hours</div>
+          <div class="ctrls">
+            <button class="btn btn-start" id="startW">Start</button>
+            <button class="btn btn-stop" id="stopW" disabled>Stop</button>
           </div>
         </div>
-
+        <div class="sel-wrap" id="selW">
+          <div class="sel-trig" id="selWtrig" style="border-color:rgba(90,169,255,.25);"><span id="selWlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
+          <div class="sel-opts" id="selWopts" style="border-color:rgba(90,169,255,.3);">
+            <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
+            <div class="sel-opt" data-value="45">Every 45 minutes</div>
+            <div class="sel-opt" data-value="60">Every 60 minutes</div>
+            <div class="sel-opt" data-value="90">Every 90 minutes</div>
+            <div class="sel-opt" data-value="120">Every 2 hours</div>
+          </div>
+        </div>
         <div class="card">
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
-            <div class="glass-mini"><div class="glass-mini-rim"></div><div class="glass-mini-body"></div><div class="glass-mini-fill" id="waterMiniGlassFill"></div></div>
-            <div>
-              <div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1;"><span id="waterGlassCount">0</span><span style="font-size:13px;font-weight:400;opacity:.6;">/ <span id="waterGoalDisplay">8</span></span></div>
-              <div style="font-size:11px;opacity:.6;margin-top:3px;">glasses today</div>
-            </div>
+            <div class="gmini"><div class="gmini-rim"></div><div class="gmini-body"></div><div class="gmini-fill" id="wFill"></div></div>
+            <div><div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1;"><span id="wCnt">0</span><span style="font-size:13px;font-weight:400;opacity:.6;">/ <span id="wGoalD">8</span></span></div><div style="font-size:11px;opacity:.6;margin-top:3px;">glasses today</div></div>
           </div>
-          <div id="waterDotsContainer" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"></div>
+          <div id="wDots" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"></div>
         </div>
-
         <div class="card">
-          <div class="setting">
-            <div class="setting-text"><div class="label">Play sound</div><div class="sub-label">Gentle chime when the water screen opens</div></div>
-            <input type="checkbox" id="waterSoundToggle" class="toggle toggle-blue" />
-          </div>
-          <div class="setting">
-            <div class="setting-text">
-              <div class="label">Daily goal <span id="waterGoalLockIcon" style="font-size:11px;opacity:.5;">🔒</span></div>
-              <div class="sub-label" id="waterGoalSubLabel">Upgrade to Pro to set your own goal</div>
-            </div>
-            <div class="goal-stepper" id="waterGoalStepper" style="opacity:.4;pointer-events:none;">
-              <button class="stepper-btn" id="waterGoalMinus">−</button>
-              <div class="stepper-val" id="waterGoalValue">8</div>
-              <button class="stepper-btn" id="waterGoalPlus">+</button>
-            </div>
+          <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the water screen opens</div></div><input type="checkbox" id="wSndTog" class="toggle toggle-b" /></div>
+          <div class="row">
+            <div class="rt"><div class="lbl">Daily goal <span id="wLock" style="font-size:11px;opacity:.5;">🔒</span></div><div class="sub" id="wGoalSub">Upgrade to Pro to set your own goal</div></div>
+            <div class="stepper" id="wStepper" style="opacity:.4;pointer-events:none;"><button class="stepbtn" id="wMinus">−</button><div class="stepval" id="wGoalV">8</div><button class="stepbtn" id="wPlus">+</button></div>
           </div>
         </div>
-
-        <div class="card upgrade-card hidden" id="waterUpgradeCard">
-          <div class="upgrade-title">💧 Upgrade Water to Pro</div>
-          <div class="upgrade-sub">One-time purchase. Unlock meeting detection and custom goals.</div>
-          <div class="upgrade-features">
-            <div class="upgrade-feature"><div class="upgrade-feature-icon">📅</div><div><div class="label" style="font-size:14px;">Skip during meetings</div><div class="sub-label">Pauses water reminders during Google Calendar events</div></div></div>
-            <div class="upgrade-feature"><div class="upgrade-feature-icon">🎯</div><div><div class="label" style="font-size:14px;">Custom daily glass goal</div><div class="sub-label">Set your own target, not locked to 8 glasses</div></div></div>
+        <div class="card ucard hidden" id="uCardW">
+          <div class="utitle">💧 Upgrade Water to Pro</div>
+          <div class="usub">One-time purchase. Unlock meeting detection and custom goals.</div>
+          <div class="ufeats">
+            <div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div></div>
+            <div class="ufeat"><div class="ufi">🎯</div><div><div class="lbl" style="font-size:14px;">Custom daily glass goal</div><div class="sub">Set your own target, not locked to 8 glasses</div></div></div>
           </div>
-          <button class="btn btn-upgrade" id="waterUpgradeBtn">Upgrade — €5.00</button>
-          <button class="btn btn-verify" id="waterVerifyBtn">✓ I've paid — Verify Payment</button>
-          <div class="pending-note" id="waterPendingNote">Complete your payment then tap Verify.</div>
-          <div class="upgrade-price">One-time · No subscription · Instant unlock</div>
+          <button class="btn btn-up" id="upgW">Upgrade — €5.00</button>
+          <button class="btn btn-verify" id="verW">✓ I've paid — Verify Payment</button>
+          <div class="pnote" id="pnoteW">Complete payment then tap Verify.</div>
+          <div class="uprice">One-time · No subscription · Instant unlock</div>
         </div>
-
-        <div class="card hidden" id="waterProCard" style="border-color:rgba(90,169,255,.2);background:rgba(90,169,255,.04);">
-          <div class="setting">
-            <div class="setting-text"><div class="label">📅 Skip during meetings</div><div class="sub-label">Pauses water reminders during Google Calendar events</div></div>
-            <input type="checkbox" id="waterCalendarToggle" class="toggle toggle-blue" />
-          </div>
-          <div class="status-ok" id="waterCalendarStatus">✅ Google Calendar connected</div>
+        <div class="card hidden" id="proW" style="border-color:rgba(90,169,255,.2);background:rgba(90,169,255,.04);">
+          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div><input type="checkbox" id="wCalTog" class="toggle toggle-b" /></div>
+          <div class="sok" id="wCalSok">✅ Google Calendar connected</div>
         </div>
-      </div><!-- /sectionWater -->
+      </div>
 
     </div>
-  </div><!-- /screenHome -->
+  </div>
 
-  <!-- ═══ STRETCH BREAK (Week 2) ═══ -->
-  <div id="screenStretch" class="screen">
-    <div class="screen-scroll">
+  <!-- STRETCH BREAK (Week 2) -->
+  <div id="sw" class="screen">
+    <div class="scr" style="align-items:center;justify-content:center;text-align:center;">
       <div style="font-size:56px;margin-bottom:12px;">🧘</div>
       <div style="font-size:24px;font-weight:800;margin-bottom:8px;">Stretch Time</div>
       <div style="font-size:14px;color:var(--muted);margin-bottom:32px;">Full stretch screen — Week 2</div>
-      <button class="btn btn-start" id="stretchBackBtn" style="max-width:280px;width:100%;">← Back</button>
+      <button class="btn btn-start" id="swBack" style="max-width:280px;width:100%;">← Back</button>
     </div>
   </div>
 
-  <!-- ═══ WATER SCREEN (Week 2) ═══ -->
-  <div id="screenWater" class="screen">
-    <div class="screen-scroll">
+  <!-- WATER SCREEN (Week 2) -->
+  <div id="sw2" class="screen">
+    <div class="scr" style="align-items:center;justify-content:center;text-align:center;">
       <div style="font-size:56px;margin-bottom:12px;">💧</div>
       <div style="font-size:24px;font-weight:800;margin-bottom:8px;">Drink Water</div>
       <div style="font-size:14px;color:var(--muted);margin-bottom:32px;">Full water screen — Week 2</div>
-      <button class="btn btn-start" id="waterBackBtn" style="max-width:280px;width:100%;background:var(--blue);">← Back</button>
+      <button class="btn btn-start" id="sw2Back" style="max-width:280px;width:100%;background:var(--blue);">← Back</button>
     </div>
   </div>
 
-</div><!-- /app -->
+</div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// ALL JS INLINED — no module imports, nothing to 404
-// ═══════════════════════════════════════════════════════
+'use strict';
 
-const BACKEND_URL = 'https://desk-wellness-pack.vercel.app';
+// ── Config ─────────────────────────────────────────────────────────
+var BACKEND = 'https://desk-wellness-pack.vercel.app';
 
-// ── Storage ──────────────────────────────────────────────────────
-const storage = {
-  get(key) {
-    try { const v = localStorage.getItem(key); return v === null ? null : JSON.parse(v); }
-    catch(e) { return null; }
-  },
-  set(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
-  },
-  initDefaults() {
-    if (this.get('installDate') !== null) return false;
-    const defaults = {
-      installDate: new Date().toISOString(),
-      hasSeenWelcome: false,
-      stretchEnabled: false, stretchInterval: 30, smartMode: true, stretchSound: true,
-      completedCount: 0, snoozedCount: 0, skippedCount: 0,
-      lastCompletedCount: 0, lastSnoozedCount: 0, lastSkippedCount: 0,
-      waterEnabled: false, waterInterval: 30, waterSound: true,
-      waterGlassCount: 0, waterGoal: 8,
-    };
-    for (const [k, v] of Object.entries(defaults)) this.set(k, v);
-    return true;
+// ── Storage ────────────────────────────────────────────────────────
+var store = {
+  get: function(k) { try { var v=localStorage.getItem(k); return v===null?null:JSON.parse(v); } catch(e){return null;} },
+  set: function(k,v) { try { localStorage.setItem(k,JSON.stringify(v)); } catch(e){} },
+  init: function() {
+    if (this.get('installDate')!==null) return;
+    var d = { installDate:new Date().toISOString(), hasSeenWelcome:false,
+      stretchEnabled:false, stretchInterval:30, smartMode:true, stretchSound:true,
+      completedCount:0, snoozedCount:0, skippedCount:0,
+      lastCompletedCount:0, lastSnoozedCount:0, lastSkippedCount:0,
+      waterEnabled:false, waterInterval:30, waterSound:true, waterGlassCount:0, waterGoal:8 };
+    for (var k in d) this.set(k,d[k]);
   }
 };
 
-// ── Push notification system ─────────────────────────────────────
-// Architecture: Web Push via Vercel backend + Upstash Redis
-// Cron job fires every minute, sends push to SW, SW shows notification.
-// Works whether app is open, backgrounded, or fully killed.
-let pushSubscription = null;
+// ── Screens ────────────────────────────────────────────────────────
+var SC = { WL:'wl', HM:'hm', SW:'sw', SW2:'sw2' };
 
-// Convert base64 VAPID public key to Uint8Array for subscribe()
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
-
-async function getPushSubscription(reg) {
-  // Return existing subscription if we have one
-  const existing = await reg.pushManager.getSubscription();
-  if (existing) { pushSubscription = existing; return existing; }
-
-  // Fetch VAPID public key from server
-  let vapidPublicKey;
-  try {
-    const resp = await fetch(`${BACKEND_URL}/api/pwa-vapid-public-key`);
-    const data = await resp.json();
-    vapidPublicKey = data.publicKey;
-  } catch(e) {
-    console.error('[push] could not fetch VAPID key:', e);
-    return null;
-  }
-
-  // Subscribe to push
-  try {
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly:      true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-    });
-    pushSubscription = sub;
-    console.log('[push] subscribed:', sub.endpoint.slice(0, 60) + '...');
-    return sub;
-  } catch(e) {
-    console.error('[push] subscribe failed:', e);
-    return null;
-  }
-}
-
-async function sendScheduleToServer(schedule) {
-  const reg = await navigator.serviceWorker.ready;
-  const sub = await getPushSubscription(reg);
-  if (!sub) {
-    console.warn('[push] no subscription — cannot send schedule to server');
-    return false;
-  }
-
-  let id = storage.get('installationId');
-  if (!id) { id = 'pwa-' + Math.random().toString(36).slice(2, 15); storage.set('installationId', id); }
-
-  try {
-    const resp = await fetch(`${BACKEND_URL}/api/pwa-subscribe`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        action:         'subscribe',
-        subscription:   sub.toJSON(),
-        installationId: id,
-        schedule,
-      }),
-    });
-    const data = await resp.json();
-    console.log('[push] schedule saved to server:', data);
-    return true;
-  } catch(e) {
-    console.error('[push] sendScheduleToServer failed:', e);
-    return false;
-  }
-}
-
-async function cancelOnServer(type) {
-  const id = storage.get('installationId');
-  if (!id || !pushSubscription) return;
-
-  const schedule = {
-    stretchEnabled:  type === 'water' ? (storage.get('stretchEnabled') ?? false) : false,
-    stretchInterval: storage.get('stretchInterval') ?? 30,
-    waterEnabled:    type === 'stretch' ? (storage.get('waterEnabled') ?? false) : false,
-    waterInterval:   storage.get('waterInterval') ?? 30,
-  };
-
-  try {
-    await fetch(`${BACKEND_URL}/api/pwa-subscribe`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        action:         'update',
-        subscription:   pushSubscription.toJSON(),
-        installationId: id,
-        schedule,
-      }),
-    });
-  } catch(e) {
-    console.error('[push] cancelOnServer failed:', e);
-  }
-}
-
-// Called when Start is pressed for stretch
-function scheduleStretch(intervalMin) {
-  storage.set('nextStretchTime', Date.now() + intervalMin * 60000);
-  const schedule = {
-    stretchEnabled:  true,
-    stretchInterval: intervalMin,
-    waterEnabled:    storage.get('waterEnabled')   ?? false,
-    waterInterval:   storage.get('waterInterval')  ?? 30,
-  };
-  sendScheduleToServer(schedule);
-}
-
-function cancelStretch() {
-  storage.set('nextStretchTime', null);
-  cancelOnServer('stretch');
-}
-
-// Called when Start is pressed for water
-function scheduleWater(intervalMin) {
-  storage.set('nextWaterTime', Date.now() + intervalMin * 60000);
-  const schedule = {
-    stretchEnabled:  storage.get('stretchEnabled')  ?? false,
-    stretchInterval: storage.get('stretchInterval') ?? 30,
-    waterEnabled:    true,
-    waterInterval:   intervalMin,
-  };
-  sendScheduleToServer(schedule);
-}
-
-function cancelWater() {
-  storage.set('nextWaterTime', null);
-  cancelOnServer('water');
-}
-// ── Screen router ─────────────────────────────────────────────────
-const SCREENS = { WELCOME:'screenWelcome', HOME:'screenHome', STRETCH:'screenStretch', WATER:'screenWater' };
-
-function navigate(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById(screenId);
+function navigate(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el = document.getElementById(id);
   if (el) el.classList.add('active');
-  if (screenId === SCREENS.HOME) initHome();
+  if (id === SC.HM) initHome();
 }
 
-// ── Countdown tick ────────────────────────────────────────────────
-let tickInterval = null;
-function startTick() {
-  if (tickInterval) return;
-  tickInterval = setInterval(tick, 1000);
-  tick();
+// ── Push notifications ─────────────────────────────────────────────
+var pushSub = null;
+
+function urlB64ToU8(b64) {
+  var pad = '='.repeat((4-b64.length%4)%4);
+  var b = (b64+pad).replace(/-/g,'+').replace(/_/g,'/');
+  var raw = atob(b);
+  var arr = new Uint8Array(raw.length);
+  for (var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+  return arr;
 }
+
+async function getOrCreateSub() {
+  if (pushSub) return pushSub;
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var existing = await reg.pushManager.getSubscription();
+    if (existing) { pushSub=existing; return existing; }
+    var resp = await fetch(BACKEND+'/api/pwa-vapid-public-key');
+    var data = await resp.json();
+    var sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlB64ToU8(data.publicKey) });
+    pushSub = sub;
+    return sub;
+  } catch(e) { console.warn('[push] subscribe failed:',e); return null; }
+}
+
+async function syncSchedule() {
+  try {
+    var sub = await getOrCreateSub();
+    if (!sub) return;
+    var id = store.get('installationId');
+    if (!id) { id='pwa-'+Math.random().toString(36).slice(2,15); store.set('installationId',id); }
+    await fetch(BACKEND+'/api/pwa-subscribe', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        action:'subscribe', subscription:sub.toJSON(), installationId:id,
+        schedule:{ stretchEnabled:store.get('stretchEnabled')||false, stretchInterval:store.get('stretchInterval')||30,
+                   waterEnabled:store.get('waterEnabled')||false,   waterInterval:store.get('waterInterval')||30 }
+      })
+    });
+    console.log('[push] schedule synced');
+  } catch(e) { console.warn('[push] sync failed:',e); }
+}
+
+// ── Timer display ──────────────────────────────────────────────────
+var tickId = null;
+function startTick() { if (!tickId) tickId=setInterval(tick,1000); tick(); }
 function tick() {
-  tickTimer('nextStretchTime','timerDisplay','timerLabel','stretchEnabled','Next stretch in','var(--yellow)','Next stretch break');
-  tickTimer('nextWaterTime','waterTimerDisplay','waterTimerLabel','waterEnabled','Next water in','var(--blue)','Next water reminder');
+  doTick('nextStretchTime','tVal','tLbl','stretchEnabled','Next stretch in','var(--yellow)','Next stretch break');
+  doTick('nextWaterTime','wVal','wLbl','waterEnabled','Next water in','var(--blue)','Next water reminder');
 }
-function tickTimer(key, dispId, lblId, enabledKey, lblActive, color, lblInactive) {
-  const el = document.getElementById(dispId);
-  const lbl = document.getElementById(lblId);
-  if (!el) return;
-  if (!storage.get(enabledKey)) {
-    el.textContent = 'Timer Inactive'; el.style.color = color;
-    if (lbl) lbl.textContent = lblInactive; return;
-  }
-  const next = storage.get(key);
-  if (!next) { el.textContent = 'Starting…'; el.style.color = color; return; }
-  const rem = next - Date.now();
-  if (rem <= 0) { el.textContent = '00:00'; el.style.color = color; return; }
-  const m = Math.floor(rem / 60000), s = Math.floor((rem % 60000) / 1000);
-  el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-  el.style.color = color;
-  if (lbl) lbl.textContent = lblActive;
+function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
+  var el=document.getElementById(dId); if(!el) return;
+  el.style.color=col;
+  if (!store.get(enKey)) { el.textContent='Timer Inactive'; var l=document.getElementById(lId); if(l) l.textContent=lblOff; return; }
+  var next=store.get(key);
+  if (!next) { el.textContent='Starting…'; return; }
+  var rem=next-Date.now();
+  if (rem<=0) { el.textContent='00:00'; return; }
+  var m=Math.floor(rem/60000), s=Math.floor((rem%60000)/1000);
+  el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  var l=document.getElementById(lId); if(l) l.textContent=lblOn;
 }
 
-// ── Custom select ─────────────────────────────────────────────────
-function initSelect(wrapId, onChange) {
-  const wrap = document.getElementById(wrapId);
-  if (!wrap) return;
-  const trigger = wrap.querySelector('.custom-select-trigger');
-  const opts    = wrap.querySelector('.custom-select-options');
-  const label   = trigger?.querySelector('span');
-  if (!trigger || !opts) return;
-
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    trigger.classList.toggle('open');
-    opts.classList.toggle('open');
-  });
-  wrap.querySelectorAll('.custom-select-option').forEach(opt => {
-    opt.addEventListener('click', () => {
-      wrap.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+// ── Custom select ──────────────────────────────────────────────────
+function initSel(wrapId, onChange) {
+  var wrap=document.getElementById(wrapId); if(!wrap) return;
+  var trig=wrap.querySelector('.sel-trig');
+  var opts=wrap.querySelector('.sel-opts');
+  var lbl=trig&&trig.querySelector('span');
+  if (!trig||!opts) return;
+  trig.addEventListener('click',function(e){ e.stopPropagation(); trig.classList.toggle('open'); opts.classList.toggle('open'); });
+  wrap.querySelectorAll('.sel-opt').forEach(function(opt){
+    opt.addEventListener('click',function(){
+      wrap.querySelectorAll('.sel-opt').forEach(function(o){o.classList.remove('selected');});
       opt.classList.add('selected');
-      if (label) label.textContent = opt.textContent;
-      trigger.classList.remove('open'); opts.classList.remove('open');
-      if (onChange) onChange(opt.dataset.value);
+      if(lbl) lbl.textContent=opt.textContent;
+      trig.classList.remove('open'); opts.classList.remove('open');
+      if(onChange) onChange(opt.dataset.value);
     });
   });
-  document.addEventListener('click', () => { trigger.classList.remove('open'); opts.classList.remove('open'); });
+  document.addEventListener('click',function(){ trig.classList.remove('open'); opts.classList.remove('open'); });
 }
-
-function setSelectValue(wrapId, value) {
-  const wrap = document.getElementById(wrapId);
-  if (!wrap) return;
-  wrap.querySelectorAll('.custom-select-option').forEach(opt => {
-    const sel = Number(opt.dataset.value) === Number(value);
-    opt.classList.toggle('selected', sel);
-    if (sel) { const lbl = wrap.querySelector('.custom-select-trigger span'); if (lbl) lbl.textContent = opt.textContent; }
+function setSel(wrapId, val) {
+  var wrap=document.getElementById(wrapId); if(!wrap) return;
+  wrap.querySelectorAll('.sel-opt').forEach(function(opt){
+    var sel=Number(opt.dataset.value)===Number(val);
+    opt.classList.toggle('selected',sel);
+    if(sel){ var l=wrap.querySelector('.sel-trig span'); if(l) l.textContent=opt.textContent; }
   });
 }
 
-// ── Home screen ───────────────────────────────────────────────────
-let homeInitialised = false;
+// ── Home ───────────────────────────────────────────────────────────
+var homeReady = false;
 function initHome() {
-  if (homeInitialised) { renderStats(); tick(); return; }
-  homeInitialised = true;
+  renderStats(); tick();
+  if (homeReady) return;
+  homeReady = true;
 
   // Tabs
-  document.getElementById('tabStretch')?.addEventListener('click', () => activateTab('stretch'));
-  document.getElementById('tabWater')?.addEventListener('click',   () => activateTab('water'));
+  document.getElementById('tabS').addEventListener('click',function(){ setTab('s'); });
+  document.getElementById('tabW').addEventListener('click',function(){ setTab('w'); });
 
-  // Stretch controls
-  document.getElementById('startBtn')?.addEventListener('click', () => {
-    storage.set('stretchEnabled', true);
-    scheduleStretch(storage.get('stretchInterval') ?? 30);
-    updateStretchUI(true);
+  // Stretch
+  document.getElementById('startS').addEventListener('click',function(){
+    store.set('stretchEnabled',true);
+    var iv=store.get('stretchInterval')||30;
+    store.set('nextStretchTime',Date.now()+iv*60000);
+    updateStretchUI(true); syncSchedule();
   });
-  document.getElementById('stopBtn')?.addEventListener('click', () => {
-    storage.set('stretchEnabled', false);
-    cancelStretch();
-    updateStretchUI(false);
+  document.getElementById('stopS').addEventListener('click',function(){
+    store.set('stretchEnabled',false); store.set('nextStretchTime',null);
+    updateStretchUI(false); syncSchedule();
   });
-  document.getElementById('smartModeToggle')?.addEventListener('change', e => storage.set('smartMode', e.target.checked));
-  document.getElementById('soundToggle')?.addEventListener('change',     e => storage.set('stretchSound', e.target.checked));
+  document.getElementById('smartTog').addEventListener('change',function(e){ store.set('smartMode',e.target.checked); });
+  document.getElementById('soundTog').addEventListener('change',function(e){ store.set('stretchSound',e.target.checked); });
+  initSel('selS',function(v){ store.set('stretchInterval',Number(v)); if(store.get('stretchEnabled')){ store.set('nextStretchTime',Date.now()+Number(v)*60000); syncSchedule(); } });
 
-  initSelect('customSelectWrap', val => {
-    storage.set('stretchInterval', Number(val));
-    if (storage.get('stretchEnabled')) scheduleStretch(Number(val));
+  // Water
+  document.getElementById('startW').addEventListener('click',function(){
+    store.set('waterEnabled',true);
+    var iv=store.get('waterInterval')||30;
+    store.set('nextWaterTime',Date.now()+iv*60000);
+    updateWaterUI(true); syncSchedule();
   });
-
-  // Water controls
-  document.getElementById('waterStartBtn')?.addEventListener('click', () => {
-    storage.set('waterEnabled', true);
-    scheduleWater(storage.get('waterInterval') ?? 30);
-    updateWaterUI(true);
+  document.getElementById('stopW').addEventListener('click',function(){
+    store.set('waterEnabled',false); store.set('nextWaterTime',null);
+    updateWaterUI(false); syncSchedule();
   });
-  document.getElementById('waterStopBtn')?.addEventListener('click', () => {
-    storage.set('waterEnabled', false);
-    cancelWater();
-    updateWaterUI(false);
-  });
-  document.getElementById('waterSoundToggle')?.addEventListener('change', e => storage.set('waterSound', e.target.checked));
-  document.getElementById('waterGoalMinus')?.addEventListener('click', () => changeGoal(-1));
-  document.getElementById('waterGoalPlus')?.addEventListener('click',  () => changeGoal(+1));
-
-  initSelect('waterCustomSelectWrap', val => {
-    storage.set('waterInterval', Number(val));
-    if (storage.get('waterEnabled')) scheduleWater(Number(val));
-  });
+  document.getElementById('wSndTog').addEventListener('change',function(e){ store.set('waterSound',e.target.checked); });
+  document.getElementById('wMinus').addEventListener('click',function(){ changeGoal(-1); });
+  document.getElementById('wPlus').addEventListener('click',function(){ changeGoal(1); });
+  initSel('selW',function(v){ store.set('waterInterval',Number(v)); if(store.get('waterEnabled')){ store.set('nextWaterTime',Date.now()+Number(v)*60000); syncSchedule(); } });
 
   // Upgrade
-  document.getElementById('upgradeBtn')?.addEventListener('click',      () => openUpgrade('stretch'));
-  document.getElementById('verifyBtn')?.addEventListener('click',       () => verifyPayment('stretch'));
-  document.getElementById('waterUpgradeBtn')?.addEventListener('click', () => openUpgrade('water'));
-  document.getElementById('waterVerifyBtn')?.addEventListener('click',  () => verifyPayment('water'));
+  document.getElementById('upgS').addEventListener('click',function(){ doUpgrade('stretch'); });
+  document.getElementById('verS').addEventListener('click',function(){ doVerify('stretch'); });
+  document.getElementById('upgW').addEventListener('click',function(){ doUpgrade('water'); });
+  document.getElementById('verW').addEventListener('click',function(){ doVerify('water'); });
 
-  // Load state
+  // Back buttons
+  document.getElementById('swBack').addEventListener('click',function(){ navigate(SC.HM); });
+  document.getElementById('sw2Back').addEventListener('click',function(){ navigate(SC.HM); });
+
   loadState();
   startTick();
 }
 
-function activateTab(tab) {
-  const isStretch = tab === 'stretch';
-  document.getElementById('tabStretch')?.classList.toggle('tab-active', isStretch);
-  document.getElementById('tabWater')?.classList.toggle('tab-active', !isStretch);
-  document.getElementById('sectionStretch')?.classList.toggle('hidden', !isStretch);
-  document.getElementById('sectionWater')?.classList.toggle('hidden', isStretch);
+function setTab(t) {
+  var isS=t==='s';
+  document.getElementById('tabS').classList.toggle('act',isS);
+  document.getElementById('tabW').classList.toggle('act',!isS);
+  document.getElementById('secS').classList.toggle('hidden',!isS);
+  document.getElementById('secW').classList.toggle('hidden',isS);
 }
 
 function loadState() {
-  const stretchEnabled = storage.get('stretchEnabled') ?? false;
-  const waterEnabled   = storage.get('waterEnabled')   ?? false;
-
-  // Toggles
-  const sm = document.getElementById('smartModeToggle'); if(sm) sm.checked = storage.get('smartMode') ?? true;
-  const ss = document.getElementById('soundToggle');     if(ss) ss.checked = storage.get('stretchSound') ?? true;
-  const ws = document.getElementById('waterSoundToggle');if(ws) ws.checked = storage.get('waterSound') ?? true;
-
-  // Selects
-  setSelectValue('customSelectWrap',      storage.get('stretchInterval') ?? 30);
-  setSelectValue('waterCustomSelectWrap', storage.get('waterInterval')   ?? 30);
-
-  updateStretchUI(stretchEnabled);
-  updateWaterUI(waterEnabled);
-  updateWaterGlasses(storage.get('waterGlassCount') ?? 0, storage.get('waterGoal') ?? 8);
-
-  // Pro
-  const isPro      = !!storage.get('licenseToken');
-  const isWaterPro = !!storage.get('waterLicenseToken');
-  document.getElementById('upgradeCard')?.classList.toggle('hidden', isPro);
-  document.getElementById('proIntegrationsCard')?.classList.toggle('hidden', !isPro);
-  document.getElementById('stretchProBadge')?.classList.toggle('hidden', !isPro);
-  document.getElementById('waterUpgradeCard')?.classList.toggle('hidden', isWaterPro);
-  document.getElementById('waterProCard')?.classList.toggle('hidden', !isWaterPro);
-  document.getElementById('waterProBadge')?.classList.toggle('hidden', !isWaterPro);
-  unlockGoalStepper(isWaterPro);
-
+  var se=store.get('stretchEnabled')||false, we=store.get('waterEnabled')||false;
+  var sm=document.getElementById('smartTog'); if(sm) sm.checked=store.get('smartMode')||true;
+  var ss=document.getElementById('soundTog'); if(ss) ss.checked=store.get('stretchSound')||true;
+  var ws=document.getElementById('wSndTog'); if(ws) ws.checked=store.get('waterSound')||true;
+  setSel('selS',store.get('stretchInterval')||30);
+  setSel('selW',store.get('waterInterval')||30);
+  updateStretchUI(se); updateWaterUI(we);
+  updateWaterGlasses(store.get('waterGlassCount')||0, store.get('waterGoal')||8);
+  var sp=!!store.get('licenseToken'), wp=!!store.get('waterLicenseToken');
+  document.getElementById('uCardS').classList.toggle('hidden',sp);
+  document.getElementById('proS').classList.toggle('hidden',!sp);
+  document.getElementById('spb').classList.toggle('hidden',!sp);
+  document.getElementById('uCardW').classList.toggle('hidden',wp);
+  document.getElementById('proW').classList.toggle('hidden',!wp);
+  document.getElementById('wpb').classList.toggle('hidden',!wp);
+  unlockGoal(wp);
   renderStats();
 }
 
-function updateStretchUI(enabled) {
-  const start = document.getElementById('startBtn');
-  const stop  = document.getElementById('stopBtn');
-  if (start) start.disabled = enabled;
-  if (stop)  stop.disabled  = !enabled;
-  if (!enabled) {
-    const d = document.getElementById('timerDisplay'); if(d) d.textContent = 'Timer Inactive';
-    const l = document.getElementById('timerLabel');   if(l) l.textContent = 'Next stretch break';
+function updateStretchUI(on) {
+  var s=document.getElementById('startS'), p=document.getElementById('stopS');
+  if(s) s.disabled=on; if(p) p.disabled=!on;
+  if(!on){ var d=document.getElementById('tVal'); if(d) d.textContent='Timer Inactive'; var l=document.getElementById('tLbl'); if(l) l.textContent='Next stretch break'; }
+}
+function updateWaterUI(on) {
+  var s=document.getElementById('startW'), p=document.getElementById('stopW');
+  if(s) s.disabled=on; if(p) p.disabled=!on;
+  if(!on){ var d=document.getElementById('wVal'); if(d) d.textContent='Timer Inactive'; var l=document.getElementById('wLbl'); if(l) l.textContent='Next water reminder'; }
+}
+function updateWaterGlasses(cnt, goal) {
+  var c=document.getElementById('wCnt'); if(c) c.textContent=cnt;
+  var g=document.getElementById('wGoalD'); if(g) g.textContent=goal;
+  var gv=document.getElementById('wGoalV'); if(gv) gv.textContent=goal;
+  var f=document.getElementById('wFill'); if(f) f.style.height=Math.min(100,Math.round(cnt/goal*100))+'%';
+  var dots=document.getElementById('wDots'); if(!dots) return;
+  dots.innerHTML='';
+  for(var i=0;i<goal;i++){
+    var d=document.createElement('div');
+    d.style.cssText='width:10px;height:10px;border-radius:50%;background:'+(i<cnt?'var(--blue)':'rgba(90,169,255,.2)')+';transition:background .3s;';
+    dots.appendChild(d);
   }
 }
-
-function updateWaterUI(enabled) {
-  const start = document.getElementById('waterStartBtn');
-  const stop  = document.getElementById('waterStopBtn');
-  if (start) start.disabled = enabled;
-  if (stop)  stop.disabled  = !enabled;
-  if (!enabled) {
-    const d = document.getElementById('waterTimerDisplay'); if(d) d.textContent = 'Timer Inactive';
-    const l = document.getElementById('waterTimerLabel');   if(l) l.textContent = 'Next water reminder';
-  }
-}
-
-function updateWaterGlasses(count, goal) {
-  const countEl = document.getElementById('waterGlassCount');
-  const goalEl  = document.getElementById('waterGoalDisplay');
-  const goalVal = document.getElementById('waterGoalValue');
-  const fillEl  = document.getElementById('waterMiniGlassFill');
-  const dotsEl  = document.getElementById('waterDotsContainer');
-  if (countEl) countEl.textContent = count;
-  if (goalEl)  goalEl.textContent  = goal;
-  if (goalVal) goalVal.textContent = goal;
-  if (fillEl)  fillEl.style.height = Math.min(100, Math.round(count/goal*100)) + '%';
-  if (dotsEl) {
-    dotsEl.innerHTML = '';
-    for (let i = 0; i < goal; i++) {
-      const dot = document.createElement('div');
-      dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${i < count ? 'var(--blue)' : 'rgba(90,169,255,.2)'};transition:background .3s;`;
-      dotsEl.appendChild(dot);
-    }
-  }
-}
-
 function changeGoal(delta) {
-  const current = storage.get('waterGoal') ?? 8;
-  const next = Math.max(1, Math.min(20, current + delta));
-  storage.set('waterGoal', next);
-  updateWaterGlasses(storage.get('waterGlassCount') ?? 0, next);
+  var cur=store.get('waterGoal')||8, next=Math.max(1,Math.min(20,cur+delta));
+  store.set('waterGoal',next); updateWaterGlasses(store.get('waterGlassCount')||0,next);
 }
-
-function unlockGoalStepper(isPro) {
-  const stepper  = document.getElementById('waterGoalStepper');
-  const lock     = document.getElementById('waterGoalLockIcon');
-  const sublabel = document.getElementById('waterGoalSubLabel');
-  if (stepper)  { stepper.style.opacity = isPro ? '1' : '0.4'; stepper.style.pointerEvents = isPro ? 'auto' : 'none'; }
-  if (lock)       lock.style.display = isPro ? 'none' : 'inline';
-  if (sublabel)   sublabel.textContent = isPro ? 'Your daily hydration target' : 'Upgrade to Pro to set your own goal';
+function unlockGoal(isPro) {
+  var st=document.getElementById('wStepper'); if(st){st.style.opacity=isPro?'1':'0.4';st.style.pointerEvents=isPro?'auto':'none';}
+  var lk=document.getElementById('wLock'); if(lk) lk.style.display=isPro?'none':'inline';
+  var sl=document.getElementById('wGoalSub'); if(sl) sl.textContent=isPro?'Your daily hydration target':'Upgrade to Pro to set your own goal';
 }
-
 function renderStats() {
-  ['completedCount','snoozedCount','skippedCount','lastCompletedCount','lastSnoozedCount','lastSkippedCount'].forEach(f => {
-    const el = document.getElementById(f); if (el) el.textContent = storage.get(f) ?? 0;
-  });
+  var m={'lcC':'lastCompletedCount','lsC':'lastSnoozedCount','lkC':'lastSkippedCount','cC':'completedCount','sC':'snoozedCount','kC':'skippedCount'};
+  for(var id in m){ var el=document.getElementById(id); if(el) el.textContent=store.get(m[id])||0; }
 }
-
-// ── Upgrade ───────────────────────────────────────────────────────
-async function openUpgrade(module) {
-  let id = storage.get('installationId');
-  if (!id) { id = 'pwa-' + Math.random().toString(36).slice(2,15); storage.set('installationId', id); }
-  const endpoint = module === 'water' ? `${BACKEND_URL}/api/create-water-checkout` : `${BACKEND_URL}/api/create-checkout`;
+async function doUpgrade(mod) {
+  var id=store.get('installationId'); if(!id){id='pwa-'+Math.random().toString(36).slice(2,15);store.set('installationId',id);}
+  var ep=mod==='water'?BACKEND+'/api/create-water-checkout':BACKEND+'/api/create-checkout';
   try {
-    const resp = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({installationId:id}) });
-    const data = await resp.json();
-    if (data.url) {
-      window.open(data.url, '_blank');
-      const vBtn = document.getElementById(module === 'water' ? 'waterVerifyBtn' : 'verifyBtn');
-      const note = document.getElementById(module === 'water' ? 'waterPendingNote' : 'pendingNote');
-      if (vBtn) vBtn.style.display = 'flex';
-      if (note) note.style.display = 'block';
-    }
-  } catch(e) { alert('Could not connect. Check your connection and try again.'); }
+    var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
+    var d=await r.json();
+    if(d.url){ window.open(d.url,'_blank');
+      var vb=document.getElementById(mod==='water'?'verW':'verS'); if(vb) vb.style.display='flex';
+      var pn=document.getElementById(mod==='water'?'pnoteW':'pnoteS'); if(pn) pn.style.display='block'; }
+  } catch(e){ alert('Could not connect. Check your connection.'); }
 }
-
-async function verifyPayment(module) {
-  const id = storage.get('installationId'); if (!id) return;
-  const endpoint = module === 'water' ? `${BACKEND_URL}/api/verify-water-payment` : `${BACKEND_URL}/api/verify-payment`;
+async function doVerify(mod) {
+  var id=store.get('installationId'); if(!id) return;
+  var ep=mod==='water'?BACKEND+'/api/verify-water-payment':BACKEND+'/api/verify-payment';
   try {
-    const resp = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({installationId:id}) });
-    const data = await resp.json();
-    if (data.token) {
-      storage.set(module === 'water' ? 'waterLicenseToken' : 'licenseToken', data.token);
-      homeInitialised = false; loadState();
-    } else { alert('Payment not found yet — complete checkout and try again.'); }
-  } catch(e) { alert('Could not verify. Check your connection.'); }
+    var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
+    var d=await r.json();
+    if(d.token){ store.set(mod==='water'?'waterLicenseToken':'licenseToken',d.token); homeReady=false; loadState(); }
+    else alert('Payment not found yet — complete checkout and try again.');
+  } catch(e){ alert('Could not verify. Check your connection.'); }
 }
 
-// ── Welcome ───────────────────────────────────────────────────────
-const ua = navigator.userAgent;
-const isIOS      = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-const isAndroid  = /Android/.test(ua);
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-
+// ── Welcome ────────────────────────────────────────────────────────
 function showWelcomeCard() {
-  const android  = document.getElementById('notifCardAndroid');
-  const ios      = document.getElementById('notifCardIOS');
-  const desktop  = document.getElementById('notifCardDesktop');
-  if (isIOS && !isStandalone) {
-    android.style.display = 'none'; ios.style.display = 'block';
-  } else if (!isIOS && !isAndroid) {
-    android.style.display = 'none'; desktop.style.display = 'block';
-  }
+  var ua=navigator.userAgent;
+  var isIOS=/iPad|iPhone|iPod/.test(ua)&&!window.MSStream;
+  var isAndroid=/Android/.test(ua);
+  var isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if (isIOS&&!isStandalone) { document.getElementById('nc-android').style.display='none'; document.getElementById('nc-ios').style.display='block'; }
+  else if (!isIOS&&!isAndroid) { document.getElementById('nc-android').style.display='none'; document.getElementById('nc-desktop').style.display='block'; }
 }
 
-document.getElementById('requestNotifBtn')?.addEventListener('click', async () => {
-  const status = document.getElementById('notifStatus');
-  if (!('Notification' in window)) {
-    status.textContent = 'Notifications not supported here. Try adding to Home Screen first.';
-    status.style.color = 'var(--red)'; status.style.display = 'block'; return;
-  }
-  const perm = await Notification.requestPermission();
-  storage.set('notificationPermission', perm);
-  if (perm === 'granted') {
-    status.textContent = "✅ You're all set! Notifications enabled.";
-    status.style.color = 'var(--green)';
-    // Check if Samsung/Xiaomi — known to kill background processes aggressively
-    const isSamsung = /Samsung/i.test(navigator.userAgent);
-    const isXiaomi  = /Xiaomi|MIUI/i.test(navigator.userAgent);
-    if (isSamsung || isXiaomi) {
-      status.textContent += ' One more step: go to Settings → Battery → App battery usage → find Chrome → set to "Unrestricted". This lets reminders fire when your phone is locked.';
-    }
-  } else {
-    status.textContent = 'Notifications blocked. Go to Settings → Apps → Chrome → Notifications to enable.';
-    status.style.color = 'var(--red)';
-  }
-  status.style.display = 'block';
-  setTimeout(() => { storage.set('hasSeenWelcome', true); navigate(SCREENS.HOME); }, perm === 'granted' ? 1500 : 3000);
+document.getElementById('notifBtn').addEventListener('click',async function(){
+  var st=document.getElementById('notifStatus');
+  if(!('Notification' in window)){ st.textContent='Not supported here. Try adding to Home Screen first.'; st.style.color='var(--red)'; st.style.display='block'; return; }
+  var perm=await Notification.requestPermission();
+  store.set('notificationPermission',perm);
+  st.textContent=perm==='granted'?"✅ You're all set!":'Blocked — go to Settings → Chrome → Notifications.';
+  st.style.color=perm==='granted'?'var(--green)':'var(--red)'; st.style.display='block';
+  setTimeout(function(){ store.set('hasSeenWelcome',true); navigate(SC.HM); }, 1200);
 });
+document.getElementById('skipBtn').addEventListener('click',function(){ store.set('hasSeenWelcome',true); navigate(SC.HM); });
 
-document.getElementById('welcomeSkipBtn')?.addEventListener('click', () => {
-  storage.set('hasSeenWelcome', true); navigate(SCREENS.HOME);
-});
-
-// ── Back buttons (placeholder screens) ───────────────────────────
-document.getElementById('stretchBackBtn')?.addEventListener('click', () => navigate(SCREENS.HOME));
-document.getElementById('waterBackBtn')?.addEventListener('click',   () => navigate(SCREENS.HOME));
-
-// Dismiss background tip
-document.getElementById('bgTipClose')?.addEventListener('click', () => {
-  const card = document.getElementById('bgTipCard');
-  if (card) card.style.display = 'none';
-  storage.set('bgTipDismissed', true);
-});
-if (storage.get('bgTipDismissed')) {
-  const card = document.getElementById('bgTipCard');
-  if (card) card.style.display = 'none';
-}
-
-// ── Service Worker ───────────────────────────────────────────────
+// ── Service Worker ─────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js', { scope: './' })
-    .then(reg => {
-      console.log('[SW] registered, scope:', reg.scope);
-    })
-    .catch(e => console.error('[SW] registration failed:', e));
-
-  // Listen for NAVIGATE messages from SW (notification tap → open right screen)
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    const { type, screen } = event.data || {};
-    if (type === 'NAVIGATE' && screen) {
-      navigate(SCREENS[screen.toUpperCase()] || SCREENS.HOME);
-    }
+  navigator.serviceWorker.register('./service-worker.js',{scope:'./'})
+    .then(function(reg){ console.log('[SW] registered',reg.scope); })
+    .catch(function(e){ console.warn('[SW] failed',e); });
+  navigator.serviceWorker.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='NAVIGATE'&&e.data.screen){ navigate(SC[e.data.screen.toUpperCase()]||SC.HM); }
   });
 }
-// ── Visibility change — catch missed reminders when app reopens ───
-// If the app was swiped away and reopened, the setTimeout won't have fired.
-// This checks if any reminder is overdue and fires it immediately.
-document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState !== 'visible') return;
-  const now = Date.now();
 
-  if (storage.get('stretchEnabled')) {
-    const next = storage.get('nextStretchTime');
-    const interval = storage.get('stretchInterval') ?? 30;
-    if (next && now >= next) {
-      console.log('[notif] overdue stretch — firing on reopen');
-      await fireNotification('stretch', interval);
-      scheduleStretch(interval); // restart fresh timer
-    }
-  }
-
-  if (storage.get('waterEnabled')) {
-    const next = storage.get('nextWaterTime');
-    const interval = storage.get('waterInterval') ?? 30;
-    if (next && now >= next) {
-      console.log('[notif] overdue water — firing on reopen');
-      await fireNotification('water', interval);
-      scheduleWater(interval);
-    }
-  }
-});
-// ── Boot ──────────────────────────────────────────────────────────
+// ── Boot ───────────────────────────────────────────────────────────
 function boot() {
-  storage.initDefaults();
+  store.init();
   showWelcomeCard();
-  const hasSeenWelcome = storage.get('hasSeenWelcome');
-  const params = new URLSearchParams(window.location.search);
-  const target = params.get('screen');
-  if (!hasSeenWelcome) {
-    navigate(SCREENS.WELCOME);
-  } else if (target === 'stretch') {
-    navigate(SCREENS.STRETCH);
-  } else if (target === 'water') {
-    navigate(SCREENS.WATER);
-  } else {
-    navigate(SCREENS.HOME);
-  }
-  const loader = document.getElementById('loadingScreen');
-  if (loader) { loader.classList.add('fade-out'); setTimeout(() => loader.remove(), 350); }
+  var params=new URLSearchParams(window.location.search), scr=params.get('screen');
+  if (!store.get('hasSeenWelcome')) navigate(SC.WL);
+  else if (scr==='stretch') navigate(SC.SW);
+  else if (scr==='water')   navigate(SC.SW2);
+  else navigate(SC.HM);
+  var ls=document.getElementById('ls');
+  if(ls){ ls.classList.add('out'); setTimeout(function(){ ls.remove(); },350); }
 }
 
-// ── Failsafe ─────────────────────────────────────────────────────
-// If boot() or any JS crashes, force the app visible after 3 seconds
-// so the user isn't stuck on a loading screen forever.
-const _failsafe = setTimeout(() => {
-  const loader = document.getElementById('loadingScreen');
-  if (loader) loader.style.display = 'none';
-  const home = document.getElementById('screenHome');
-  if (home) home.classList.add('active');
-  console.warn('[failsafe] forced app visible after timeout');
-}, 3000);
-
-// Catch any uncaught JS errors and show them on screen
-window.addEventListener('error', (e) => {
-  clearTimeout(_failsafe);
-  const loader = document.getElementById('loadingScreen');
-  if (loader) {
-    loader.innerHTML = '<div style="padding:24px;color:#ff8a80;font-size:13px;font-family:monospace;max-width:320px;text-align:left;">'
-      + '<div style="font-size:16px;margin-bottom:12px;">⚠️ JS Error</div>'
-      + '<div>' + (e.message || 'Unknown error') + '</div>'
-      + '<div style="margin-top:8px;opacity:0.6;">' + (e.filename ? e.filename.split('/').pop() : '') + ':' + e.lineno + '</div>'
-      + '</div>';
-  }
-  console.error('[boot error]', e.message, e.filename, e.lineno);
-});
-
-try {
-  boot();
-  clearTimeout(_failsafe);
-} catch(e) {
-  clearTimeout(_failsafe);
-  const loader = document.getElementById('loadingScreen');
-  if (loader) {
-    loader.innerHTML = '<div style="padding:24px;color:#ff8a80;font-size:13px;font-family:monospace;max-width:320px;text-align:left;">'
-      + '<div style="font-size:16px;margin-bottom:12px;">⚠️ Boot Error</div>'
-      + '<div>' + e.message + '</div>'
-      + '</div>';
-  }
-  console.error('[boot] crashed:', e);
-}
+boot();
 </script>
 </body>
 </html>
