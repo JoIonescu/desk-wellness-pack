@@ -13,40 +13,63 @@
   <title>Desk Wellness Pack</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="./css/base.css" />
 
   <style>
-    /* Critical styles — inlined so they work even if base.css is slow/fails */
-    :root { color-scheme: dark light; }
+    /* ── Reset & base ── */
+    :root {
+      color-scheme: dark light;
+      --yellow: #ffd400; --orange: #ff7a00; --green: #34c759;
+      --red: #ff8a80; --blue: #5aa9ff; --blue2: #3d8fe0;
+      --touch-min: 48px;
+    }
     *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html { height: 100%; -webkit-text-size-adjust: 100%; }
     body {
-      margin: 0; padding: 0;
-      min-height: 100dvh;
+      margin: 0; padding: 0; min-height: 100dvh;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased; overscroll-behavior: none;
     }
-    @media (prefers-color-scheme: dark)  { body { background: linear-gradient(180deg,#1b1f2a,#23293a); color:#fff; } }
-    @media (prefers-color-scheme: light) { body { background: linear-gradient(180deg,#f0f2f7,#e4e8f2); color:#1b1f2a; } }
 
-    /* Loading screen — must always be visible */
+    /* ── Colour modes ── */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-1:#1b1f2a; --bg-2:#23293a;
+        --panel:rgba(255,255,255,.08); --panel-border:rgba(255,255,255,.12);
+        --text:#fff; --muted:#8d97ae; --muted2:#c7cedd;
+        --stat-bg:rgba(255,255,255,.06); --stat-border:rgba(255,255,255,.08);
+        --select-bg:#1e2535; --setting-border:rgba(255,255,255,.07);
+        --timer-bg:rgba(255,255,255,.06); --timer-border:rgba(255,255,255,.08);
+        --toggle-off:rgba(255,255,255,.18);
+      }
+      body { background: linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:#fff; }
+      #loadingScreen { background:#1b1f2a; }
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-1:#f0f2f7; --bg-2:#e4e8f2;
+        --panel:rgba(255,255,255,.85); --panel-border:rgba(0,0,0,.08);
+        --text:#1b1f2a; --muted:#5a6480; --muted2:#3a4260;
+        --stat-bg:rgba(0,0,0,.04); --stat-border:rgba(0,0,0,.06);
+        --select-bg:#fff; --setting-border:rgba(0,0,0,.07);
+        --timer-bg:rgba(0,0,0,.04); --timer-border:rgba(0,0,0,.08);
+        --toggle-off:rgba(0,0,0,.15);
+      }
+      body { background: linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:#1b1f2a; }
+      #loadingScreen { background:#f0f2f7; }
+    }
+
+    /* ── Loading ── */
     #loadingScreen {
-      position: fixed; inset: 0; z-index: 9999;
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 14px;
-      transition: opacity 0.3s ease;
+      position:fixed; inset:0; z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      flex-direction:column; gap:14px; transition:opacity .3s ease;
     }
-    @media (prefers-color-scheme: dark)  { #loadingScreen { background: #1b1f2a; } }
-    @media (prefers-color-scheme: light) { #loadingScreen { background: #f0f2f7; } }
-    #loadingScreen.fade-out { opacity: 0; pointer-events: none; }
-    .loading-icon { font-size: 40px; animation: pulse 1.5s ease infinite; }
+    #loadingScreen.fade-out { opacity:0; pointer-events:none; }
+    .loading-icon { font-size:40px; animation:pulse 1.5s ease infinite; }
+    .loading-text { font-size:14px; color:var(--muted); }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .loading-text { font-size: 14px; }
-    @media (prefers-color-scheme: dark)  { .loading-text { color: #8d97ae; } }
-    @media (prefers-color-scheme: light) { .loading-text { color: #5a6480; } }
 
-    /* App shell */
+    /* ── App shell ── */
     #app { display:flex; flex-direction:column; min-height:100dvh;
       padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
       padding-left:env(safe-area-inset-left,0px); padding-right:env(safe-area-inset-right,0px); }
@@ -56,57 +79,123 @@
       padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
       display:flex; flex-direction:column; gap:10px; }
 
-    /* Tab bar */
-    .tab-bar { display:flex; gap:6px; border-radius:14px; padding:5px; }
-    @media (prefers-color-scheme: dark)  { .tab-bar { background:rgba(0,0,0,.25); } }
-    @media (prefers-color-scheme: light) { .tab-bar { background:rgba(0,0,0,.07); } }
+    /* ── Card ── */
+    .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:20px; padding:16px; box-shadow:0 4px 16px rgba(0,0,0,.12); }
+
+    /* ── Buttons ── */
+    .btn { display:flex; align-items:center; justify-content:center; border:none; border-radius:16px;
+      padding:0 20px; height:var(--touch-min); font-size:15px; font-weight:800; font-family:inherit;
+      cursor:pointer; transition:transform .15s,opacity .15s; -webkit-user-select:none; user-select:none; }
+    .btn:active { transform:scale(.97); }
+    .btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+    .btn-start { background:var(--green); color:#0f1b12; flex:1; }
+    .btn-stop  { background:var(--red);   color:#2b1010; flex:1; }
+    .btn-upgrade { background:linear-gradient(135deg,var(--yellow),var(--orange)); color:#1b1f2a; width:100%; margin-top:14px; font-size:16px; height:52px; border-radius:16px; }
+    .btn-verify  { background:var(--blue); color:#0a1220; width:100%; margin-top:10px; font-size:14px; height:48px; border-radius:14px; display:none; }
+    .btn-secondary { background:rgba(128,128,128,.15); border:1px solid rgba(128,128,128,.2); color:var(--muted); width:100%; font-size:14px; }
+    .controls { display:flex; gap:10px; margin-top:12px; }
+
+    /* ── Toggle ── */
+    .toggle { appearance:none; -webkit-appearance:none; width:44px; min-width:44px; height:26px;
+      border-radius:100px; border:none; background:var(--toggle-off); cursor:pointer;
+      position:relative; transition:background .2s; flex-shrink:0; margin:0; }
+    .toggle::after { content:""; position:absolute; width:20px; height:20px; border-radius:50%;
+      background:rgba(255,255,255,.7); top:3px; left:3px; transition:transform .2s,background .2s; }
+    .toggle:checked { background:var(--yellow); }
+    .toggle:checked::after { background:#1b1f2a; transform:translateX(18px); }
+    .toggle-blue:checked { background:var(--blue); }
+    .toggle-blue:checked::after { background:#081726; }
+
+    /* ── Setting row ── */
+    .setting { display:flex; align-items:flex-start; justify-content:space-between;
+      gap:12px; padding:10px 0; min-height:var(--touch-min); }
+    .setting+.setting { border-top:1px solid var(--setting-border); }
+    .setting-text { flex:1; min-width:0; }
+    .label { font-size:15px; font-weight:600; line-height:1.3; }
+    .sub-label { font-size:12px; color:var(--muted); margin-top:3px; line-height:1.45; }
+
+    /* ── Timer box ── */
+    .timer-box { display:flex; flex-direction:column; align-items:center; justify-content:center;
+      min-height:88px; border-radius:16px; background:var(--timer-bg); border:1px solid var(--timer-border);
+      text-align:center; padding:16px; }
+    .timer-label { font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .timer-value { font-size:32px; font-weight:800; line-height:1; color:var(--yellow); }
+
+    /* ── Custom select ── */
+    .custom-select-wrap { width:100%; user-select:none; }
+    .custom-select-trigger { display:flex; align-items:center; justify-content:space-between;
+      padding:0 16px; height:var(--touch-min); border-radius:14px;
+      border:1px solid var(--panel-border); background:var(--panel);
+      color:var(--text); font-size:15px; font-weight:600; cursor:pointer; }
+    .custom-select-trigger.open { border-radius:14px 14px 0 0; border-color:rgba(255,212,0,.5); border-bottom-color:transparent; }
+    .custom-select-arrow { font-size:11px; color:var(--muted); transition:transform .2s; }
+    .custom-select-trigger.open .custom-select-arrow { transform:rotate(180deg); }
+    .custom-select-options { width:100%; background:var(--select-bg); border:1px solid rgba(255,212,0,.3);
+      border-top:none; border-radius:0 0 14px 14px; overflow:hidden; max-height:0; opacity:0; transition:max-height .22s,opacity .18s; }
+    .custom-select-options.open { max-height:280px; opacity:1; }
+    .custom-select-option { padding:14px 16px; font-size:14px; color:var(--muted); cursor:pointer;
+      border-top:1px solid var(--setting-border); }
+    .custom-select-option.selected { color:var(--yellow); font-weight:700; }
+
+    /* ── Stats ── */
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .stat { background:var(--stat-bg); border:1px solid var(--stat-border); border-radius:14px; padding:12px 8px; text-align:center; }
+    .stat-value { font-size:22px; font-weight:800; margin-bottom:4px; }
+    .stat-label { font-size:11px; color:var(--muted); }
+
+    /* ── Upgrade card ── */
+    .upgrade-card { background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06)); border:1px solid rgba(255,212,0,.22); }
+    .upgrade-title { font-size:17px; font-weight:800; margin-bottom:4px; }
+    .upgrade-sub { font-size:13px; color:var(--muted); line-height:1.5; }
+    .upgrade-features { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+    .upgrade-feature { display:flex; align-items:flex-start; gap:12px; }
+    .upgrade-feature-icon { font-size:20px; min-width:28px; }
+    .upgrade-price { margin-top:8px; font-size:12px; color:var(--muted); text-align:center; }
+    .pending-note { display:none; font-size:13px; color:var(--muted); text-align:center; margin-top:12px; line-height:1.5; }
+
+    /* ── Misc ── */
+    .status-ok { font-size:12px; color:var(--green); margin-top:6px; display:none; }
+    .pro-badge-inline { position:absolute; top:0; right:0; font-size:9px; font-weight:800;
+      padding:3px 9px; border-radius:100px; background:linear-gradient(90deg,var(--yellow),var(--orange)); color:#1b1f2a; }
+    .hidden { display:none !important; }
+
+    /* ── Tabs ── */
+    .tab-bar { display:flex; gap:6px; border-radius:14px; padding:5px; background:rgba(0,0,0,.2); }
     .tab-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
-      padding:10px 12px; border-radius:10px; font-size:13px; font-weight:600;
-      cursor:pointer; border:1px solid transparent; font-family:inherit;
-      transition:background .15s,color .15s,border-color .15s; min-height:44px; background:none; }
-    @media (prefers-color-scheme: dark)  { .tab-btn { color:#8d97ae; } }
-    @media (prefers-color-scheme: light) { .tab-btn { color:#5a6480; } }
-    .tab-btn.tab-active { background:rgba(255,212,0,.12); color:#ffd400; border-color:rgba(255,212,0,.25); }
-    .tab-btn-water.tab-active { background:rgba(90,169,255,.12); color:#5aa9ff; border-color:rgba(90,169,255,.25); }
+      padding:10px 12px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;
+      border:1px solid transparent; font-family:inherit; background:none; color:var(--muted); min-height:44px; }
+    .tab-btn.tab-active { background:rgba(255,212,0,.12); color:var(--yellow); border-color:rgba(255,212,0,.25); }
+    .tab-btn-water.tab-active { background:rgba(90,169,255,.12); color:var(--blue); border-color:rgba(90,169,255,.25); }
     .module-section.hidden { display:none; }
 
-    /* Welcome */
-    #screenWelcome .screen-scroll { align-items:center; justify-content:center; text-align:center; }
-    .welcome-title { font-size:28px; font-weight:800; margin-bottom:8px; }
-    .welcome-sub { font-size:15px; line-height:1.6; margin-bottom:28px; max-width:320px; }
-    @media (prefers-color-scheme: dark)  { .welcome-sub { color:#c7cedd; } }
-    @media (prefers-color-scheme: light) { .welcome-sub { color:#3a4260; } }
-    .welcome-features { display:flex; flex-direction:column; gap:12px; width:100%; max-width:340px; margin-bottom:28px; }
-    .welcome-feature { display:flex; align-items:flex-start; gap:14px; border-radius:16px; padding:14px; text-align:left; border:1px solid; }
-    @media (prefers-color-scheme: dark)  { .welcome-feature { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.12); } }
-    @media (prefers-color-scheme: light) { .welcome-feature { background:rgba(255,255,255,.85); border-color:rgba(0,0,0,.08); } }
-    .welcome-feature-icon { font-size:24px; margin-top:1px; }
-    .welcome-feature-text { font-size:14px; line-height:1.5; }
-    .welcome-feature-text strong { font-weight:700; display:block; margin-bottom:2px; }
-    .notif-card { width:100%; max-width:340px; border-radius:18px; padding:18px; text-align:left; }
-    @media (prefers-color-scheme: dark)  { .notif-card { background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06)); border:1px solid rgba(255,212,0,.22); } }
-    @media (prefers-color-scheme: light) { .notif-card { background:linear-gradient(135deg,rgba(255,212,0,.15),rgba(255,122,0,.10)); border:1px solid rgba(255,180,0,.35); } }
-
-    /* Water glass mini */
+    /* ── Water glass mini ── */
     .glass-mini { position:relative; width:40px; height:50px; flex-shrink:0; }
     .glass-mini-rim { position:absolute; top:0; left:-2px; right:-2px; height:2px; background:rgba(90,169,255,.4); border-radius:2px; }
     .glass-mini-body { position:absolute; inset:0; border:2px solid rgba(90,169,255,.35); border-top:none; border-radius:2px 2px 12px 12px; }
     .glass-mini-fill { position:absolute; bottom:2px; left:2px; right:2px; border-radius:1px 1px 10px 10px; background:linear-gradient(180deg,rgba(90,169,255,.55),rgba(61,143,224,.75)); transition:height .5s ease; height:0%; }
 
-    /* Goal stepper */
-    .goal-stepper { display:flex; align-items:center; border-radius:12px; overflow:hidden; border:1px solid; }
-    @media (prefers-color-scheme: dark)  { .goal-stepper { background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.10); } }
-    @media (prefers-color-scheme: light) { .goal-stepper { background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.10); } }
-    .stepper-btn { width:36px; height:36px; border:none; background:none; color:#5aa9ff; font-size:18px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; }
-    .stepper-val { min-width:28px; text-align:center; font-size:14px; font-weight:700; color:#5aa9ff; line-height:36px; border-left:1px solid rgba(255,255,255,.08); border-right:1px solid rgba(255,255,255,.08); }
+    /* ── Goal stepper ── */
+    .goal-stepper { display:flex; align-items:center; border-radius:12px; overflow:hidden; border:1px solid var(--panel-border); background:var(--stat-bg); }
+    .stepper-btn { width:36px; height:36px; border:none; background:none; color:var(--blue); font-size:18px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; }
+    .stepper-val { min-width:28px; text-align:center; font-size:14px; font-weight:700; color:var(--blue); line-height:36px; border-left:1px solid var(--panel-border); border-right:1px solid var(--panel-border); }
 
-    /* Carousel dots */
-    .carousel-dot { width:10px; height:10px; border-radius:50%; cursor:pointer; transition:background .2s,transform .2s; }
-    @media (prefers-color-scheme: dark)  { .carousel-dot { background:rgba(255,255,255,.22); } }
-    @media (prefers-color-scheme: light) { .carousel-dot { background:rgba(0,0,0,.15); } }
-    .carousel-dot.active { background:#ffd400; transform:scale(1.15); }
+    /* ── Welcome ── */
+    #screenWelcome .screen-scroll { align-items:center; text-align:center; }
+    .welcome-title { font-size:28px; font-weight:800; margin-bottom:8px; }
+    .welcome-sub { font-size:15px; line-height:1.6; margin-bottom:24px; max-width:320px; color:var(--muted2); }
+    .welcome-features { display:flex; flex-direction:column; gap:12px; width:100%; max-width:340px; margin-bottom:24px; }
+    .welcome-feature { display:flex; align-items:flex-start; gap:14px; border-radius:16px; padding:14px; text-align:left; background:var(--panel); border:1px solid var(--panel-border); }
+    .welcome-feature-icon { font-size:24px; margin-top:1px; }
+    .welcome-feature-text { font-size:14px; line-height:1.5; }
+    .welcome-feature-text strong { font-weight:700; display:block; margin-bottom:2px; }
+    .notif-card { width:100%; max-width:340px; border-radius:18px; padding:18px; text-align:left; background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06)); border:1px solid rgba(255,212,0,.22); }
+    .notif-card-blue { background:rgba(90,169,255,.06); border-color:rgba(90,169,255,.25); }
 
-    /* Placeholder screens */
+    /* ── Carousel dots ── */
+    .carousel-dot { width:10px; height:10px; border-radius:50%; cursor:pointer; background:var(--stat-bg); border:1px solid var(--panel-border); transition:background .2s,transform .2s; }
+    .carousel-dot.active { background:var(--yellow); border-color:var(--yellow); transform:scale(1.15); }
+
+    /* ── Placeholder screens ── */
     #screenStretch .screen-scroll, #screenWater .screen-scroll { align-items:center; justify-content:center; text-align:center; }
   </style>
 </head>
@@ -119,7 +208,7 @@
 
 <div id="app">
 
-  <!-- WELCOME -->
+  <!-- ═══ WELCOME ═══ -->
   <div id="screenWelcome" class="screen">
     <div class="screen-scroll">
       <div style="font-size:52px;margin-bottom:6px;">🧘💧</div>
@@ -135,23 +224,23 @@
           <div class="welcome-feature-text"><strong>Water Reminder</strong>Tracks daily glasses and reminds you to drink at your own pace.</div>
         </div>
       </div>
-      <!-- Android: normal notification permission -->
+
+      <!-- Android: normal permission button -->
       <div class="notif-card" id="notifCardAndroid">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">🔔 Allow notifications</div>
         <div style="font-size:13px;line-height:1.55;margin-bottom:14px;opacity:.75;">The app uses notifications to remind you to stretch and drink water. Without them, reminders won't fire in the background.</div>
-        <button class="btn btn-upgrade" id="requestNotifBtn" style="margin-top:0;font-size:15px;">Allow notifications</button>
+        <button class="btn btn-upgrade" id="requestNotifBtn" style="margin-top:0;">Allow notifications</button>
         <div id="notifStatus" style="font-size:12px;margin-top:10px;text-align:center;display:none;"></div>
       </div>
 
-      <!-- iOS: must add to Home Screen first -->
+      <!-- iOS in browser: must install first -->
       <div class="notif-card" id="notifCardIOS" style="display:none;">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📲 Add to Home Screen first</div>
-        <div style="font-size:13px;line-height:1.6;margin-bottom:14px;opacity:.75;">Notifications on iPhone require the app to be installed.<br><br>Tap <strong>Share →</strong> then <strong>"Add to Home Screen"</strong>, then open it from your home screen.</div>
-        <div style="font-size:12px;opacity:.5;text-align:center;">Or use an Android device for the full experience</div>
+        <div style="font-size:13px;line-height:1.6;opacity:.75;">Tap <strong>Share</strong> → <strong>"Add to Home Screen"</strong>, then open the app from your home screen — notifications will work from there.</div>
       </div>
 
-      <!-- Desktop browser -->
-      <div class="notif-card" id="notifCardDesktop" style="display:none;border-color:rgba(90,169,255,.3);background:rgba(90,169,255,.06);">
+      <!-- Desktop -->
+      <div class="notif-card notif-card-blue" id="notifCardDesktop" style="display:none;">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📱 Best on Android</div>
         <div style="font-size:13px;line-height:1.6;opacity:.75;">Open this URL in Chrome for Android and add it to your home screen for the full experience.</div>
       </div>
@@ -160,13 +249,13 @@
     </div>
   </div>
 
-  <!-- HOME -->
+  <!-- ═══ HOME ═══ -->
   <div id="screenHome" class="screen">
     <div class="screen-scroll">
 
       <div class="card">
-        <div class="title" style="margin-bottom:4px;">Desk Wellness Pack</div>
-        <div class="subtitle">Smart reminders for healthier desk habits</div>
+        <div style="font-size:22px;font-weight:800;margin-bottom:4px;">Desk Wellness Pack</div>
+        <div style="font-size:14px;color:var(--muted);">Smart reminders for healthier desk habits</div>
       </div>
 
       <div class="card" style="padding:6px;">
@@ -223,7 +312,7 @@
           </div>
           <button class="btn btn-upgrade" id="upgradeBtn">Upgrade — €3.00</button>
           <button class="btn btn-verify" id="verifyBtn">✓ I've paid — Verify Payment</button>
-          <div class="pending-note" id="pendingNote">Complete your payment in the tab that opened, then tap Verify Payment.</div>
+          <div class="pending-note" id="pendingNote">Complete your payment then tap Verify.</div>
           <div class="upgrade-price">One-time · No subscription · Instant unlock</div>
         </div>
 
@@ -239,7 +328,7 @@
           <div class="label">Weekly stretch activity</div>
           <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
             <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;" id="statsCarousel">
-              <div style="flex:0 0 100%;scroll-snap-align:start;padding-right:4px;">
+              <div style="flex:0 0 100%;scroll-snap-align:start;">
                 <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
                 <div class="stats">
                   <div class="stat"><div class="stat-value" id="lastCompletedCount">0</div><div class="stat-label">Completed</div></div>
@@ -247,7 +336,7 @@
                   <div class="stat"><div class="stat-value" id="lastSkippedCount">0</div><div class="stat-label">Skipped</div></div>
                 </div>
               </div>
-              <div style="flex:0 0 100%;scroll-snap-align:start;padding-left:4px;">
+              <div style="flex:0 0 100%;scroll-snap-align:start;">
                 <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">This Week</div>
                 <div class="stats">
                   <div class="stat"><div class="stat-value" id="completedCount">0</div><div class="stat-label">Completed</div></div>
@@ -261,7 +350,7 @@
             <div class="carousel-dot" id="dot0"></div>
             <div class="carousel-dot active" id="dot1"></div>
           </div>
-          <div style="margin-top:10px;font-size:11px;opacity:.6;text-align:center;">Resets every week (Sunday) · Swipe to see last week</div>
+          <div style="margin-top:8px;font-size:11px;opacity:.5;text-align:center;">Resets every Sunday · Swipe to see last week</div>
         </div>
       </div><!-- /sectionStretch -->
 
@@ -271,7 +360,7 @@
           <div id="waterProBadge" class="pro-badge-inline hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
           <div class="timer-box" style="background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.14);">
             <div class="timer-label" id="waterTimerLabel">Next water reminder</div>
-            <div class="timer-value" id="waterTimerDisplay" style="color:#5aa9ff;">Timer Inactive</div>
+            <div class="timer-value" id="waterTimerDisplay" style="color:var(--blue);">Timer Inactive</div>
           </div>
           <div class="controls">
             <button class="btn btn-start" id="waterStartBtn">Start</button>
@@ -297,11 +386,11 @@
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
             <div class="glass-mini"><div class="glass-mini-rim"></div><div class="glass-mini-body"></div><div class="glass-mini-fill" id="waterMiniGlassFill"></div></div>
             <div>
-              <div style="font-size:24px;font-weight:800;color:#5aa9ff;line-height:1;"><span id="waterGlassCount">0</span><span style="font-size:13px;font-weight:400;opacity:.65;">/ <span id="waterGoalDisplay">8</span></span></div>
+              <div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1;"><span id="waterGlassCount">0</span><span style="font-size:13px;font-weight:400;opacity:.6;">/ <span id="waterGoalDisplay">8</span></span></div>
               <div style="font-size:11px;opacity:.6;margin-top:3px;">glasses today</div>
             </div>
           </div>
-          <div id="waterDotsContainer" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+          <div id="waterDotsContainer" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"></div>
         </div>
 
         <div class="card">
@@ -309,7 +398,7 @@
             <div class="setting-text"><div class="label">Play sound</div><div class="sub-label">Gentle chime when the water screen opens</div></div>
             <input type="checkbox" id="waterSoundToggle" class="toggle toggle-blue" />
           </div>
-          <div class="setting" id="waterGoalSetting">
+          <div class="setting">
             <div class="setting-text">
               <div class="label">Daily goal <span id="waterGoalLockIcon" style="font-size:11px;opacity:.5;">🔒</span></div>
               <div class="sub-label" id="waterGoalSubLabel">Upgrade to Pro to set your own goal</div>
@@ -331,7 +420,7 @@
           </div>
           <button class="btn btn-upgrade" id="waterUpgradeBtn">Upgrade — €5.00</button>
           <button class="btn btn-verify" id="waterVerifyBtn">✓ I've paid — Verify Payment</button>
-          <div class="pending-note" id="waterPendingNote">Complete your payment in the tab that opened, then tap Verify Payment.</div>
+          <div class="pending-note" id="waterPendingNote">Complete your payment then tap Verify.</div>
           <div class="upgrade-price">One-time · No subscription · Instant unlock</div>
         </div>
 
@@ -347,80 +436,408 @@
     </div>
   </div><!-- /screenHome -->
 
-  <!-- STRETCH BREAK (Week 2) -->
+  <!-- ═══ STRETCH BREAK (Week 2) ═══ -->
   <div id="screenStretch" class="screen">
     <div class="screen-scroll">
-      <div style="font-size:48px;margin-bottom:12px;">🧘</div>
-      <div class="title" style="margin-bottom:8px;">Stretch Time</div>
-      <div class="subtitle" style="margin-bottom:32px;">Full stretch screen — Week 2</div>
-      <button class="btn btn-start" id="stretchBackBtn" style="width:100%;max-width:280px;">← Back</button>
+      <div style="font-size:56px;margin-bottom:12px;">🧘</div>
+      <div style="font-size:24px;font-weight:800;margin-bottom:8px;">Stretch Time</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:32px;">Full stretch screen — Week 2</div>
+      <button class="btn btn-start" id="stretchBackBtn" style="max-width:280px;width:100%;">← Back</button>
     </div>
   </div>
 
-  <!-- WATER SCREEN (Week 2) -->
+  <!-- ═══ WATER SCREEN (Week 2) ═══ -->
   <div id="screenWater" class="screen">
     <div class="screen-scroll">
-      <div style="font-size:48px;margin-bottom:12px;">💧</div>
-      <div class="title" style="margin-bottom:8px;">Drink Water</div>
-      <div class="subtitle" style="margin-bottom:32px;">Full water screen — Week 2</div>
-      <button class="btn btn-start" id="waterBackBtn" style="width:100%;max-width:280px;background:#5aa9ff;">← Back</button>
+      <div style="font-size:56px;margin-bottom:12px;">💧</div>
+      <div style="font-size:24px;font-weight:800;margin-bottom:8px;">Drink Water</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:32px;">Full water screen — Week 2</div>
+      <button class="btn btn-start" id="waterBackBtn" style="max-width:280px;width:100%;background:var(--blue);">← Back</button>
     </div>
   </div>
 
-</div>
+</div><!-- /app -->
 
-<script type="module">
-  import { navigate, SCREENS } from './js/app.js';
-  import { initHome } from './js/home.js';
+<script>
+// ═══════════════════════════════════════════════════════
+// ALL JS INLINED — no module imports, nothing to 404
+// ═══════════════════════════════════════════════════════
 
-  // ── Platform detection ──────────────────────────────────────────
-  const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-  const isAndroid = /Android/.test(ua);
-  const isMobile = isIOS || isAndroid;
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-                    || window.navigator.standalone === true;
+const BACKEND_URL = 'https://desk-wellness-pack.vercel.app';
 
-  // Show the right notification card
-  if (isIOS && !isStandalone) {
-    // iPhone in browser — must install first
-    document.getElementById('notifCardAndroid').style.display = 'none';
-    document.getElementById('notifCardIOS').style.display = 'block';
-  } else if (!isMobile) {
-    // Desktop browser
-    document.getElementById('notifCardAndroid').style.display = 'none';
-    document.getElementById('notifCardDesktop').style.display = 'block';
+// ── Storage ──────────────────────────────────────────────────────
+const storage = {
+  get(key) {
+    try { const v = localStorage.getItem(key); return v === null ? null : JSON.parse(v); }
+    catch(e) { return null; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+  },
+  initDefaults() {
+    if (this.get('installDate') !== null) return false;
+    const defaults = {
+      installDate: new Date().toISOString(),
+      hasSeenWelcome: false,
+      stretchEnabled: false, stretchInterval: 30, smartMode: true, stretchSound: true,
+      completedCount: 0, snoozedCount: 0, skippedCount: 0,
+      lastCompletedCount: 0, lastSnoozedCount: 0, lastSkippedCount: 0,
+      waterEnabled: false, waterInterval: 30, waterSound: true,
+      waterGlassCount: 0, waterGoal: 8,
+    };
+    for (const [k, v] of Object.entries(defaults)) this.set(k, v);
+    return true;
   }
-  // Android (or iOS standalone): show normal permission card
+};
 
-  document.getElementById('requestNotifBtn')?.addEventListener('click', async () => {
-    const status = document.getElementById('notifStatus');
-    if (!('Notification' in window)) {
-      status.textContent = 'Notifications not supported. Try adding to Home Screen first.';
-      status.style.color = '#ff8a80'; status.style.display = 'block'; return;
+// ── Notifications (stubs — full impl Day 3-4) ─────────────────────
+function scheduleStretch(intervalMin) {
+  const fireAt = Date.now() + intervalMin * 60000;
+  storage.set('nextStretchTime', fireAt);
+}
+function cancelStretch() { storage.set('nextStretchTime', null); }
+function scheduleWater(intervalMin) {
+  const fireAt = Date.now() + intervalMin * 60000;
+  storage.set('nextWaterTime', fireAt);
+}
+function cancelWater() { storage.set('nextWaterTime', null); }
+
+// ── Screen router ─────────────────────────────────────────────────
+const SCREENS = { WELCOME:'screenWelcome', HOME:'screenHome', STRETCH:'screenStretch', WATER:'screenWater' };
+
+function navigate(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(screenId);
+  if (el) el.classList.add('active');
+  if (screenId === SCREENS.HOME) initHome();
+}
+
+// ── Countdown tick ────────────────────────────────────────────────
+let tickInterval = null;
+function startTick() {
+  if (tickInterval) return;
+  tickInterval = setInterval(tick, 1000);
+  tick();
+}
+function tick() {
+  tickTimer('nextStretchTime','timerDisplay','timerLabel','stretchEnabled','Next stretch in','var(--yellow)','Next stretch break');
+  tickTimer('nextWaterTime','waterTimerDisplay','waterTimerLabel','waterEnabled','Next water in','var(--blue)','Next water reminder');
+}
+function tickTimer(key, dispId, lblId, enabledKey, lblActive, color, lblInactive) {
+  const el = document.getElementById(dispId);
+  const lbl = document.getElementById(lblId);
+  if (!el) return;
+  if (!storage.get(enabledKey)) {
+    el.textContent = 'Timer Inactive'; el.style.color = color;
+    if (lbl) lbl.textContent = lblInactive; return;
+  }
+  const next = storage.get(key);
+  if (!next) { el.textContent = 'Starting…'; el.style.color = color; return; }
+  const rem = next - Date.now();
+  if (rem <= 0) { el.textContent = '00:00'; el.style.color = color; return; }
+  const m = Math.floor(rem / 60000), s = Math.floor((rem % 60000) / 1000);
+  el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  el.style.color = color;
+  if (lbl) lbl.textContent = lblActive;
+}
+
+// ── Custom select ─────────────────────────────────────────────────
+function initSelect(wrapId, onChange) {
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  const trigger = wrap.querySelector('.custom-select-trigger');
+  const opts    = wrap.querySelector('.custom-select-options');
+  const label   = trigger?.querySelector('span');
+  if (!trigger || !opts) return;
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    trigger.classList.toggle('open');
+    opts.classList.toggle('open');
+  });
+  wrap.querySelectorAll('.custom-select-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      wrap.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      if (label) label.textContent = opt.textContent;
+      trigger.classList.remove('open'); opts.classList.remove('open');
+      if (onChange) onChange(opt.dataset.value);
+    });
+  });
+  document.addEventListener('click', () => { trigger.classList.remove('open'); opts.classList.remove('open'); });
+}
+
+function setSelectValue(wrapId, value) {
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  wrap.querySelectorAll('.custom-select-option').forEach(opt => {
+    const sel = Number(opt.dataset.value) === Number(value);
+    opt.classList.toggle('selected', sel);
+    if (sel) { const lbl = wrap.querySelector('.custom-select-trigger span'); if (lbl) lbl.textContent = opt.textContent; }
+  });
+}
+
+// ── Home screen ───────────────────────────────────────────────────
+let homeInitialised = false;
+function initHome() {
+  if (homeInitialised) { renderStats(); tick(); return; }
+  homeInitialised = true;
+
+  // Tabs
+  document.getElementById('tabStretch')?.addEventListener('click', () => activateTab('stretch'));
+  document.getElementById('tabWater')?.addEventListener('click',   () => activateTab('water'));
+
+  // Stretch controls
+  document.getElementById('startBtn')?.addEventListener('click', () => {
+    storage.set('stretchEnabled', true);
+    scheduleStretch(storage.get('stretchInterval') ?? 30);
+    updateStretchUI(true);
+  });
+  document.getElementById('stopBtn')?.addEventListener('click', () => {
+    storage.set('stretchEnabled', false);
+    cancelStretch();
+    updateStretchUI(false);
+  });
+  document.getElementById('smartModeToggle')?.addEventListener('change', e => storage.set('smartMode', e.target.checked));
+  document.getElementById('soundToggle')?.addEventListener('change',     e => storage.set('stretchSound', e.target.checked));
+
+  initSelect('customSelectWrap', val => {
+    storage.set('stretchInterval', Number(val));
+    if (storage.get('stretchEnabled')) scheduleStretch(Number(val));
+  });
+
+  // Water controls
+  document.getElementById('waterStartBtn')?.addEventListener('click', () => {
+    storage.set('waterEnabled', true);
+    scheduleWater(storage.get('waterInterval') ?? 30);
+    updateWaterUI(true);
+  });
+  document.getElementById('waterStopBtn')?.addEventListener('click', () => {
+    storage.set('waterEnabled', false);
+    cancelWater();
+    updateWaterUI(false);
+  });
+  document.getElementById('waterSoundToggle')?.addEventListener('change', e => storage.set('waterSound', e.target.checked));
+  document.getElementById('waterGoalMinus')?.addEventListener('click', () => changeGoal(-1));
+  document.getElementById('waterGoalPlus')?.addEventListener('click',  () => changeGoal(+1));
+
+  initSelect('waterCustomSelectWrap', val => {
+    storage.set('waterInterval', Number(val));
+    if (storage.get('waterEnabled')) scheduleWater(Number(val));
+  });
+
+  // Upgrade
+  document.getElementById('upgradeBtn')?.addEventListener('click',      () => openUpgrade('stretch'));
+  document.getElementById('verifyBtn')?.addEventListener('click',       () => verifyPayment('stretch'));
+  document.getElementById('waterUpgradeBtn')?.addEventListener('click', () => openUpgrade('water'));
+  document.getElementById('waterVerifyBtn')?.addEventListener('click',  () => verifyPayment('water'));
+
+  // Load state
+  loadState();
+  startTick();
+}
+
+function activateTab(tab) {
+  const isStretch = tab === 'stretch';
+  document.getElementById('tabStretch')?.classList.toggle('tab-active', isStretch);
+  document.getElementById('tabWater')?.classList.toggle('tab-active', !isStretch);
+  document.getElementById('sectionStretch')?.classList.toggle('hidden', !isStretch);
+  document.getElementById('sectionWater')?.classList.toggle('hidden', isStretch);
+}
+
+function loadState() {
+  const stretchEnabled = storage.get('stretchEnabled') ?? false;
+  const waterEnabled   = storage.get('waterEnabled')   ?? false;
+
+  // Toggles
+  const sm = document.getElementById('smartModeToggle'); if(sm) sm.checked = storage.get('smartMode') ?? true;
+  const ss = document.getElementById('soundToggle');     if(ss) ss.checked = storage.get('stretchSound') ?? true;
+  const ws = document.getElementById('waterSoundToggle');if(ws) ws.checked = storage.get('waterSound') ?? true;
+
+  // Selects
+  setSelectValue('customSelectWrap',      storage.get('stretchInterval') ?? 30);
+  setSelectValue('waterCustomSelectWrap', storage.get('waterInterval')   ?? 30);
+
+  updateStretchUI(stretchEnabled);
+  updateWaterUI(waterEnabled);
+  updateWaterGlasses(storage.get('waterGlassCount') ?? 0, storage.get('waterGoal') ?? 8);
+
+  // Pro
+  const isPro      = !!storage.get('licenseToken');
+  const isWaterPro = !!storage.get('waterLicenseToken');
+  document.getElementById('upgradeCard')?.classList.toggle('hidden', isPro);
+  document.getElementById('proIntegrationsCard')?.classList.toggle('hidden', !isPro);
+  document.getElementById('stretchProBadge')?.classList.toggle('hidden', !isPro);
+  document.getElementById('waterUpgradeCard')?.classList.toggle('hidden', isWaterPro);
+  document.getElementById('waterProCard')?.classList.toggle('hidden', !isWaterPro);
+  document.getElementById('waterProBadge')?.classList.toggle('hidden', !isWaterPro);
+  unlockGoalStepper(isWaterPro);
+
+  renderStats();
+}
+
+function updateStretchUI(enabled) {
+  const start = document.getElementById('startBtn');
+  const stop  = document.getElementById('stopBtn');
+  if (start) start.disabled = enabled;
+  if (stop)  stop.disabled  = !enabled;
+  if (!enabled) {
+    const d = document.getElementById('timerDisplay'); if(d) d.textContent = 'Timer Inactive';
+    const l = document.getElementById('timerLabel');   if(l) l.textContent = 'Next stretch break';
+  }
+}
+
+function updateWaterUI(enabled) {
+  const start = document.getElementById('waterStartBtn');
+  const stop  = document.getElementById('waterStopBtn');
+  if (start) start.disabled = enabled;
+  if (stop)  stop.disabled  = !enabled;
+  if (!enabled) {
+    const d = document.getElementById('waterTimerDisplay'); if(d) d.textContent = 'Timer Inactive';
+    const l = document.getElementById('waterTimerLabel');   if(l) l.textContent = 'Next water reminder';
+  }
+}
+
+function updateWaterGlasses(count, goal) {
+  const countEl = document.getElementById('waterGlassCount');
+  const goalEl  = document.getElementById('waterGoalDisplay');
+  const goalVal = document.getElementById('waterGoalValue');
+  const fillEl  = document.getElementById('waterMiniGlassFill');
+  const dotsEl  = document.getElementById('waterDotsContainer');
+  if (countEl) countEl.textContent = count;
+  if (goalEl)  goalEl.textContent  = goal;
+  if (goalVal) goalVal.textContent = goal;
+  if (fillEl)  fillEl.style.height = Math.min(100, Math.round(count/goal*100)) + '%';
+  if (dotsEl) {
+    dotsEl.innerHTML = '';
+    for (let i = 0; i < goal; i++) {
+      const dot = document.createElement('div');
+      dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${i < count ? 'var(--blue)' : 'rgba(90,169,255,.2)'};transition:background .3s;`;
+      dotsEl.appendChild(dot);
     }
-    const perm = await Notification.requestPermission();
-    localStorage.setItem('notificationPermission', JSON.stringify(perm));
-    status.textContent = perm === 'granted' ? '✅ Notifications allowed — you're all set!' : 'Blocked. Enable in Settings → Chrome → Notifications.';
-    status.style.color = perm === 'granted' ? '#34c759' : '#ff8a80';
-    status.style.display = 'block';
-    setTimeout(() => {
-      localStorage.setItem('hasSeenWelcome', JSON.stringify(true));
-      navigate(SCREENS.HOME); initHome();
-    }, 1200);
-  });
+  }
+}
 
-  document.getElementById('welcomeSkipBtn')?.addEventListener('click', () => {
-    localStorage.setItem('hasSeenWelcome', JSON.stringify(true));
-    navigate(SCREENS.HOME); initHome();
-  });
+function changeGoal(delta) {
+  const current = storage.get('waterGoal') ?? 8;
+  const next = Math.max(1, Math.min(20, current + delta));
+  storage.set('waterGoal', next);
+  updateWaterGlasses(storage.get('waterGlassCount') ?? 0, next);
+}
 
-  document.getElementById('stretchBackBtn')?.addEventListener('click', () => navigate(SCREENS.HOME));
-  document.getElementById('waterBackBtn')?.addEventListener('click', () => navigate(SCREENS.HOME));
+function unlockGoalStepper(isPro) {
+  const stepper  = document.getElementById('waterGoalStepper');
+  const lock     = document.getElementById('waterGoalLockIcon');
+  const sublabel = document.getElementById('waterGoalSubLabel');
+  if (stepper)  { stepper.style.opacity = isPro ? '1' : '0.4'; stepper.style.pointerEvents = isPro ? 'auto' : 'none'; }
+  if (lock)       lock.style.display = isPro ? 'none' : 'inline';
+  if (sublabel)   sublabel.textContent = isPro ? 'Your daily hydration target' : 'Upgrade to Pro to set your own goal';
+}
 
-  document.addEventListener('screenchange', (e) => {
-    if (e.detail.screen === SCREENS.HOME) initHome();
+function renderStats() {
+  ['completedCount','snoozedCount','skippedCount','lastCompletedCount','lastSnoozedCount','lastSkippedCount'].forEach(f => {
+    const el = document.getElementById(f); if (el) el.textContent = storage.get(f) ?? 0;
   });
+}
+
+// ── Upgrade ───────────────────────────────────────────────────────
+async function openUpgrade(module) {
+  let id = storage.get('installationId');
+  if (!id) { id = 'pwa-' + Math.random().toString(36).slice(2,15); storage.set('installationId', id); }
+  const endpoint = module === 'water' ? `${BACKEND_URL}/api/create-water-checkout` : `${BACKEND_URL}/api/create-checkout`;
+  try {
+    const resp = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({installationId:id}) });
+    const data = await resp.json();
+    if (data.url) {
+      window.open(data.url, '_blank');
+      const vBtn = document.getElementById(module === 'water' ? 'waterVerifyBtn' : 'verifyBtn');
+      const note = document.getElementById(module === 'water' ? 'waterPendingNote' : 'pendingNote');
+      if (vBtn) vBtn.style.display = 'flex';
+      if (note) note.style.display = 'block';
+    }
+  } catch(e) { alert('Could not connect. Check your connection and try again.'); }
+}
+
+async function verifyPayment(module) {
+  const id = storage.get('installationId'); if (!id) return;
+  const endpoint = module === 'water' ? `${BACKEND_URL}/api/verify-water-payment` : `${BACKEND_URL}/api/verify-payment`;
+  try {
+    const resp = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({installationId:id}) });
+    const data = await resp.json();
+    if (data.token) {
+      storage.set(module === 'water' ? 'waterLicenseToken' : 'licenseToken', data.token);
+      homeInitialised = false; loadState();
+    } else { alert('Payment not found yet — complete checkout and try again.'); }
+  } catch(e) { alert('Could not verify. Check your connection.'); }
+}
+
+// ── Welcome ───────────────────────────────────────────────────────
+const ua = navigator.userAgent;
+const isIOS      = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+const isAndroid  = /Android/.test(ua);
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+function showWelcomeCard() {
+  const android  = document.getElementById('notifCardAndroid');
+  const ios      = document.getElementById('notifCardIOS');
+  const desktop  = document.getElementById('notifCardDesktop');
+  if (isIOS && !isStandalone) {
+    android.style.display = 'none'; ios.style.display = 'block';
+  } else if (!isIOS && !isAndroid) {
+    android.style.display = 'none'; desktop.style.display = 'block';
+  }
+}
+
+document.getElementById('requestNotifBtn')?.addEventListener('click', async () => {
+  const status = document.getElementById('notifStatus');
+  if (!('Notification' in window)) {
+    status.textContent = 'Notifications not supported here. Try adding to Home Screen first.';
+    status.style.color = 'var(--red)'; status.style.display = 'block'; return;
+  }
+  const perm = await Notification.requestPermission();
+  storage.set('notificationPermission', perm);
+  status.textContent = perm === 'granted' ? "✅ You're all set!" : 'Blocked — go to Settings → Chrome → Notifications to enable.';
+  status.style.color = perm === 'granted' ? 'var(--green)' : 'var(--red)';
+  status.style.display = 'block';
+  setTimeout(() => { storage.set('hasSeenWelcome', true); navigate(SCREENS.HOME); }, 1200);
+});
+
+document.getElementById('welcomeSkipBtn')?.addEventListener('click', () => {
+  storage.set('hasSeenWelcome', true); navigate(SCREENS.HOME);
+});
+
+// ── Back buttons (placeholder screens) ───────────────────────────
+document.getElementById('stretchBackBtn')?.addEventListener('click', () => navigate(SCREENS.HOME));
+document.getElementById('waterBackBtn')?.addEventListener('click',   () => navigate(SCREENS.HOME));
+
+// ── Service Worker ────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+    .then(r => console.log('[SW] registered', r.scope))
+    .catch(e => console.warn('[SW] registration failed', e));
+}
+
+// ── Boot ──────────────────────────────────────────────────────────
+function boot() {
+  storage.initDefaults();
+  showWelcomeCard();
+  const hasSeenWelcome = storage.get('hasSeenWelcome');
+  const params = new URLSearchParams(window.location.search);
+  const target = params.get('screen');
+  if (!hasSeenWelcome) {
+    navigate(SCREENS.WELCOME);
+  } else if (target === 'stretch') {
+    navigate(SCREENS.STRETCH);
+  } else if (target === 'water') {
+    navigate(SCREENS.WATER);
+  } else {
+    navigate(SCREENS.HOME);
+  }
+  const loader = document.getElementById('loadingScreen');
+  if (loader) { loader.classList.add('fade-out'); setTimeout(() => loader.remove(), 350); }
+}
+
+boot();
 </script>
 </body>
 </html>
