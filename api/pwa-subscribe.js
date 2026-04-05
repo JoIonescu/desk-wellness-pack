@@ -10,10 +10,9 @@ module.exports = async function handler(req, res) {
   try {
     const redis = Redis.fromEnv();
     const { action, subscription, installationId, schedule } = req.body;
-
     if (!installationId) return res.status(400).json({ error: 'installationId required' });
 
-    const key = `sub:${installationId}`;
+    const key = 'sub:' + installationId;
 
     if (action === 'unsubscribe') {
       await redis.del(key);
@@ -27,31 +26,43 @@ module.exports = async function handler(req, res) {
       }
 
       const now = Date.now();
+      const se = !!(schedule && schedule.stretchEnabled);
+      const we = !!(schedule && schedule.waterEnabled);
+      const si = (schedule && schedule.stretchInterval) ? Number(schedule.stretchInterval) : 30;
+      const wi = (schedule && schedule.waterInterval)   ? Number(schedule.waterInterval)   : 30;
+
+      // Use exact timestamps from client if provided, otherwise calculate from interval
+      // This ensures the server fires at exactly the same moment the client countdown hits 0:00
+      const nst = se
+        ? (schedule.nextStretchTime ? Number(schedule.nextStretchTime) : now + si * 60000)
+        : null;
+      const nwt = we
+        ? (schedule.nextWaterTime   ? Number(schedule.nextWaterTime)   : now + wi * 60000)
+        : null;
+
       const record = {
         subscription,
         installationId,
         schedule: {
-          stretchEnabled:  schedule && schedule.stretchEnabled  ? true : false,
-          stretchInterval: schedule && schedule.stretchInterval ? schedule.stretchInterval : 30,
-          waterEnabled:    schedule && schedule.waterEnabled    ? true : false,
-          waterInterval:   schedule && schedule.waterInterval   ? schedule.waterInterval   : 30,
-          nextStretchTime: schedule && schedule.stretchEnabled
-            ? now + (schedule.stretchInterval || 30) * 60 * 1000 : null,
-          nextWaterTime: schedule && schedule.waterEnabled
-            ? now + (schedule.waterInterval || 30) * 60 * 1000 : null,
+          stretchEnabled:  se,
+          stretchInterval: si,
+          waterEnabled:    we,
+          waterInterval:   wi,
+          nextStretchTime: nst,
+          nextWaterTime:   nwt,
         },
         updatedAt: now,
       };
 
       await redis.set(key, JSON.stringify(record), { ex: 7 * 24 * 60 * 60 });
 
-      if (record.schedule.stretchEnabled || record.schedule.waterEnabled) {
+      if (se || we) {
         await redis.sadd('active_subs', key);
       } else {
         await redis.srem('active_subs', key);
       }
 
-      return res.status(200).json({ ok: true, action: 'saved' });
+      return res.status(200).json({ ok: true, action: 'saved', nextStretchTime: nst, nextWaterTime: nwt });
     }
 
     return res.status(400).json({ error: 'Unknown action' });
