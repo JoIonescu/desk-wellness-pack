@@ -14,125 +14,217 @@
   <link rel="manifest" href="./manifest.json" />
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
   <style>
-    :root { color-scheme: dark light; --yellow:#ffd400; --orange:#ff7a00; --green:#34c759; --red:#ff8a80; --blue:#5aa9ff; --blue2:#3d8fe0; }
-    *,*::before,*::after { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html { height:100%; -webkit-text-size-adjust:100%; }
-    body { margin:0; padding:0; min-height:100dvh; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; overscroll-behavior:none; }
-    @media (prefers-color-scheme:dark)  { :root{--bg1:#1b1f2a;--bg2:#23293a;--panel:rgba(255,255,255,.08);--pborder:rgba(255,255,255,.12);--text:#fff;--muted:#8d97ae;--muted2:#c7cedd;--statbg:rgba(255,255,255,.06);--statb:rgba(255,255,255,.08);--selbg:#1e2535;--setborder:rgba(255,255,255,.07);--timbg:rgba(255,255,255,.06);--timb:rgba(255,255,255,.08);--toggleoff:rgba(255,255,255,.18);} body{background:linear-gradient(180deg,#1b1f2a,#23293a);color:#fff;} #ls{background:#1b1f2a;} }
-    @media (prefers-color-scheme:light) { :root{--bg1:#f0f2f7;--bg2:#e4e8f2;--panel:rgba(255,255,255,.85);--pborder:rgba(0,0,0,.08);--text:#1b1f2a;--muted:#5a6480;--muted2:#3a4260;--statbg:rgba(0,0,0,.04);--statb:rgba(0,0,0,.06);--selbg:#fff;--setborder:rgba(0,0,0,.07);--timbg:rgba(0,0,0,.04);--timb:rgba(0,0,0,.08);--toggleoff:rgba(0,0,0,.15);} body{background:linear-gradient(180deg,#f0f2f7,#e4e8f2);color:#1b1f2a;} #ls{background:#f0f2f7;} }
-    #ls { position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .3s; }
-    #ls.out { opacity:0;pointer-events:none; }
-    .spin { font-size:40px;animation:pulse 1.5s ease infinite; }
-    .spin-txt { font-size:14px;color:var(--muted); }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
-    #app { display:flex;flex-direction:column;min-height:100dvh;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px); }
-    .screen { display:none;flex:1;flex-direction:column; }
-    .screen.active { display:flex; }
-    .scr { flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px; }
-    .card { background:var(--panel);border:1px solid var(--pborder);border-radius:20px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.12); }
-    .btn { display:flex;align-items:center;justify-content:center;border:none;border-radius:16px;padding:0 20px;height:48px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;transition:transform .15s,opacity .15s;-webkit-user-select:none;user-select:none; }
-    .btn:active{transform:scale(.97)} .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-    .btn-start{background:var(--green);color:#0f1b12;flex:1} .btn-stop{background:var(--red);color:#2b1010;flex:1}
+    /* ── Base ── */
+    :root { color-scheme:dark light; --yellow:#ffd400; --orange:#ff7a00; --green:#34c759; --red:#ff8a80; --blue:#5aa9ff; --blue2:#3d8fe0; }
+    *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html{height:100%;-webkit-text-size-adjust:100%;}
+    body{margin:0;padding:0;min-height:100dvh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none;}
+    @media(prefers-color-scheme:dark){
+      :root{--bg1:#1b1f2a;--bg2:#23293a;--panel:rgba(255,255,255,.08);--pb:rgba(255,255,255,.12);--text:#fff;--muted:#8d97ae;--muted2:#c7cedd;--sb:rgba(255,255,255,.06);--sbb:rgba(255,255,255,.08);--selbg:#1e2535;--setb:rgba(255,255,255,.07);--tog:rgba(255,255,255,.18);}
+      body{background:linear-gradient(180deg,#1b1f2a,#23293a);color:#fff;}
+      #ls{background:#1b1f2a;}
+    }
+    @media(prefers-color-scheme:light){
+      :root{--bg1:#f0f2f7;--bg2:#e4e8f2;--panel:rgba(255,255,255,.85);--pb:rgba(0,0,0,.08);--text:#1b1f2a;--muted:#5a6480;--muted2:#3a4260;--sb:rgba(0,0,0,.04);--sbb:rgba(0,0,0,.08);--selbg:#fff;--setb:rgba(0,0,0,.07);--tog:rgba(0,0,0,.15);}
+      body{background:linear-gradient(180deg,#f0f2f7,#e4e8f2);color:#1b1f2a;}
+      #ls{background:#f0f2f7;}
+    }
+    /* ── Loading ── */
+    #ls{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .3s;}
+    #ls.out{opacity:0;pointer-events:none;}
+    .spin{font-size:40px;animation:pulse 1.5s ease infinite;}
+    .spin-txt{font-size:14px;color:var(--muted);}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    /* ── App ── */
+    #app{display:flex;flex-direction:column;min-height:100dvh;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);}
+    .screen{display:none;flex:1;flex-direction:column;}
+    .screen.active{display:flex;}
+    .scr{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;}
+    /* ── Home UI ── */
+    .card{background:var(--panel);border:1px solid var(--pb);border-radius:20px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.12);}
+    .btn{display:flex;align-items:center;justify-content:center;border:none;border-radius:16px;padding:0 20px;height:48px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;transition:transform .15s,opacity .15s;-webkit-user-select:none;user-select:none;}
+    .btn:active{transform:scale(.97)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+    .btn-start{background:var(--green);color:#0f1b12;flex:1}.btn-stop{background:var(--red);color:#2b1010;flex:1}
     .btn-up{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#1b1f2a;width:100%;margin-top:14px;font-size:16px;height:52px;border-radius:16px;}
     .btn-verify{background:var(--blue);color:#0a1220;width:100%;margin-top:10px;font-size:14px;height:48px;border-radius:14px;display:none;}
     .btn-sec{background:rgba(128,128,128,.15);border:1px solid rgba(128,128,128,.2);color:var(--muted);width:100%;font-size:14px;}
     .ctrls{display:flex;gap:10px;margin-top:12px;}
-    .toggle{appearance:none;-webkit-appearance:none;width:44px;min-width:44px;height:26px;border-radius:100px;border:none;background:var(--toggleoff);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;margin:0;}
+    .toggle{appearance:none;-webkit-appearance:none;width:44px;min-width:44px;height:26px;border-radius:100px;border:none;background:var(--tog);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;margin:0;}
     .toggle::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.7);top:3px;left:3px;transition:transform .2s,background .2s;}
-    .toggle:checked{background:var(--yellow)} .toggle:checked::after{background:#1b1f2a;transform:translateX(18px)}
-    .toggle-b:checked{background:var(--blue)} .toggle-b:checked::after{background:#081726}
+    .toggle:checked{background:var(--yellow)}.toggle:checked::after{background:#1b1f2a;transform:translateX(18px);}
+    .toggle-b:checked{background:var(--blue)}.toggle-b:checked::after{background:#081726;}
     .row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;min-height:48px;}
-    .row+.row{border-top:1px solid var(--setborder)} .rt{flex:1;min-width:0;}
-    .lbl{font-size:15px;font-weight:600;line-height:1.3} .sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
-    .tbox{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:88px;border-radius:16px;background:var(--timbg);border:1px solid var(--timb);text-align:center;padding:16px;}
-    .tlbl{font-size:12px;color:var(--muted);margin-bottom:6px} .tval{font-size:32px;font-weight:800;line-height:1;color:var(--yellow)}
-    .sel-wrap{width:100%;user-select:none}
-    .sel-trig{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:48px;border-radius:14px;border:1px solid var(--pborder);background:var(--panel);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;}
+    .row+.row{border-top:1px solid var(--setb)}.rt{flex:1;min-width:0;}
+    .lbl{font-size:15px;font-weight:600;line-height:1.3}.sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45;}
+    .tbox{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:88px;border-radius:16px;background:var(--sb);border:1px solid var(--sbb);text-align:center;padding:16px;}
+    .tlbl{font-size:12px;color:var(--muted);margin-bottom:6px}.tval{font-size:32px;font-weight:800;line-height:1;color:var(--yellow);}
+    .sel-wrap{width:100%;user-select:none;}
+    .sel-trig{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:48px;border-radius:14px;border:1px solid var(--pb);background:var(--panel);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;}
     .sel-trig.open{border-radius:14px 14px 0 0;border-color:rgba(255,212,0,.5);border-bottom-color:transparent;}
-    .sel-arr{font-size:11px;color:var(--muted);transition:transform .2s} .sel-trig.open .sel-arr{transform:rotate(180deg)}
+    .sel-arr{font-size:11px;color:var(--muted);transition:transform .2s}.sel-trig.open .sel-arr{transform:rotate(180deg);}
     .sel-opts{width:100%;background:var(--selbg);border:1px solid rgba(255,212,0,.3);border-top:none;border-radius:0 0 14px 14px;overflow:hidden;max-height:0;opacity:0;transition:max-height .22s,opacity .18s;}
-    .sel-opts.open{max-height:280px;opacity:1}
-    .sel-opt{padding:14px 16px;font-size:14px;color:var(--muted);cursor:pointer;border-top:1px solid var(--setborder);}
-    .sel-opt.selected{color:var(--yellow);font-weight:700}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .stat{background:var(--statbg);border:1px solid var(--statb);border-radius:14px;padding:12px 8px;text-align:center}
-    .sv{font-size:22px;font-weight:800;margin-bottom:4px} .sl{font-size:11px;color:var(--muted)}
+    .sel-opts.open{max-height:280px;opacity:1;}
+    .sel-opt{padding:14px 16px;font-size:14px;color:var(--muted);cursor:pointer;border-top:1px solid var(--setb);}
+    .sel-opt.selected{color:var(--yellow);font-weight:700;}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .stat{background:var(--sb);border:1px solid var(--sbb);border-radius:14px;padding:12px 8px;text-align:center;}
+    .sv{font-size:22px;font-weight:800;margin-bottom:4px}.sl{font-size:11px;color:var(--muted);}
     .ucard{background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06));border:1px solid rgba(255,212,0,.22);}
-    .utitle{font-size:17px;font-weight:800;margin-bottom:4px} .usub{font-size:13px;color:var(--muted);line-height:1.5}
-    .ufeats{display:flex;flex-direction:column;gap:10px;margin-top:12px} .ufeat{display:flex;align-items:flex-start;gap:12px} .ufi{font-size:20px;min-width:28px}
-    .uprice{margin-top:8px;font-size:12px;color:var(--muted);text-align:center} .pnote{display:none;font-size:13px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5}
-    .sok{font-size:12px;color:var(--green);margin-top:6px;display:none}
-    .pbi{position:absolute;top:0;right:0;font-size:9px;font-weight:800;padding:3px 9px;border-radius:100px;background:linear-gradient(90deg,var(--yellow),var(--orange));color:#1b1f2a}
-    .hidden{display:none!important}
-    .tabbar{display:flex;gap:6px;border-radius:14px;padding:5px;background:rgba(0,0,0,.2)}
+    .utitle{font-size:17px;font-weight:800;margin-bottom:4px}.usub{font-size:13px;color:var(--muted);line-height:1.5;}
+    .ufeats{display:flex;flex-direction:column;gap:10px;margin-top:12px;}.ufeat{display:flex;align-items:flex-start;gap:12px;}.ufi{font-size:20px;min-width:28px;}
+    .uprice{margin-top:8px;font-size:12px;color:var(--muted);text-align:center;}.pnote{display:none;font-size:13px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5;}
+    .sok{font-size:12px;color:var(--green);margin-top:6px;display:none;}
+    .pbi{position:absolute;top:0;right:0;font-size:9px;font-weight:800;padding:3px 9px;border-radius:100px;background:linear-gradient(90deg,var(--yellow),var(--orange));color:#1b1f2a;}
+    .hidden{display:none!important;}
+    .tabbar{display:flex;gap:6px;border-radius:14px;padding:5px;background:rgba(0,0,0,.2);}
     .tabbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;background:none;color:var(--muted);min-height:44px;}
-    .tabbtn.act{background:rgba(255,212,0,.12);color:var(--yellow);border-color:rgba(255,212,0,.25)}
-    .tabbtn-w.act{background:rgba(90,169,255,.12);color:var(--blue);border-color:rgba(90,169,255,.25)}
-    .modsec.hidden{display:none}
-    .gmini{position:relative;width:40px;height:50px;flex-shrink:0}
-    .gmini-rim{position:absolute;top:0;left:-2px;right:-2px;height:2px;background:rgba(90,169,255,.4);border-radius:2px}
-    .gmini-body{position:absolute;inset:0;border:2px solid rgba(90,169,255,.35);border-top:none;border-radius:2px 2px 12px 12px}
-    .gmini-fill{position:absolute;bottom:2px;left:2px;right:2px;border-radius:1px 1px 10px 10px;background:linear-gradient(180deg,rgba(90,169,255,.55),rgba(61,143,224,.75));transition:height .5s ease;height:0%}
-    .stepper{display:flex;align-items:center;border-radius:12px;overflow:hidden;border:1px solid var(--pborder);background:var(--statbg)}
-    .stepbtn{width:36px;height:36px;border:none;background:none;color:var(--blue);font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
-    .stepval{min-width:28px;text-align:center;font-size:14px;font-weight:700;color:var(--blue);line-height:36px;border-left:1px solid var(--pborder);border-right:1px solid var(--pborder)}
-    #sw .scr{align-items:center;text-align:center} #sw2 .scr{align-items:center;text-align:center}
-    #wl .scr{align-items:center;text-align:center}
-    .wfeat{display:flex;align-items:flex-start;gap:14px;border-radius:16px;padding:14px;text-align:left;background:var(--panel);border:1px solid var(--pborder)}
-    .wfeat-icon{font-size:24px;margin-top:1px} .wfeat-txt{font-size:14px;line-height:1.5}
-    .wfeat-txt strong{font-weight:700;display:block;margin-bottom:2px}
-    .ncard{width:100%;max-width:340px;border-radius:18px;padding:18px;text-align:left;background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06));border:1px solid rgba(255,212,0,.22)}
-    .ncard-blue{background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.25)}
-    .cdot{width:10px;height:10px;border-radius:50%;cursor:pointer;background:var(--statbg);border:1px solid var(--pborder);transition:background .2s,transform .2s}
-    .cdot.act{background:var(--yellow);border-color:var(--yellow);transform:scale(1.15)}
+    .tabbtn.act{background:rgba(255,212,0,.12);color:var(--yellow);border-color:rgba(255,212,0,.25);}
+    .tabbtn-w.act{background:rgba(90,169,255,.12);color:var(--blue);border-color:rgba(90,169,255,.25);}
+    .modsec.hidden{display:none;}
+    .gmini{position:relative;width:40px;height:50px;flex-shrink:0;}
+    .gmini-rim{position:absolute;top:0;left:-2px;right:-2px;height:2px;background:rgba(90,169,255,.4);border-radius:2px;}
+    .gmini-body{position:absolute;inset:0;border:2px solid rgba(90,169,255,.35);border-top:none;border-radius:2px 2px 12px 12px;}
+    .gmini-fill{position:absolute;bottom:2px;left:2px;right:2px;border-radius:1px 1px 10px 10px;background:linear-gradient(180deg,rgba(90,169,255,.55),rgba(61,143,224,.75));transition:height .5s ease;height:0%;}
+    .stepper{display:flex;align-items:center;border-radius:12px;overflow:hidden;border:1px solid var(--pb);background:var(--sb);}
+    .stepbtn{width:36px;height:36px;border:none;background:none;color:var(--blue);font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;}
+    .stepval{min-width:28px;text-align:center;font-size:14px;font-weight:700;color:var(--blue);line-height:36px;border-left:1px solid var(--pb);border-right:1px solid var(--pb);}
+    .cdot{width:10px;height:10px;border-radius:50%;cursor:pointer;background:var(--sb);border:1px solid var(--pb);transition:background .2s,transform .2s;}
+    .cdot.act{background:var(--yellow);border-color:var(--yellow);transform:scale(1.15);}
+    /* ── Welcome ── */
+    .wfeat{display:flex;align-items:flex-start;gap:14px;border-radius:16px;padding:14px;text-align:left;background:var(--panel);border:1px solid var(--pb);}
+    .wfeat-icon{font-size:24px;margin-top:1px}.wfeat-txt{font-size:14px;line-height:1.5;}
+    .wfeat-txt strong{font-weight:700;display:block;margin-bottom:2px;}
+    .ncard{width:100%;max-width:340px;border-radius:18px;padding:18px;text-align:left;background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06));border:1px solid rgba(255,212,0,.22);}
+    .ncard-blue{background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.25);}
+    /* ── STRETCH BREAK SCREEN ── */
+    #sb{background:radial-gradient(circle at top,#2b3348 0%,#1b1f2a 40%,#151923 100%);}
+    .sb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top,24px) 24px calc(24px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;width:100%;}
+    .sb-top{text-align:center;padding-top:8px;}
+    .sb-eyebrow{font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:8px;letter-spacing:0.3px;}
+    .sb-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px;}
+    .sb-subtitle{font-size:14px;color:var(--muted2);line-height:1.5;}
+    .sb-center{display:flex;flex-direction:column;align-items:center;gap:20px;flex:1;justify-content:center;}
+    .pulse-wrap{width:260px;height:260px;position:relative;display:grid;place-items:center;animation:breathe 8s ease-in-out infinite;}
+    @keyframes breathe{0%{transform:scale(.97)}50%{transform:scale(1.03)}100%{transform:scale(.97)}}
+    .progress-ring{width:260px;height:260px;position:absolute;inset:0;transform:rotate(-90deg);pointer-events:none;}
+    .ring-bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:10;}
+    .ring-prog{fill:none;stroke:url(#grd);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 1s linear;}
+    .inner-circle{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,212,0,.18),rgba(255,122,0,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.10);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2;text-align:center;}
+    .sb-time{font-size:52px;font-weight:900;line-height:1;color:#fff;}
+    .sb-time-lbl{margin-top:6px;font-size:13px;color:var(--muted2);font-weight:600;}
+    .sb-exercise{width:100%;text-align:center;}
+    .sb-ex-icon{font-size:38px;margin-bottom:8px;}
+    .sb-ex-name{font-size:22px;font-weight:800;margin-bottom:6px;}
+    .sb-ex-inst{font-size:14px;color:var(--muted2);line-height:1.55;min-height:44px;}
+    .sb-actions{width:100%;display:flex;gap:12px;padding-bottom:4px;}
+    .sb-btn{flex:1;border:none;border-radius:16px;padding:0;height:52px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform .15s;}
+    .sb-btn:active{transform:scale(.97);}
+    .sb-snooze{background:var(--blue);color:#081726;}
+    .sb-skip{background:var(--red);color:#2b1010;}
+    .sb-done{background:var(--green);color:#0f1b12;width:100%;display:none;}
+    .sb-success{display:none;position:absolute;inset:0;background:rgba(21,25,35,.96);flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;z-index:20;}
+    .sb-success.show{display:flex;}
+    .sb-suc-emoji{font-size:64px;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+    @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+    .sb-suc-title{font-size:30px;font-weight:900;}
+    .sb-suc-sub{font-size:15px;color:var(--muted2);}
+    #sbConfetti{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;width:100%;max-width:480px;height:220px;pointer-events:none;z-index:1;}
+    /* ── WATER BREAK SCREEN ── */
+    #wb{background:radial-gradient(circle at top,#1a2540 0%,#141820 45%,#0e1318 100%);}
+    .wb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top,24px) 24px calc(24px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;width:100%;position:relative;}
+    .wave-bg{position:absolute;bottom:0;left:0;right:0;height:40%;overflow:hidden;border-radius:0 0 0 0;z-index:0;opacity:.10;}
+    .wave{position:absolute;bottom:0;left:-100%;width:300%;height:100%;}
+    .wave svg{width:100%;height:100%;position:absolute;bottom:0;}
+    .wave-1{animation:waveM 6s linear infinite;}
+    .wave-2{animation:waveM 9s linear infinite reverse;opacity:.6;}
+    .wave-3{animation:waveM 12s linear infinite;opacity:.4;}
+    @keyframes waveM{0%{transform:translateX(0)}100%{transform:translateX(33.33%)}}
+    .wb-top{text-align:center;position:relative;z-index:2;}
+    .wb-eyebrow{font-size:11px;font-weight:600;color:var(--blue);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;opacity:.8;}
+    .wb-title{font-size:28px;font-weight:800;line-height:1.1;margin-bottom:6px;}
+    .wb-subtitle{font-size:13px;color:var(--muted);line-height:1.5;}
+    .wb-center{display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;z-index:2;flex:1;justify-content:center;}
+    .glass-wrap{position:relative;width:100px;height:130px;}
+    .glass-top{position:absolute;top:0;left:-2px;right:-2px;height:2px;background:rgba(90,169,255,.4);border-radius:2px 2px 0 0;}
+    .glass-outline{position:absolute;inset:0;border:2.5px solid rgba(90,169,255,.35);border-top:none;border-radius:3px 3px 18px 18px;}
+    .glass-shine{position:absolute;top:8px;left:10px;width:8px;height:35%;background:linear-gradient(180deg,rgba(255,255,255,.2),transparent);border-radius:4px;z-index:4;}
+    .water-fill{position:absolute;bottom:2px;left:2px;right:2px;border-radius:2px 2px 16px 16px;overflow:hidden;z-index:2;background:linear-gradient(180deg,rgba(90,169,255,.55),rgba(61,143,224,.75));transition:height .6s cubic-bezier(.34,1.56,.64,1);}
+    .water-surface{position:absolute;top:0;left:-20%;right:-20%;height:10px;}
+    .water-surface svg{width:100%;height:100%;animation:ripple 2.5s ease-in-out infinite;}
+    @keyframes ripple{0%,100%{transform:translateX(0)}50%{transform:translateX(-12px)}}
+    .bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.28);animation:rise linear infinite;}
+    .b1{width:5px;height:5px;left:20%;bottom:8%;animation-duration:2.4s;}
+    .b2{width:3px;height:3px;left:55%;bottom:5%;animation-duration:3.1s;animation-delay:.8s;}
+    .b3{width:4px;height:4px;left:72%;bottom:12%;animation-duration:2.7s;animation-delay:1.5s;}
+    @keyframes rise{0%{transform:translateY(0);opacity:.4}100%{transform:translateY(-80px);opacity:0}}
+    .wb-counter{text-align:center;}
+    .wb-cnt-num{font-size:40px;font-weight:900;color:var(--blue);line-height:1;font-variant-numeric:tabular-nums;}
+    .wb-cnt-num span{font-size:18px;font-weight:400;color:var(--muted);margin-left:3px;}
+    .wb-cnt-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+    .wb-dots{display:flex;flex-direction:column;align-items:center;gap:6px;}
+    .wb-dots-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+    .wb-dot-row{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-width:280px;}
+    .wd{height:7px;border-radius:4px;flex:1;min-width:18px;max-width:28px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.07);transition:all .3s;}
+    .wd.filled{background:var(--blue);border-color:var(--blue2);box-shadow:0 0 5px rgba(90,169,255,.35);}
+    .wb-next{display:flex;align-items:center;gap:7px;background:rgba(90,169,255,.08);border:1px solid rgba(90,169,255,.15);border-radius:10px;padding:7px 14px;font-size:12px;color:var(--muted);}
+    .wb-next strong{color:var(--blue);font-variant-numeric:tabular-nums;}
+    .wb-goal-banner{display:none;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.25);border-radius:10px;padding:8px 14px;font-size:12px;color:var(--green);text-align:center;position:relative;z-index:2;}
+    .wb-goal-banner.show{display:block;}
+    .wb-actions{width:100%;display:flex;gap:10px;position:relative;z-index:2;}
+    .wb-btn{flex:1;border:none;border-radius:16px;height:52px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform .15s;}
+    .wb-btn:active{transform:scale(.97);}
+    .wb-drink{background:var(--blue);color:#081726;flex:2;font-size:15px;}
+    .wb-skip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:var(--muted);}
+    .wb-success{display:none;position:absolute;inset:0;background:rgba(14,19,30,.96);flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:20;animation:fadeIn .3s ease;}
+    .wb-success.show{display:flex;}
+    @keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+    .wb-suc-icon{font-size:64px;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+    .wb-suc-title{font-size:28px;font-weight:900;color:var(--blue);}
+    .wb-suc-sub{font-size:14px;color:var(--muted);text-align:center;max-width:260px;line-height:1.5;}
+    #wbConfetti{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;width:100%;max-width:480px;height:220px;pointer-events:none;z-index:1;}
   </style>
 </head>
 <body>
 
-<div id="ls">
-  <div class="spin">🧘</div>
-  <div class="spin-txt">Loading…</div>
-</div>
+<div id="ls"><div class="spin">🧘</div><div class="spin-txt">Loading…</div></div>
 
 <div id="app">
 
-  <!-- WELCOME -->
+  <!-- ═══ WELCOME ═══ -->
   <div id="wl" class="screen">
     <div class="scr" style="align-items:center;text-align:center;">
       <div style="font-size:52px;margin-bottom:6px;">🧘💧</div>
       <div style="font-size:28px;font-weight:800;margin-bottom:8px;">Desk Wellness Pack</div>
-      <div style="font-size:15px;line-height:1.6;margin-bottom:24px;max-width:320px;color:var(--muted2);">Smart reminders for healthier desk habits — stretch breaks and hydration, running quietly in the background.</div>
+      <div style="font-size:15px;line-height:1.6;margin-bottom:24px;max-width:320px;color:var(--muted2);">Smart reminders for healthier desk habits.</div>
       <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;margin-bottom:24px;">
-        <div class="wfeat"><div class="wfeat-icon">🧘</div><div class="wfeat-txt"><strong>Smart Stretch</strong>Adaptive guided breaks that remind you to move before you stiffen.</div></div>
+        <div class="wfeat"><div class="wfeat-icon">🧘</div><div class="wfeat-txt"><strong>Smart Stretch</strong>Adaptive guided breaks with countdown ring and session types.</div></div>
         <div class="wfeat"><div class="wfeat-icon">💧</div><div class="wfeat-txt"><strong>Water Reminder</strong>Tracks daily glasses and reminds you to drink at your own pace.</div></div>
       </div>
       <div class="ncard" id="nc-android">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">🔔 Allow notifications</div>
-        <div style="font-size:13px;line-height:1.55;margin-bottom:14px;opacity:.75;">The app uses notifications to remind you to stretch and drink water. Without them, reminders won't fire in the background.</div>
+        <div style="font-size:13px;line-height:1.55;margin-bottom:14px;opacity:.75;">The app uses notifications when you're away. Without them, reminders won't fire in the background.</div>
         <button class="btn btn-up" id="notifBtn" style="margin-top:0;">Allow notifications</button>
         <div id="notifStatus" style="font-size:12px;margin-top:10px;text-align:center;display:none;"></div>
       </div>
       <div class="ncard" id="nc-ios" style="display:none;">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📲 Add to Home Screen first</div>
-        <div style="font-size:13px;line-height:1.6;opacity:.75;">Tap <strong>Share</strong> → <strong>Add to Home Screen</strong>, then open the app from your home screen.</div>
+        <div style="font-size:13px;line-height:1.6;opacity:.75;">Tap <strong>Share</strong> → <strong>Add to Home Screen</strong>, then open from your home screen.</div>
       </div>
       <div class="ncard ncard-blue" id="nc-desktop" style="display:none;">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📱 Best on Android</div>
-        <div style="font-size:13px;line-height:1.6;opacity:.75;">Open this URL in Chrome for Android and add it to your home screen for the full experience.</div>
+        <div style="font-size:13px;line-height:1.6;opacity:.75;">Open this URL in Chrome for Android and add it to your home screen.</div>
       </div>
-      <button class="btn btn-sec" id="skipBtn" style="max-width:340px;width:100%;margin-top:10px;">Continue anyway</button>
+      <button class="btn btn-sec" id="skipWelBtn" style="max-width:340px;width:100%;margin-top:10px;">Continue anyway</button>
     </div>
   </div>
 
-  <!-- HOME -->
+  <!-- ═══ HOME ═══ -->
   <div id="hm" class="screen">
     <div class="scr">
-
       <div class="card">
         <div style="font-size:22px;font-weight:800;margin-bottom:4px;">Desk Wellness Pack</div>
         <div style="font-size:14px;color:var(--muted);">Smart reminders for healthier desk habits</div>
       </div>
-
       <div class="card" style="padding:6px;">
         <div class="tabbar">
           <button class="tabbtn act" id="tabS">🧘 Smart Stretch</button>
@@ -140,7 +232,7 @@
         </div>
       </div>
 
-      <!-- STRETCH -->
+      <!-- STRETCH TAB -->
       <div id="secS" class="modsec">
         <div class="card" style="position:relative;">
           <div id="spb" class="pbi hidden">✨ Pro</div>
@@ -170,20 +262,20 @@
         <div class="card ucard" id="uCardS">
           <div class="utitle">✨ Upgrade to Pro</div>
           <div class="usub">One-time purchase. Skip stretches during meetings automatically.</div>
-          <div class="ufeats"><div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Checks Google Calendar — pauses reminders when you're busy</div></div></div></div>
+          <div class="ufeats"><div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Checks Google Calendar — pauses when you're busy</div></div></div></div>
           <button class="btn btn-up" id="upgS">Upgrade — €3.00</button>
           <button class="btn btn-verify" id="verS">✓ I've paid — Verify Payment</button>
           <div class="pnote" id="pnoteS">Complete payment then tap Verify.</div>
           <div class="uprice">One-time · No subscription · Instant unlock</div>
         </div>
         <div class="card hidden" id="proS">
-          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Checks Google Calendar — skips stretch if you're busy</div></div><input type="checkbox" id="calTog" class="toggle" /></div>
+          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Skips stretch if you're busy in Google Calendar</div></div><input type="checkbox" id="calTog" class="toggle" /></div>
           <div class="sok" id="calSok">✅ Google Calendar connected</div>
         </div>
         <div class="card">
           <div class="lbl">Weekly stretch activity</div>
           <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
-            <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+            <div id="statCarousel" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
               <div style="flex:0 0 100%;scroll-snap-align:start;">
                 <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
                 <div class="stats">
@@ -205,9 +297,9 @@
           <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;"><div class="cdot" id="d0"></div><div class="cdot act" id="d1"></div></div>
           <div style="margin-top:8px;font-size:11px;opacity:.5;text-align:center;">Resets every Sunday · Swipe to see last week</div>
         </div>
-      </div>
+      </div><!-- /secS -->
 
-      <!-- WATER -->
+      <!-- WATER TAB -->
       <div id="secW" class="modsec hidden">
         <div class="card" style="position:relative;">
           <div id="wpb" class="pbi hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
@@ -260,38 +352,126 @@
           <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div><input type="checkbox" id="wCalTog" class="toggle toggle-b" /></div>
           <div class="sok" id="wCalSok">✅ Google Calendar connected</div>
         </div>
+      </div><!-- /secW -->
+    </div>
+  </div><!-- /hm -->
+
+  <!-- ═══ STRETCH BREAK ═══ -->
+  <div id="sb" class="screen" style="position:relative;overflow:hidden;">
+    <div class="sb-wrap">
+      <div class="sb-top">
+        <div class="sb-eyebrow">Smart Stretch Break</div>
+        <div class="sb-title" id="sbTitle">Time to move</div>
+        <div class="sb-subtitle" id="sbSub">A short guided stretch to reset your posture and energy.</div>
       </div>
-
+      <div class="sb-center">
+        <div class="pulse-wrap">
+          <svg class="progress-ring" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="grd" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFD400"></stop>
+                <stop offset="100%" stop-color="#FF7A00"></stop>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+            <circle id="ringProg" class="ring-prog" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="inner-circle">
+            <div class="sb-time" id="sbTime">60</div>
+            <div class="sb-time-lbl">seconds</div>
+          </div>
+        </div>
+        <div class="sb-exercise">
+          <div class="sb-ex-icon" id="sbExIcon">🧘</div>
+          <div class="sb-ex-name" id="sbExName">Neck Roll</div>
+          <div class="sb-ex-inst" id="sbExInst">Gently roll your head in a circle. Feel the stretch along your neck.</div>
+        </div>
+      </div>
+      <div class="sb-actions" id="sbActions">
+        <button class="sb-btn sb-snooze" id="sbSnooze">Snooze 5 min</button>
+        <button class="sb-btn sb-skip" id="sbSkip">Skip</button>
+      </div>
     </div>
-  </div>
-
-  <!-- STRETCH BREAK (Week 2) -->
-  <div id="sw" class="screen">
-    <div class="scr" style="align-items:center;justify-content:center;text-align:center;">
-      <div style="font-size:56px;margin-bottom:12px;">🧘</div>
-      <div style="font-size:24px;font-weight:800;margin-bottom:8px;">Stretch Time</div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:32px;">Full stretch screen — Week 2</div>
-      <button class="btn btn-start" id="swBack" style="max-width:280px;width:100%;">← Back</button>
+    <!-- Success overlay -->
+    <div class="sb-success" id="sbSuccess">
+      <div class="sb-suc-emoji">👍</div>
+      <div class="sb-suc-title">Good job!</div>
+      <div class="sb-suc-sub">You completed your stretch break.</div>
+      <canvas id="sbConfetti"></canvas>
     </div>
-  </div>
+  </div><!-- /sb -->
 
-  <!-- WATER SCREEN (Week 2) -->
-  <div id="sw2" class="screen">
-    <div class="scr" style="align-items:center;justify-content:center;text-align:center;">
-      <div style="font-size:56px;margin-bottom:12px;">💧</div>
-      <div style="font-size:24px;font-weight:800;margin-bottom:8px;">Drink Water</div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:32px;">Full water screen — Week 2</div>
-      <button class="btn btn-start" id="sw2Back" style="max-width:280px;width:100%;background:var(--blue);">← Back</button>
+  <!-- ═══ WATER BREAK ═══ -->
+  <div id="wb" class="screen" style="position:relative;overflow:hidden;">
+    <div class="wb-wrap">
+      <div class="wave-bg">
+        <div class="wave wave-1"><svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,100 C150,160 350,40 600,100 C850,160 1050,40 1200,100 L1200,200 L0,200 Z" fill="#5aa9ff"/></svg></div>
+        <div class="wave wave-2"><svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,120 C200,60 400,180 600,120 C800,60 1000,180 1200,120 L1200,200 L0,200 Z" fill="#3d8fe0"/></svg></div>
+        <div class="wave wave-3"><svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,80 C300,140 500,20 800,80 C1000,120 1100,60 1200,80 L1200,200 L0,200 Z" fill="#5aa9ff"/></svg></div>
+      </div>
+      <div class="wb-top">
+        <div class="wb-eyebrow">💧 Hydration Break</div>
+        <div class="wb-title">Time to drink water</div>
+        <div class="wb-subtitle">Hydration keeps your focus sharp and your energy steady.</div>
+      </div>
+      <div class="wb-center">
+        <div class="glass-wrap">
+          <div class="glass-top"></div>
+          <div class="glass-outline"></div>
+          <div class="glass-shine"></div>
+          <div class="water-fill" id="wbFill">
+            <div class="water-surface"><svg viewBox="0 0 200 10" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C25,0 50,10 75,5 C100,0 125,10 150,5 C175,0 200,10 200,5 L200,10 L0,10 Z" fill="rgba(255,255,255,0.22)"/></svg></div>
+            <div class="bubble b1"></div>
+            <div class="bubble b2"></div>
+            <div class="bubble b3"></div>
+          </div>
+        </div>
+        <div class="wb-counter">
+          <div class="wb-cnt-num"><span id="wbCnt">0</span><span>/ <span id="wbGoalLbl">8</span></span></div>
+          <div class="wb-cnt-sub">glasses today</div>
+        </div>
+        <div class="wb-dots">
+          <div class="wb-dots-lbl">Daily Goal</div>
+          <div class="wb-dot-row" id="wbDotRow"></div>
+        </div>
+        <div class="wb-next">⏱ Next reminder in <strong id="wbNextTime">–:––</strong></div>
+      </div>
+      <div class="wb-goal-banner" id="wbGoalBanner">🎉 Daily goal reached! Keep going if you'd like.</div>
+      <div class="wb-actions">
+        <button class="wb-btn wb-drink" id="wbDrink">💧 I just drank water</button>
+        <button class="wb-btn wb-skip" id="wbSkip">Skip</button>
+      </div>
     </div>
-  </div>
+    <!-- Success overlay -->
+    <div class="wb-success" id="wbSuccess">
+      <canvas id="wbConfetti"></canvas>
+      <div class="wb-suc-icon">💧</div>
+      <div class="wb-suc-title">Great job!</div>
+      <div class="wb-suc-sub" id="wbSuccessSub">Keep it up — your body thanks you.</div>
+    </div>
+  </div><!-- /wb -->
 
-</div>
+</div><!-- /app -->
+
+<!-- Confetti from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
 <script>
 'use strict';
 
-// ── Config ─────────────────────────────────────────────────────────
 var BACKEND = 'https://desk-wellness-pack.vercel.app';
+
+// ── Sessions ──────────────────────────────────────────────────────
+var SESSIONS = [
+  { type:'neck',      icon:'🔄', name:'Neck Roll',         inst:'Slowly roll your head in a full circle — feel the gentle stretch along your neck and shoulders.',                       dur:60 },
+  { type:'shoulder',  icon:'💪', name:'Shoulder Stretch',  inst:'Roll your shoulders back 5 times, then forward 5 times. Squeeze them up to your ears and release.',                   dur:45 },
+  { type:'back',      icon:'🪑', name:'Back Arch',         inst:'Sit up straight, place hands on your lower back and gently arch backward. Hold for 5 seconds and repeat.',            dur:45 },
+  { type:'wrist',     icon:'✋', name:'Wrist & Hand',      inst:'Extend your arms, rotate wrists both ways 5 times. Then spread fingers wide and make a fist — repeat 10 times.',       dur:30 },
+  { type:'eyes',      icon:'👁️', name:'Eye Rest',          inst:'Look away from your screen at something far away for 20 seconds. Blink slowly and let your eyes relax.',              dur:20 },
+  { type:'breathing', icon:'🫁', name:'Deep Breathing',    inst:'Breathe in for 4 counts, hold for 4, breathe out for 4. Repeat 4 times and feel your tension release.',              dur:60 },
+  { type:'standing',  icon:'🧍', name:'Stand & Stretch',   inst:'Stand up and reach your arms high above your head. Side bend left and right, then roll your shoulders back.',         dur:45 },
+  { type:'hip',       icon:'🦵', name:'Hip Flexor',        inst:'Stand and step one foot forward into a gentle lunge. Feel the stretch in your hip. Hold 15 seconds each side.',       dur:45 },
+];
 
 // ── Storage ────────────────────────────────────────────────────────
 var store = {
@@ -299,75 +479,293 @@ var store = {
   set: function(k,v) { try { localStorage.setItem(k,JSON.stringify(v)); } catch(e){} },
   init: function() {
     if (this.get('installDate')!==null) return;
-    var d = { installDate:new Date().toISOString(), hasSeenWelcome:false,
+    var d = {
+      installDate:new Date().toISOString(), hasSeenWelcome:false,
       stretchEnabled:false, stretchInterval:30, smartMode:true, stretchSound:true,
       completedCount:0, snoozedCount:0, skippedCount:0,
       lastCompletedCount:0, lastSnoozedCount:0, lastSkippedCount:0,
-      waterEnabled:false, waterInterval:30, waterSound:true, waterGlassCount:0, waterGoal:8 };
+      lastSessionType:null,
+      waterEnabled:false, waterInterval:30, waterSound:true,
+      waterGlassCount:0, waterGoal:8, waterGoalResetDate:null,
+    };
     for (var k in d) this.set(k,d[k]);
   }
 };
 
-// ── Screens ────────────────────────────────────────────────────────
-var SC = { WL:'wl', HM:'hm', SW:'sw', SW2:'sw2' };
+// ── Screen router ──────────────────────────────────────────────────
+var SC = { WL:'wl', HM:'hm', SB:'sb', WB:'wb' };
+var currentScreen = '';
 
 function navigate(id) {
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
   var el = document.getElementById(id);
   if (el) el.classList.add('active');
+  currentScreen = id;
   if (id === SC.HM) initHome();
+  if (id === SC.SB) startStretchScreen();
+  if (id === SC.WB) startWaterScreen();
 }
 
-// ── Push notifications ─────────────────────────────────────────────
-var pushSub = null;
-
-function urlB64ToU8(b64) {
-  var pad = '='.repeat((4-b64.length%4)%4);
-  var b = (b64+pad).replace(/-/g,'+').replace(/_/g,'/');
-  var raw = atob(b);
-  var arr = new Uint8Array(raw.length);
-  for (var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
-  return arr;
-}
-
-async function getOrCreateSub() {
-  if (pushSub) return pushSub;
+// ── Sound ──────────────────────────────────────────────────────────
+function playChime(freq) {
   try {
-    var reg = await navigator.serviceWorker.ready;
-    var existing = await reg.pushManager.getSubscription();
-    if (existing) { pushSub=existing; return existing; }
-    var resp = await fetch(BACKEND+'/api/pwa-vapid-public-key');
-    var data = await resp.json();
-    var sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlB64ToU8(data.publicKey) });
-    pushSub = sub;
-    return sub;
-  } catch(e) { console.warn('[push] subscribe failed:',e); return null; }
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq || 528;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 1.5);
+  } catch(e) {}
 }
 
-async function syncSchedule() {
-  try {
-    var sub = await getOrCreateSub();
-    if (!sub) return;
-    var id = store.get('installationId');
-    if (!id) { id='pwa-'+Math.random().toString(36).slice(2,15); store.set('installationId',id); }
-    await fetch(BACKEND+'/api/pwa-subscribe', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        action:'subscribe', subscription:sub.toJSON(), installationId:id,
-        schedule:{ stretchEnabled:store.get('stretchEnabled')||false, stretchInterval:store.get('stretchInterval')||30,
-                   waterEnabled:store.get('waterEnabled')||false,   waterInterval:store.get('waterInterval')||30 }
-      })
-    });
-    console.log('[push] schedule synced');
-  } catch(e) { console.warn('[push] sync failed:',e); }
+// ── Confetti ───────────────────────────────────────────────────────
+function fireConfetti(canvasId) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas || typeof confetti === 'undefined') return;
+  var myConfetti = confetti.create(canvas, { resize: true });
+  myConfetti({ particleCount: 120, spread: 80, origin: { y: 0.4 }, colors: ['#ffd400','#ff7a00','#34c759','#5aa9ff','#ffffff'] });
 }
 
-// ── Timer display ──────────────────────────────────────────────────
+// ── Smart session selection ────────────────────────────────────────
+function pickSession() {
+  var smart = store.get('smartMode');
+  var last = store.get('lastSessionType');
+  if (!smart) {
+    var idx = Math.floor(Math.random() * SESSIONS.length);
+    return SESSIONS[idx];
+  }
+  var available = SESSIONS.filter(function(s){ return s.type !== last; });
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+// ── Stretch break screen ───────────────────────────────────────────
+var sbSession = null;
+var sbDuration = 0;
+var sbElapsed = 0;
+var sbTimerId = null;
+var sbCircumference = 2 * Math.PI * 52;
+
+function startStretchScreen() {
+  // Pick session
+  sbSession = pickSession();
+  store.set('lastSessionType', sbSession.type);
+  sbDuration = sbSession.dur;
+  sbElapsed = 0;
+
+  // Update UI
+  document.getElementById('sbTitle').textContent = sbSession.name;
+  document.getElementById('sbExIcon').textContent = sbSession.icon;
+  document.getElementById('sbExName').textContent = sbSession.name;
+  document.getElementById('sbExInst').textContent = sbSession.inst;
+  document.getElementById('sbSub').textContent = 'A ' + sbDuration + '-second guided stretch.';
+  document.getElementById('sbSuccess').classList.remove('show');
+  document.getElementById('sbActions').style.display = 'flex';
+
+  // Ring
+  var ring = document.getElementById('ringProg');
+  ring.style.strokeDasharray = sbCircumference;
+  ring.style.strokeDashoffset = '0';
+
+  // Time display
+  document.getElementById('sbTime').textContent = sbDuration;
+
+  // Sound
+  if (store.get('stretchSound')) playChime(528);
+
+  // Start countdown
+  clearInterval(sbTimerId);
+  sbTimerId = setInterval(function() {
+    sbElapsed++;
+    var remaining = sbDuration - sbElapsed;
+    document.getElementById('sbTime').textContent = remaining;
+    var progress = sbElapsed / sbDuration;
+    var offset = sbCircumference * (1 - progress);
+    document.getElementById('ringProg').style.strokeDashoffset = String(offset);
+    if (remaining <= 0) {
+      clearInterval(sbTimerId);
+      onStretchComplete();
+    }
+  }, 1000);
+}
+
+function onStretchComplete() {
+  // Record stat
+  var cnt = (store.get('completedCount') || 0) + 1;
+  store.set('completedCount', cnt);
+  // Show success
+  document.getElementById('sbActions').style.display = 'none';
+  document.getElementById('sbSuccess').classList.add('show');
+  fireConfetti('sbConfetti');
+  if (store.get('stretchSound')) playChime(660);
+  // Reschedule stretch
+  var iv = store.get('stretchInterval') || 30;
+  store.set('nextStretchTime', Date.now() + iv * 60000);
+  syncSchedule();
+  // Return to home after 3s, then check if water is overdue
+  setTimeout(function() {
+    navigate(SC.HM);
+    setTimeout(checkWaterOverdue, 400);
+  }, 3000);
+}
+
+function stopStretchScreen() { clearInterval(sbTimerId); }
+
+// Snooze
+document.getElementById('sbSnooze').addEventListener('click', function() {
+  clearInterval(sbTimerId);
+  var cnt = (store.get('snoozedCount') || 0) + 1;
+  store.set('snoozedCount', cnt);
+  store.set('nextStretchTime', Date.now() + 5 * 60000);
+  syncSchedule();
+  navigate(SC.HM);
+});
+
+// Skip
+document.getElementById('sbSkip').addEventListener('click', function() {
+  clearInterval(sbTimerId);
+  var cnt = (store.get('skippedCount') || 0) + 1;
+  store.set('skippedCount', cnt);
+  var iv = store.get('stretchInterval') || 30;
+  store.set('nextStretchTime', Date.now() + iv * 60000);
+  syncSchedule();
+  navigate(SC.HM);
+  setTimeout(checkWaterOverdue, 400);
+});
+
+// ── Water break screen ─────────────────────────────────────────────
+var wbTimerId2 = null;
+
+function startWaterScreen() {
+  // Reset daily count if new day
+  checkWaterDayReset();
+  var cnt = store.get('waterGlassCount') || 0;
+  var goal = store.get('waterGoal') || 8;
+
+  // Glass fill
+  var pct = Math.min(100, Math.round(cnt / goal * 100));
+  document.getElementById('wbFill').style.height = pct + '%';
+
+  // Counter
+  document.getElementById('wbCnt').textContent = cnt;
+  document.getElementById('wbGoalLbl').textContent = goal;
+
+  // Dots
+  var dotRow = document.getElementById('wbDotRow');
+  dotRow.innerHTML = '';
+  for (var i = 0; i < goal; i++) {
+    var d = document.createElement('div');
+    d.className = 'wd' + (i < cnt ? ' filled' : '') + (i === goal - 1 && cnt >= goal ? ' goal-dot' : '');
+    dotRow.appendChild(d);
+  }
+
+  // Goal banner
+  document.getElementById('wbGoalBanner').classList.toggle('show', cnt >= goal);
+
+  // Next reminder countdown
+  updateWbNext();
+  clearInterval(wbTimerId2);
+  wbTimerId2 = setInterval(updateWbNext, 1000);
+
+  // Success overlay hidden
+  document.getElementById('wbSuccess').classList.remove('show');
+
+  // Sound
+  if (store.get('waterSound')) playChime(440);
+}
+
+function updateWbNext() {
+  var next = store.get('nextWaterTime');
+  var el = document.getElementById('wbNextTime');
+  if (!next || !store.get('waterEnabled')) { if(el) el.textContent = '–:––'; return; }
+  var rem = next - Date.now();
+  if (rem <= 0) { if(el) el.textContent = '0:00'; return; }
+  var m = Math.floor(rem / 60000), s = Math.floor((rem % 60000) / 1000);
+  if(el) el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function checkWaterDayReset() {
+  var today = new Date().toDateString();
+  var last = store.get('waterGoalResetDate');
+  if (last !== today) {
+    store.set('waterGlassCount', 0);
+    store.set('waterGoalResetDate', today);
+  }
+}
+
+// Drink button
+document.getElementById('wbDrink').addEventListener('click', function() {
+  clearInterval(wbTimerId2);
+  var cnt = (store.get('waterGlassCount') || 0) + 1;
+  store.set('waterGlassCount', cnt);
+  var goal = store.get('waterGoal') || 8;
+
+  // Animate fill
+  var pct = Math.min(100, Math.round(cnt / goal * 100));
+  document.getElementById('wbFill').style.height = pct + '%';
+  document.getElementById('wbCnt').textContent = cnt;
+
+  // Show success
+  var sub = cnt >= goal
+    ? "Daily goal reached! You're crushing it 🎉"
+    : cnt + ' of ' + goal + ' glasses done. Keep going!';
+  document.getElementById('wbSuccessSub').textContent = sub;
+  document.getElementById('wbSuccess').classList.add('show');
+  if (store.get('waterSound')) playChime(528);
+  if (cnt >= goal) fireConfetti('wbConfetti');
+
+  // Reschedule water (one-shot)
+  var iv = store.get('waterInterval') || 30;
+  store.set('nextWaterTime', Date.now() + iv * 60000);
+  syncSchedule();
+
+  // Sync home screen glass display
+  updateHomeGlasses(cnt, goal);
+
+  setTimeout(function() { navigate(SC.HM); }, 2500);
+});
+
+// Skip water
+document.getElementById('wbSkip').addEventListener('click', function() {
+  clearInterval(wbTimerId2);
+  var iv = store.get('waterInterval') || 30;
+  store.set('nextWaterTime', Date.now() + iv * 60000);
+  syncSchedule();
+  navigate(SC.HM);
+});
+
+// ── Overdue check — fires when app reopens or timer hits zero ──────
+function checkStretchOverdue() {
+  if (!store.get('stretchEnabled')) return;
+  var next = store.get('nextStretchTime');
+  if (next && Date.now() >= next && currentScreen !== SC.SB && currentScreen !== SC.WB) {
+    navigate(SC.SB);
+  }
+}
+
+function checkWaterOverdue() {
+  if (!store.get('waterEnabled')) return;
+  var next = store.get('nextWaterTime');
+  // Only show water if stretch is not active
+  if (next && Date.now() >= next && currentScreen !== SC.WB && currentScreen !== SC.SB) {
+    navigate(SC.WB);
+  }
+}
+
+// ── Home countdown tick ────────────────────────────────────────────
 var tickId = null;
-function startTick() { if (!tickId) tickId=setInterval(tick,1000); tick(); }
+function startTick() { if (!tickId) tickId = setInterval(tick, 1000); tick(); }
 function tick() {
   doTick('nextStretchTime','tVal','tLbl','stretchEnabled','Next stretch in','var(--yellow)','Next stretch break');
   doTick('nextWaterTime','wVal','wLbl','waterEnabled','Next water in','var(--blue)','Next water reminder');
+  // Auto-navigate to break screen when countdown hits zero
+  if (currentScreen === SC.HM) {
+    checkStretchOverdue();
+    if (currentScreen !== SC.SB) checkWaterOverdue();
+  }
 }
 function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
   var el=document.getElementById(dId); if(!el) return;
@@ -382,44 +780,94 @@ function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
   var l=document.getElementById(lId); if(l) l.textContent=lblOn;
 }
 
+// ── Visibility change — catch overdue on app reopen ────────────────
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState !== 'visible') return;
+  checkStretchOverdue();
+  if (currentScreen !== SC.SB) checkWaterOverdue();
+});
+
+// ── Push subscription ──────────────────────────────────────────────
+var pushSub = null;
+function urlB64ToU8(b64) {
+  var pad='='.repeat((4-b64.length%4)%4);
+  var b=(b64+pad).replace(/-/g,'+').replace(/_/g,'/');
+  var raw=atob(b); var arr=new Uint8Array(raw.length);
+  for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+async function getOrCreateSub() {
+  if (pushSub) return pushSub;
+  try {
+    var reg=await navigator.serviceWorker.ready;
+    var ex=await reg.pushManager.getSubscription();
+    if(ex){pushSub=ex;return ex;}
+    var resp=await fetch(BACKEND+'/api/pwa-vapid-public-key');
+    var data=await resp.json();
+    var sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToU8(data.publicKey)});
+    pushSub=sub; return sub;
+  } catch(e){console.warn('[push] subscribe failed:',e);return null;}
+}
+async function syncSchedule() {
+  try {
+    var sub=await getOrCreateSub(); if(!sub) return;
+    var id=store.get('installationId');
+    if(!id){id='pwa-'+Math.random().toString(36).slice(2,15);store.set('installationId',id);}
+    await fetch(BACKEND+'/api/pwa-subscribe',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'subscribe',subscription:sub.toJSON(),installationId:id,
+        schedule:{
+          stretchEnabled:store.get('stretchEnabled')||false,
+          stretchInterval:store.get('stretchInterval')||30,
+          waterEnabled:store.get('waterEnabled')||false,
+          waterInterval:store.get('waterInterval')||30,
+          nextStretchTime:store.get('nextStretchTime')||null,
+          nextWaterTime:store.get('nextWaterTime')||null,
+        }
+      })
+    });
+  } catch(e){console.warn('[push] sync failed:',e);}
+}
+
 // ── Custom select ──────────────────────────────────────────────────
-function initSel(wrapId, onChange) {
+function initSel(wrapId,onChange) {
   var wrap=document.getElementById(wrapId); if(!wrap) return;
   var trig=wrap.querySelector('.sel-trig');
   var opts=wrap.querySelector('.sel-opts');
   var lbl=trig&&trig.querySelector('span');
-  if (!trig||!opts) return;
-  trig.addEventListener('click',function(e){ e.stopPropagation(); trig.classList.toggle('open'); opts.classList.toggle('open'); });
+  if(!trig||!opts) return;
+  trig.addEventListener('click',function(e){e.stopPropagation();trig.classList.toggle('open');opts.classList.toggle('open');});
   wrap.querySelectorAll('.sel-opt').forEach(function(opt){
     opt.addEventListener('click',function(){
       wrap.querySelectorAll('.sel-opt').forEach(function(o){o.classList.remove('selected');});
       opt.classList.add('selected');
       if(lbl) lbl.textContent=opt.textContent;
-      trig.classList.remove('open'); opts.classList.remove('open');
+      trig.classList.remove('open');opts.classList.remove('open');
       if(onChange) onChange(opt.dataset.value);
     });
   });
-  document.addEventListener('click',function(){ trig.classList.remove('open'); opts.classList.remove('open'); });
+  document.addEventListener('click',function(){trig.classList.remove('open');opts.classList.remove('open');});
 }
-function setSel(wrapId, val) {
+function setSel(wrapId,val) {
   var wrap=document.getElementById(wrapId); if(!wrap) return;
   wrap.querySelectorAll('.sel-opt').forEach(function(opt){
     var sel=Number(opt.dataset.value)===Number(val);
     opt.classList.toggle('selected',sel);
-    if(sel){ var l=wrap.querySelector('.sel-trig span'); if(l) l.textContent=opt.textContent; }
+    if(sel){var l=wrap.querySelector('.sel-trig span');if(l) l.textContent=opt.textContent;}
   });
 }
 
-// ── Home ───────────────────────────────────────────────────────────
-var homeReady = false;
+// ── Home screen ────────────────────────────────────────────────────
+var homeReady=false;
 function initHome() {
   renderStats(); tick();
-  if (homeReady) return;
-  homeReady = true;
+  if(homeReady) return;
+  homeReady=true;
 
   // Tabs
-  document.getElementById('tabS').addEventListener('click',function(){ setTab('s'); });
-  document.getElementById('tabW').addEventListener('click',function(){ setTab('w'); });
+  document.getElementById('tabS').addEventListener('click',function(){setTab('s');});
+  document.getElementById('tabW').addEventListener('click',function(){setTab('w');});
 
   // Stretch
   document.getElementById('startS').addEventListener('click',function(){
@@ -432,9 +880,12 @@ function initHome() {
     store.set('stretchEnabled',false); store.set('nextStretchTime',null);
     updateStretchUI(false); syncSchedule();
   });
-  document.getElementById('smartTog').addEventListener('change',function(e){ store.set('smartMode',e.target.checked); });
-  document.getElementById('soundTog').addEventListener('change',function(e){ store.set('stretchSound',e.target.checked); });
-  initSel('selS',function(v){ store.set('stretchInterval',Number(v)); if(store.get('stretchEnabled')){ store.set('nextStretchTime',Date.now()+Number(v)*60000); syncSchedule(); } });
+  document.getElementById('smartTog').addEventListener('change',function(e){store.set('smartMode',e.target.checked);});
+  document.getElementById('soundTog').addEventListener('change',function(e){store.set('stretchSound',e.target.checked);});
+  initSel('selS',function(v){
+    store.set('stretchInterval',Number(v));
+    if(store.get('stretchEnabled')){store.set('nextStretchTime',Date.now()+Number(v)*60000);syncSchedule();}
+  });
 
   // Water
   document.getElementById('startW').addEventListener('click',function(){
@@ -447,20 +898,31 @@ function initHome() {
     store.set('waterEnabled',false); store.set('nextWaterTime',null);
     updateWaterUI(false); syncSchedule();
   });
-  document.getElementById('wSndTog').addEventListener('change',function(e){ store.set('waterSound',e.target.checked); });
-  document.getElementById('wMinus').addEventListener('click',function(){ changeGoal(-1); });
-  document.getElementById('wPlus').addEventListener('click',function(){ changeGoal(1); });
-  initSel('selW',function(v){ store.set('waterInterval',Number(v)); if(store.get('waterEnabled')){ store.set('nextWaterTime',Date.now()+Number(v)*60000); syncSchedule(); } });
+  document.getElementById('wSndTog').addEventListener('change',function(e){store.set('waterSound',e.target.checked);});
+  document.getElementById('wMinus').addEventListener('click',function(){changeGoal(-1);});
+  document.getElementById('wPlus').addEventListener('click',function(){changeGoal(1);});
+  initSel('selW',function(v){
+    store.set('waterInterval',Number(v));
+    if(store.get('waterEnabled')){store.set('nextWaterTime',Date.now()+Number(v)*60000);syncSchedule();}
+  });
 
   // Upgrade
-  document.getElementById('upgS').addEventListener('click',function(){ doUpgrade('stretch'); });
-  document.getElementById('verS').addEventListener('click',function(){ doVerify('stretch'); });
-  document.getElementById('upgW').addEventListener('click',function(){ doUpgrade('water'); });
-  document.getElementById('verW').addEventListener('click',function(){ doVerify('water'); });
+  document.getElementById('upgS').addEventListener('click',function(){doUpgrade('stretch');});
+  document.getElementById('verS').addEventListener('click',function(){doVerify('stretch');});
+  document.getElementById('upgW').addEventListener('click',function(){doUpgrade('water');});
+  document.getElementById('verW').addEventListener('click',function(){doVerify('water');});
 
-  // Back buttons
-  document.getElementById('swBack').addEventListener('click',function(){ navigate(SC.HM); });
-  document.getElementById('sw2Back').addEventListener('click',function(){ navigate(SC.HM); });
+  // Carousel dots
+  var car=document.getElementById('statCarousel');
+  var d0=document.getElementById('d0'), d1=document.getElementById('d1');
+  if(car&&d0&&d1){
+    car.addEventListener('scroll',function(){
+      var mid=car.scrollLeft>car.scrollWidth/4;
+      d0.classList.toggle('act',!mid); d1.classList.toggle('act',mid);
+    },{passive:true});
+    d0.addEventListener('click',function(){car.scrollTo({left:0,behavior:'smooth'});});
+    d1.addEventListener('click',function(){car.scrollTo({left:car.scrollWidth,behavior:'smooth'});});
+  }
 
   loadState();
   startTick();
@@ -476,13 +938,14 @@ function setTab(t) {
 
 function loadState() {
   var se=store.get('stretchEnabled')||false, we=store.get('waterEnabled')||false;
-  var sm=document.getElementById('smartTog'); if(sm) sm.checked=store.get('smartMode')||true;
-  var ss=document.getElementById('soundTog'); if(ss) ss.checked=store.get('stretchSound')||true;
-  var ws=document.getElementById('wSndTog'); if(ws) ws.checked=store.get('waterSound')||true;
+  var sm=document.getElementById('smartTog'); if(sm) sm.checked=store.get('smartMode')!==false;
+  var ss=document.getElementById('soundTog'); if(ss) ss.checked=store.get('stretchSound')!==false;
+  var ws=document.getElementById('wSndTog'); if(ws) ws.checked=store.get('waterSound')!==false;
   setSel('selS',store.get('stretchInterval')||30);
   setSel('selW',store.get('waterInterval')||30);
   updateStretchUI(se); updateWaterUI(we);
-  updateWaterGlasses(store.get('waterGlassCount')||0, store.get('waterGoal')||8);
+  checkWaterDayReset();
+  updateHomeGlasses(store.get('waterGlassCount')||0,store.get('waterGoal')||8);
   var sp=!!store.get('licenseToken'), wp=!!store.get('waterLicenseToken');
   document.getElementById('uCardS').classList.toggle('hidden',sp);
   document.getElementById('proS').classList.toggle('hidden',!sp);
@@ -495,61 +958,61 @@ function loadState() {
 }
 
 function updateStretchUI(on) {
-  var s=document.getElementById('startS'), p=document.getElementById('stopS');
+  var s=document.getElementById('startS'),p=document.getElementById('stopS');
   if(s) s.disabled=on; if(p) p.disabled=!on;
-  if(!on){ var d=document.getElementById('tVal'); if(d) d.textContent='Timer Inactive'; var l=document.getElementById('tLbl'); if(l) l.textContent='Next stretch break'; }
+  if(!on){var d=document.getElementById('tVal');if(d)d.textContent='Timer Inactive';var l=document.getElementById('tLbl');if(l)l.textContent='Next stretch break';}
 }
 function updateWaterUI(on) {
-  var s=document.getElementById('startW'), p=document.getElementById('stopW');
+  var s=document.getElementById('startW'),p=document.getElementById('stopW');
   if(s) s.disabled=on; if(p) p.disabled=!on;
-  if(!on){ var d=document.getElementById('wVal'); if(d) d.textContent='Timer Inactive'; var l=document.getElementById('wLbl'); if(l) l.textContent='Next water reminder'; }
+  if(!on){var d=document.getElementById('wVal');if(d)d.textContent='Timer Inactive';var l=document.getElementById('wLbl');if(l)l.textContent='Next water reminder';}
 }
-function updateWaterGlasses(cnt, goal) {
-  var c=document.getElementById('wCnt'); if(c) c.textContent=cnt;
-  var g=document.getElementById('wGoalD'); if(g) g.textContent=goal;
-  var gv=document.getElementById('wGoalV'); if(gv) gv.textContent=goal;
-  var f=document.getElementById('wFill'); if(f) f.style.height=Math.min(100,Math.round(cnt/goal*100))+'%';
+function updateHomeGlasses(cnt,goal) {
+  var c=document.getElementById('wCnt');if(c) c.textContent=cnt;
+  var g=document.getElementById('wGoalD');if(g) g.textContent=goal;
+  var gv=document.getElementById('wGoalV');if(gv) gv.textContent=goal;
+  var f=document.getElementById('wFill');if(f) f.style.height=Math.min(100,Math.round(cnt/goal*100))+'%';
   var dots=document.getElementById('wDots'); if(!dots) return;
   dots.innerHTML='';
   for(var i=0;i<goal;i++){
-    var d=document.createElement('div');
-    d.style.cssText='width:10px;height:10px;border-radius:50%;background:'+(i<cnt?'var(--blue)':'rgba(90,169,255,.2)')+';transition:background .3s;';
-    dots.appendChild(d);
+    var dot=document.createElement('div');
+    dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+(i<cnt?'var(--blue)':'rgba(90,169,255,.2)')+';transition:background .3s;';
+    dots.appendChild(dot);
   }
 }
 function changeGoal(delta) {
-  var cur=store.get('waterGoal')||8, next=Math.max(1,Math.min(20,cur+delta));
-  store.set('waterGoal',next); updateWaterGlasses(store.get('waterGlassCount')||0,next);
+  var cur=store.get('waterGoal')||8,next=Math.max(1,Math.min(20,cur+delta));
+  store.set('waterGoal',next); updateHomeGlasses(store.get('waterGlassCount')||0,next);
 }
 function unlockGoal(isPro) {
-  var st=document.getElementById('wStepper'); if(st){st.style.opacity=isPro?'1':'0.4';st.style.pointerEvents=isPro?'auto':'none';}
-  var lk=document.getElementById('wLock'); if(lk) lk.style.display=isPro?'none':'inline';
-  var sl=document.getElementById('wGoalSub'); if(sl) sl.textContent=isPro?'Your daily hydration target':'Upgrade to Pro to set your own goal';
+  var st=document.getElementById('wStepper');if(st){st.style.opacity=isPro?'1':'0.4';st.style.pointerEvents=isPro?'auto':'none';}
+  var lk=document.getElementById('wLock');if(lk) lk.style.display=isPro?'none':'inline';
+  var sl=document.getElementById('wGoalSub');if(sl) sl.textContent=isPro?'Your daily hydration target':'Upgrade to Pro to set your own goal';
 }
 function renderStats() {
   var m={'lcC':'lastCompletedCount','lsC':'lastSnoozedCount','lkC':'lastSkippedCount','cC':'completedCount','sC':'snoozedCount','kC':'skippedCount'};
-  for(var id in m){ var el=document.getElementById(id); if(el) el.textContent=store.get(m[id])||0; }
+  for(var id in m){var el=document.getElementById(id);if(el) el.textContent=store.get(m[id])||0;}
 }
 async function doUpgrade(mod) {
-  var id=store.get('installationId'); if(!id){id='pwa-'+Math.random().toString(36).slice(2,15);store.set('installationId',id);}
+  var id=store.get('installationId');if(!id){id='pwa-'+Math.random().toString(36).slice(2,15);store.set('installationId',id);}
   var ep=mod==='water'?BACKEND+'/api/create-water-checkout':BACKEND+'/api/create-checkout';
-  try {
+  try{
     var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
     var d=await r.json();
-    if(d.url){ window.open(d.url,'_blank');
-      var vb=document.getElementById(mod==='water'?'verW':'verS'); if(vb) vb.style.display='flex';
-      var pn=document.getElementById(mod==='water'?'pnoteW':'pnoteS'); if(pn) pn.style.display='block'; }
-  } catch(e){ alert('Could not connect. Check your connection.'); }
+    if(d.url){window.open(d.url,'_blank');
+      var vb=document.getElementById(mod==='water'?'verW':'verS');if(vb) vb.style.display='flex';
+      var pn=document.getElementById(mod==='water'?'pnoteW':'pnoteS');if(pn) pn.style.display='block';}
+  }catch(e){alert('Could not connect. Check your connection.');}
 }
 async function doVerify(mod) {
-  var id=store.get('installationId'); if(!id) return;
+  var id=store.get('installationId');if(!id) return;
   var ep=mod==='water'?BACKEND+'/api/verify-water-payment':BACKEND+'/api/verify-payment';
-  try {
+  try{
     var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
     var d=await r.json();
-    if(d.token){ store.set(mod==='water'?'waterLicenseToken':'licenseToken',d.token); homeReady=false; loadState(); }
+    if(d.token){store.set(mod==='water'?'waterLicenseToken':'licenseToken',d.token);homeReady=false;loadState();}
     else alert('Payment not found yet — complete checkout and try again.');
-  } catch(e){ alert('Could not verify. Check your connection.'); }
+  }catch(e){alert('Could not verify. Check your connection.');}
 }
 
 // ── Welcome ────────────────────────────────────────────────────────
@@ -558,28 +1021,33 @@ function showWelcomeCard() {
   var isIOS=/iPad|iPhone|iPod/.test(ua)&&!window.MSStream;
   var isAndroid=/Android/.test(ua);
   var isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-  if (isIOS&&!isStandalone) { document.getElementById('nc-android').style.display='none'; document.getElementById('nc-ios').style.display='block'; }
-  else if (!isIOS&&!isAndroid) { document.getElementById('nc-android').style.display='none'; document.getElementById('nc-desktop').style.display='block'; }
+  if(isIOS&&!isStandalone){document.getElementById('nc-android').style.display='none';document.getElementById('nc-ios').style.display='block';}
+  else if(!isIOS&&!isAndroid){document.getElementById('nc-android').style.display='none';document.getElementById('nc-desktop').style.display='block';}
 }
-
 document.getElementById('notifBtn').addEventListener('click',async function(){
   var st=document.getElementById('notifStatus');
-  if(!('Notification' in window)){ st.textContent='Not supported here. Try adding to Home Screen first.'; st.style.color='var(--red)'; st.style.display='block'; return; }
+  if(!('Notification' in window)){st.textContent='Not supported here. Try adding to Home Screen first.';st.style.color='var(--red)';st.style.display='block';return;}
   var perm=await Notification.requestPermission();
   store.set('notificationPermission',perm);
   st.textContent=perm==='granted'?"✅ You're all set!":'Blocked — go to Settings → Chrome → Notifications.';
-  st.style.color=perm==='granted'?'var(--green)':'var(--red)'; st.style.display='block';
-  setTimeout(function(){ store.set('hasSeenWelcome',true); navigate(SC.HM); }, 1200);
+  st.style.color=perm==='granted'?'var(--green)':'var(--red)';st.style.display='block';
+  setTimeout(function(){store.set('hasSeenWelcome',true);navigate(SC.HM);},1200);
 });
-document.getElementById('skipBtn').addEventListener('click',function(){ store.set('hasSeenWelcome',true); navigate(SC.HM); });
+document.getElementById('skipWelBtn').addEventListener('click',function(){store.set('hasSeenWelcome',true);navigate(SC.HM);});
 
 // ── Service Worker ─────────────────────────────────────────────────
-if ('serviceWorker' in navigator) {
+if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./service-worker.js',{scope:'./'})
-    .then(function(reg){ console.log('[SW] registered',reg.scope); })
-    .catch(function(e){ console.warn('[SW] failed',e); });
+    .then(function(reg){console.log('[SW] registered',reg.scope);})
+    .catch(function(e){console.warn('[SW] failed',e);});
   navigator.serviceWorker.addEventListener('message',function(e){
-    if(e.data&&e.data.type==='NAVIGATE'&&e.data.screen){ navigate(SC[e.data.screen.toUpperCase()]||SC.HM); }
+    if(!e.data) return;
+    if(e.data.type==='NAVIGATE'){
+      var scr=e.data.screen;
+      if(scr==='stretch') navigate(SC.SB);
+      else if(scr==='water') navigate(SC.WB);
+      else navigate(SC.HM);
+    }
   });
 }
 
@@ -587,13 +1055,13 @@ if ('serviceWorker' in navigator) {
 function boot() {
   store.init();
   showWelcomeCard();
-  var params=new URLSearchParams(window.location.search), scr=params.get('screen');
-  if (!store.get('hasSeenWelcome')) navigate(SC.WL);
-  else if (scr==='stretch') navigate(SC.SW);
-  else if (scr==='water')   navigate(SC.SW2);
+  var params=new URLSearchParams(window.location.search),scr=params.get('screen');
+  if(!store.get('hasSeenWelcome')) navigate(SC.WL);
+  else if(scr==='stretch') navigate(SC.SB);
+  else if(scr==='water') navigate(SC.WB);
   else navigate(SC.HM);
   var ls=document.getElementById('ls');
-  if(ls){ ls.classList.add('out'); setTimeout(function(){ ls.remove(); },350); }
+  if(ls){ls.classList.add('out');setTimeout(function(){ls.remove();},350);}
 }
 
 boot();
