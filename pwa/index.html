@@ -630,8 +630,6 @@ function startStretchScreen() {
   // Time display
   document.getElementById('sbTime').textContent = sbDuration;
 
-  // Hide status bar notif while break screen is active
-  hideStatusNotif();
   // Sound — AudioContext already unlocked from Start button press
   playStretchChime();
 
@@ -735,8 +733,6 @@ function startWaterScreen() {
   // Success overlay hidden
   document.getElementById('wbSuccess').classList.remove('show');
 
-  // Hide status bar notif while break screen is active
-  hideStatusNotif();
   // Sound
   playWaterChime();
 }
