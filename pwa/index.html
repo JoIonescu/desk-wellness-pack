@@ -377,7 +377,8 @@
         </div>
 
         <!-- STATE B: Active — shown after tapping Start Stretch -->
-        <div id="sbActive" style="display:none;flex-direction:column;align-items:center;gap:20px;width:100%;">
+        <div id="sbActive" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;">
+          <!-- pulse-wrap uses CSS animation — works fine on display:flex -->
           <div class="pulse-wrap">
             <svg class="progress-ring" viewBox="0 0 120 120">
               <defs>
@@ -394,8 +395,11 @@
               <div class="sb-time-lbl">seconds</div>
             </div>
           </div>
-          <div class="sb-exercise" style="text-align:center;">
-            <div class="sb-ex-icon" id="sbExIcon">🧘</div>
+          <!-- Name + short instruction shown during active countdown -->
+          <div style="text-align:center;width:100%;max-width:320px;">
+            <div class="sb-ex-icon" id="sbExIcon" style="font-size:28px;margin-bottom:6px;">🧘</div>
+            <div id="sbExNameActive" style="font-size:18px;font-weight:800;margin-bottom:6px;"></div>
+            <div id="sbExInstActive" style="font-size:13px;color:var(--muted2);line-height:1.5;"></div>
           </div>
         </div>
 
@@ -586,10 +590,8 @@ async function showStatusNotif() {
     if (!se && !we) { await hideStatusNotif(); return; }
     var body = (se && we) ? 'Stretch & Water active'
              : se ? 'Stretch active' : 'Water intake active';
-    // Only update if text changed or not shown yet
-    var existing = await reg.getNotifications({ tag:'dwp-status' });
-    if (existing.length > 0 && existing[0].body === body) return; // already correct
-    existing.forEach(function(n){ n.close(); });
+    // Use tag replacement — browser handles deduplication natively
+    // Never manually close before showing — that creates the double-notif spam
     await reg.showNotification('Desk Wellness', {
       body: body,
       tag: 'dwp-status',
@@ -658,8 +660,9 @@ function startStretchScreen() {
   if (t) t.textContent = sbDuration;
 
   clearInterval(sbTimerId);
-  // Play chime — screen just opened (from notification tap = AudioContext unlocked)
-  playStretchChime();
+  // Small delay ensures AudioContext is resumed before playing
+  // (needed when screen opens via auto-navigate, not notification tap)
+  setTimeout(function() { playStretchChime(); }, 150);
 }
 
 function beginStretchCountdown() {
@@ -667,6 +670,15 @@ function beginStretchCountdown() {
   document.getElementById('sbActive').style.display = 'flex';
   document.getElementById('sbActionsReady').style.display = 'none';
   document.getElementById('sbActionsActive').style.display = 'flex';
+  // Populate active state text
+  var an = document.getElementById('sbExNameActive');
+  var ai = document.getElementById('sbExInstActive');
+  var ic = document.getElementById('sbExIcon');
+  if (sbSession) {
+    if (an) an.textContent = sbSession.name;
+    if (ai) ai.textContent = sbSession.inst;
+    if (ic) ic.textContent = sbSession.icon;
+  }
 
   sbElapsed = 0;
   clearInterval(sbTimerId);
@@ -1038,7 +1050,7 @@ function initHome() {
     store.set('nextStretchTime', null);
     updateStretchUI(false);
     syncSchedule();
-    showStatusNotif(); // will hide since both disabled
+    hideStatusNotif();
   });
 
   document.getElementById('smartTog').addEventListener('change',function(e){ store.set('smartMode',e.target.checked); });
@@ -1068,7 +1080,7 @@ function initHome() {
     store.set('nextWaterTime', null);
     updateWaterUI(false);
     syncSchedule();
-    showStatusNotif();
+    hideStatusNotif();
   });
 
   document.getElementById('wSndTog').addEventListener('change',function(e){ store.set('waterSound',e.target.checked); });
