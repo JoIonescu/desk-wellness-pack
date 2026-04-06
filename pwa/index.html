@@ -365,29 +365,48 @@
         <div class="sb-subtitle" id="sbSub">A short guided stretch to reset your posture and energy.</div>
       </div>
       <div class="sb-center">
-        <div class="pulse-wrap">
-          <svg class="progress-ring" viewBox="0 0 120 120">
-            <defs>
-              <linearGradient id="grd" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#FFD400"></stop>
-                <stop offset="100%" stop-color="#FF7A00"></stop>
-              </linearGradient>
-            </defs>
-            <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-            <circle id="ringProg" class="ring-prog" cx="60" cy="60" r="52"></circle>
-          </svg>
-          <div class="inner-circle">
-            <div class="sb-time" id="sbTime">60</div>
-            <div class="sb-time-lbl">seconds</div>
+
+        <!-- STATE A: Ready — shown first, countdown not started -->
+        <div id="sbReady" style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;">
+          <div style="font-size:72px;" id="sbReadyIcon">🧘</div>
+          <div>
+            <div class="sb-ex-name" id="sbExName" style="text-align:center;margin-bottom:8px;">Neck Roll</div>
+            <div class="sb-ex-inst" id="sbExInst" style="text-align:center;">Gently roll your head in a circle. Feel the stretch along your neck.</div>
+          </div>
+          <div style="font-size:13px;color:var(--muted2);opacity:.7;">60 seconds · tap when ready</div>
+        </div>
+
+        <!-- STATE B: Active — shown after tapping Start Stretch -->
+        <div id="sbActive" style="display:none;flex-direction:column;align-items:center;gap:20px;width:100%;">
+          <div class="pulse-wrap">
+            <svg class="progress-ring" viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="grd" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FFD400"></stop>
+                  <stop offset="100%" stop-color="#FF7A00"></stop>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+              <circle id="ringProg" class="ring-prog" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="inner-circle">
+              <div class="sb-time" id="sbTime">60</div>
+              <div class="sb-time-lbl">seconds</div>
+            </div>
+          </div>
+          <div class="sb-exercise" style="text-align:center;">
+            <div class="sb-ex-icon" id="sbExIcon">🧘</div>
           </div>
         </div>
-        <div class="sb-exercise">
-          <div class="sb-ex-icon" id="sbExIcon">🧘</div>
-          <div class="sb-ex-name" id="sbExName">Neck Roll</div>
-          <div class="sb-ex-inst" id="sbExInst">Gently roll your head in a circle. Feel the stretch along your neck.</div>
-        </div>
+
       </div>
-      <div class="sb-actions" id="sbActions">
+
+      <!-- ACTION BUTTONS — swap based on state -->
+      <div class="sb-actions" id="sbActionsReady">
+        <button class="sb-btn" id="sbBegin" style="background:var(--green);color:#0f1b12;flex:2;font-size:16px;">▶ Start Stretch</button>
+        <button class="sb-btn sb-skip" id="sbSkipReady" style="flex:1;">Skip</button>
+      </div>
+      <div class="sb-actions" id="sbActionsActive" style="display:none;">
         <button class="sb-btn sb-snooze" id="sbSnooze">Snooze 5 min</button>
         <button class="sb-btn sb-skip" id="sbSkip">Skip</button>
       </div>
@@ -609,45 +628,50 @@ var sbTimerId = null;
 var sbCircumference = 2 * Math.PI * 52;
 
 function startStretchScreen() {
-  // Pick session
   sbSession = pickSession();
   store.set('lastSessionType', sbSession.type);
   sbDuration = sbSession.dur;
   sbElapsed = 0;
 
-  // Update UI
-  document.getElementById('sbTitle').textContent = sbSession.name;
-  document.getElementById('sbExIcon').textContent = sbSession.icon;
+  // Show READY state — countdown does not start until user taps Begin
+  document.getElementById('sbTitle').textContent = 'Time to stretch';
+  document.getElementById('sbSub').textContent = sbSession.dur + ' seconds — take your time';
+  document.getElementById('sbReadyIcon').textContent = sbSession.icon;
   document.getElementById('sbExName').textContent = sbSession.name;
   document.getElementById('sbExInst').textContent = sbSession.inst;
-  document.getElementById('sbSub').textContent = 'A ' + sbDuration + '-second guided stretch.';
-  document.getElementById('sbSuccess').classList.remove('show');
-  document.getElementById('sbActions').style.display = 'flex';
+  document.getElementById('sbExIcon').textContent = sbSession.icon;
 
-  // Ring
+  document.getElementById('sbReady').style.display = 'flex';
+  document.getElementById('sbActive').style.display = 'none';
+  document.getElementById('sbActionsReady').style.display = 'flex';
+  document.getElementById('sbActionsActive').style.display = 'none';
+  document.getElementById('sbSuccess').classList.remove('show');
+
   var ring = document.getElementById('ringProg');
   ring.style.strokeDasharray = sbCircumference;
   ring.style.strokeDashoffset = '0';
-
-  // Time display
   document.getElementById('sbTime').textContent = sbDuration;
 
-  // Sound — AudioContext already unlocked from Start button press
+  // Play chime when screen opens
   playStretchChime();
+  clearInterval(sbTimerId);
+}
 
-  // Start countdown
+function beginStretchCountdown() {
+  document.getElementById('sbReady').style.display = 'none';
+  document.getElementById('sbActive').style.display = 'flex';
+  document.getElementById('sbActionsReady').style.display = 'none';
+  document.getElementById('sbActionsActive').style.display = 'flex';
+
+  sbElapsed = 0;
   clearInterval(sbTimerId);
   sbTimerId = setInterval(function() {
     sbElapsed++;
     var remaining = sbDuration - sbElapsed;
     document.getElementById('sbTime').textContent = remaining;
-    var progress = sbElapsed / sbDuration;
-    var offset = sbCircumference * (1 - progress);
+    var offset = sbCircumference * (1 - sbElapsed / sbDuration);
     document.getElementById('ringProg').style.strokeDashoffset = String(offset);
-    if (remaining <= 0) {
-      clearInterval(sbTimerId);
-      onStretchComplete();
-    }
+    if (remaining <= 0) { clearInterval(sbTimerId); onStretchComplete(); }
   }, 1000);
 }
 
@@ -667,7 +691,6 @@ function onStretchComplete() {
   // Return to home after 3s, then check if water is overdue
   setTimeout(function() {
     navigate(SC.HM);
-    showStatusNotif(); // reshown if timer still running
     setTimeout(checkWaterOverdue, 400);
   }, 3000);
 }
@@ -675,6 +698,23 @@ function onStretchComplete() {
 function stopStretchScreen() { clearInterval(sbTimerId); }
 
 // Snooze
+document.getElementById('sbBegin').addEventListener('click', function() {
+  beginStretchCountdown();
+});
+
+// Skip from ready state (before countdown)
+document.getElementById('sbSkipReady').addEventListener('click', function() {
+  clearInterval(sbTimerId);
+  _stretchNavLock = false;
+  var cnt = (store.get('skippedCount') || 0) + 1;
+  store.set('skippedCount', cnt);
+  var iv = store.get('stretchInterval') || 30;
+  store.set('nextStretchTime', Date.now() + iv * 60000);
+  syncSchedule();
+  navigate(SC.HM);
+  setTimeout(checkWaterOverdue, 400);
+});
+
 document.getElementById('sbSnooze').addEventListener('click', function() {
   clearInterval(sbTimerId);
   _stretchNavLock = false;
@@ -683,7 +723,6 @@ document.getElementById('sbSnooze').addEventListener('click', function() {
   store.set('nextStretchTime', Date.now() + 5 * 60000);
   syncSchedule();
   navigate(SC.HM);
-  showStatusNotif();
 });
 
 // Skip
@@ -696,7 +735,6 @@ document.getElementById('sbSkip').addEventListener('click', function() {
   store.set('nextStretchTime', Date.now() + iv * 60000);
   syncSchedule();
   navigate(SC.HM);
-  showStatusNotif();
   setTimeout(checkWaterOverdue, 400);
 });
 
@@ -790,7 +828,7 @@ document.getElementById('wbDrink').addEventListener('click', function() {
   // Sync home screen glass display
   updateHomeGlasses(cnt, goal);
 
-  setTimeout(function() { navigate(SC.HM); showStatusNotif(); }, 2500);
+  setTimeout(function() { navigate(SC.HM); }, 2500);
 });
 
 // Skip water
@@ -801,12 +839,16 @@ document.getElementById('wbSkip').addEventListener('click', function() {
   store.set('nextWaterTime', Date.now() + iv * 60000);
   syncSchedule();
   navigate(SC.HM);
-  showStatusNotif();
 });
 
-// ── No overdue auto-check needed ────────────────────────────────────
-// Break screens only open via cron notification tap (SW NAVIGATE message).
-// This keeps behaviour predictable and avoids unexpected screen transitions.
+// ── Water overdue check ────────────────────────────────────────────
+function checkWaterOverdue() {
+  if (!store.get('waterEnabled')) return;
+  var nw = store.get('nextWaterTime');
+  if (nw && Date.now() >= nw && currentScreen !== SC.WB && currentScreen !== SC.SB) {
+    navigateToBreak('water');
+  }
+}
 
 // ── Home countdown tick ────────────────────────────────────────────
 var tickId = null;
@@ -1160,7 +1202,7 @@ if('serviceWorker' in navigator){
     // Status notification tapped — app is now open/focused
     // Re-show the status notif if timer is still running
     if(msg.type==='STATUS_TAPPED'){
-      showStatusNotif();
+      // Just focus the app — status notif stays as-is
     }
 
     // Snooze action from notification shade (without opening app)
@@ -1169,7 +1211,6 @@ if('serviceWorker' in navigator){
       store.set('snoozedCount',cnt);
       store.set('nextStretchTime',Date.now()+5*60000);
       syncSchedule();
-      showStatusNotif();
     }
   });
 }
