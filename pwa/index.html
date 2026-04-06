@@ -480,38 +480,44 @@
 
 var BACKEND = 'https://desk-wellness-pack.vercel.app';
 
-// ── Sessions ──────────────────────────────────────────────────────
-var SESSIONS = [
-  { type:'neck',      icon:'🔄', name:'Neck Roll',         inst:'Slowly roll your head in a full circle — feel the gentle stretch along your neck and shoulders.',                       dur:60 },
-  { type:'shoulder',  icon:'💪', name:'Shoulder Stretch',  inst:'Roll your shoulders back 5 times, then forward 5 times. Squeeze them up to your ears and release.',                   dur:45 },
-  { type:'back',      icon:'🪑', name:'Back Arch',         inst:'Sit up straight, place hands on your lower back and gently arch backward. Hold for 5 seconds and repeat.',            dur:45 },
-  { type:'wrist',     icon:'✋', name:'Wrist & Hand',      inst:'Extend your arms, rotate wrists both ways 5 times. Then spread fingers wide and make a fist — repeat 10 times.',       dur:30 },
-  { type:'eyes',      icon:'👁️', name:'Eye Rest',          inst:'Look away from your screen at something far away for 20 seconds. Blink slowly and let your eyes relax.',              dur:20 },
-  { type:'breathing', icon:'🫁', name:'Deep Breathing',    inst:'Breathe in for 4 counts, hold for 4, breathe out for 4. Repeat 4 times and feel your tension release.',              dur:60 },
-  { type:'standing',  icon:'🧍', name:'Stand & Stretch',   inst:'Stand up and reach your arms high above your head. Side bend left and right, then roll your shoulders back.',         dur:45 },
-  { type:'hip',       icon:'🦵', name:'Hip Flexor',        inst:'Stand and step one foot forward into a gentle lunge. Feel the stretch in your hip. Hold 15 seconds each side.',       dur:45 },
-];
-
 // ── Storage ────────────────────────────────────────────────────────
 var store = {
-  get: function(k) { try { var v=localStorage.getItem(k); return v===null?null:JSON.parse(v); } catch(e){return null;} },
-  set: function(k,v) { try { localStorage.setItem(k,JSON.stringify(v)); } catch(e){} },
+  get: function(k) {
+    try { var v=localStorage.getItem(k); return v===null?null:JSON.parse(v); } catch(e){return null;}
+  },
+  set: function(k,v) {
+    try { localStorage.setItem(k,JSON.stringify(v)); } catch(e){}
+  },
   init: function() {
     if (this.get('installDate')!==null) return;
     var d = {
-      installDate:new Date().toISOString(), hasSeenWelcome:false,
-      stretchEnabled:false, stretchInterval:30, smartMode:true, stretchSound:true,
-      completedCount:0, snoozedCount:0, skippedCount:0,
-      lastCompletedCount:0, lastSnoozedCount:0, lastSkippedCount:0,
-      lastSessionType:null,
-      waterEnabled:false, waterInterval:30, waterSound:true,
-      waterGlassCount:0, waterGoal:8, waterGoalResetDate:null,
+      installDate: new Date().toISOString(),
+      hasSeenWelcome: false,
+      stretchEnabled: false, stretchInterval: 30,
+      smartMode: true, stretchSound: true,
+      completedCount: 0, snoozedCount: 0, skippedCount: 0,
+      lastCompletedCount: 0, lastSnoozedCount: 0, lastSkippedCount: 0,
+      lastSessionType: null,
+      waterEnabled: false, waterInterval: 30, waterSound: true,
+      waterGlassCount: 0, waterGoal: 8, waterGoalResetDate: null,
     };
-    for (var k in d) this.set(k,d[k]);
+    for (var k in d) this.set(k, d[k]);
   }
 };
 
-// ── Screen router ──────────────────────────────────────────────────
+// ── Sessions ────────────────────────────────────────────────────────
+var SESSIONS = [
+  { type:'neck',      icon:'🔄', name:'Neck Roll',        inst:'Slowly roll your head in a full circle — feel the gentle stretch along your neck and shoulders.',                     dur:60 },
+  { type:'shoulder',  icon:'💪', name:'Shoulder Stretch', inst:'Roll your shoulders back 5 times, then forward 5 times. Squeeze them up to your ears and release.',                 dur:45 },
+  { type:'back',      icon:'🪑', name:'Back Arch',        inst:'Sit up straight, place hands on your lower back and gently arch backward. Hold 5 seconds and repeat.',              dur:45 },
+  { type:'wrist',     icon:'✋', name:'Wrist & Hand',     inst:'Extend your arms, rotate wrists both ways 5 times. Spread fingers wide and make a fist — repeat 10 times.',         dur:30 },
+  { type:'eyes',      icon:'👁️', name:'Eye Rest',         inst:'Look away from your screen at something far away for 20 seconds. Blink slowly and relax.',                          dur:20 },
+  { type:'breathing', icon:'🫁', name:'Deep Breathing',   inst:'Breathe in 4 counts, hold 4, out 4. Repeat 4 times and feel tension release.',                                     dur:60 },
+  { type:'standing',  icon:'🧍', name:'Stand & Stretch',  inst:'Stand up and reach arms high above your head. Side bend left and right, then roll shoulders back.',                 dur:45 },
+  { type:'hip',       icon:'🦵', name:'Hip Flexor',       inst:'Stand and step one foot forward into a gentle lunge. Hold 15 seconds each side.',                                   dur:45 },
+];
+
+// ── Screen router ────────────────────────────────────────────────────
 var SC = { WL:'wl', HM:'hm', SB:'sb', WB:'wb' };
 var currentScreen = '';
 
@@ -525,8 +531,7 @@ function navigate(id) {
   if (id === SC.WB) startWaterScreen();
 }
 
-// ── Sound ──────────────────────────────────────────────────────────
-// Unlock AudioContext on user gesture (Start button), reuse for break screens
+// ── Audio ────────────────────────────────────────────────────────────
 var _actx = null;
 function unlockAudio() {
   try {
@@ -548,79 +553,74 @@ function playChime(freq, dur) {
     g.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.05);
     g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d);
     osc.start(ctx.currentTime); osc.stop(ctx.currentTime + d);
-  } catch(e) { console.warn('[sound]', e.message); }
+  } catch(e) {}
 }
-// Two-tone stretch chime (like extension: C5 + E5)
 function playStretchChime() {
   if (!store.get('stretchSound')) return;
   playChime(523, 1.0);
-  setTimeout(function() { playChime(659, 1.2); }, 180);
+  setTimeout(function(){ playChime(659, 1.2); }, 180);
 }
-// Single soft water chime (A4)
 function playWaterChime() {
   if (!store.get('waterSound')) return;
   playChime(440, 1.6);
 }
 
-// ── Status bar notification ────────────────────────────────────────
-// Shows a silent persistent notification in the status bar while timer runs.
-// Dismissed automatically when break screen opens; reshown when done.
+// ── Confetti ─────────────────────────────────────────────────────────
+function fireConfetti(canvasId) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas || typeof confetti === 'undefined') return;
+  var myConfetti = confetti.create(canvas, { resize:true });
+  myConfetti({ particleCount:120, spread:80, origin:{y:0.4},
+    colors:['#ffd400','#ff7a00','#34c759','#5aa9ff','#ffffff'] });
+}
+
+// ── Status bar notification ───────────────────────────────────────────
+// Shows silently while timer is running. Shows/hides on Start/Stop only.
+var _statusShown = false;
 async function showStatusNotif() {
   if (Notification.permission !== 'granted') return;
   try {
     var reg = await navigator.serviceWorker.ready;
-    // Close existing first to update text
-    var existing = await reg.getNotifications({ tag: 'dwp-status' });
-    existing.forEach(function(n) { n.close(); });
     var se = store.get('stretchEnabled');
     var we = store.get('waterEnabled');
-    if (!se && !we) return;
+    if (!se && !we) { await hideStatusNotif(); return; }
     var body = (se && we) ? 'Stretch & Water active'
-             : se ? 'Stretch active'
-             : 'Water intake active';
+             : se ? 'Stretch active' : 'Water intake active';
+    // Only update if text changed or not shown yet
+    var existing = await reg.getNotifications({ tag:'dwp-status' });
+    if (existing.length > 0 && existing[0].body === body) return; // already correct
+    existing.forEach(function(n){ n.close(); });
     await reg.showNotification('Desk Wellness', {
       body: body,
       tag: 'dwp-status',
       icon: './assets/icons/icon-192.png',
       badge: './assets/icons/icon-192.png',
       silent: true,
-      requireInteraction: false,
-      // renotify:false so it doesn't make sound/vibrate when updated
       renotify: false,
-      data: { type: 'status', screen: '' },
+      requireInteraction: false,
+      data: { type:'status', screen:'' },
     });
+    _statusShown = true;
   } catch(e) { console.warn('[status notif]', e.message); }
 }
-
 async function hideStatusNotif() {
   try {
     var reg = await navigator.serviceWorker.ready;
-    var existing = await reg.getNotifications({ tag: 'dwp-status' });
-    existing.forEach(function(n) { n.close(); });
+    var existing = await reg.getNotifications({ tag:'dwp-status' });
+    existing.forEach(function(n){ n.close(); });
+    _statusShown = false;
   } catch(e) {}
 }
 
-// ── Confetti ───────────────────────────────────────────────────────
-function fireConfetti(canvasId) {
-  var canvas = document.getElementById(canvasId);
-  if (!canvas || typeof confetti === 'undefined') return;
-  var myConfetti = confetti.create(canvas, { resize: true });
-  myConfetti({ particleCount: 120, spread: 80, origin: { y: 0.4 }, colors: ['#ffd400','#ff7a00','#34c759','#5aa9ff','#ffffff'] });
-}
-
-// ── Smart session selection ────────────────────────────────────────
+// ── Smart session picker ──────────────────────────────────────────────
 function pickSession() {
-  var smart = store.get('smartMode');
   var last = store.get('lastSessionType');
-  if (!smart) {
-    var idx = Math.floor(Math.random() * SESSIONS.length);
-    return SESSIONS[idx];
-  }
-  var available = SESSIONS.filter(function(s){ return s.type !== last; });
-  return available[Math.floor(Math.random() * available.length)];
+  var smart = store.get('smartMode');
+  var pool = smart ? SESSIONS.filter(function(s){ return s.type !== last; }) : SESSIONS;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// ── Stretch break screen ───────────────────────────────────────────
+// ── Stretch break screen ──────────────────────────────────────────────
 var sbSession = null;
 var sbDuration = 0;
 var sbElapsed = 0;
@@ -633,7 +633,7 @@ function startStretchScreen() {
   sbDuration = sbSession.dur;
   sbElapsed = 0;
 
-  // Show READY state — countdown does not start until user taps Begin
+  // Populate content
   document.getElementById('sbTitle').textContent = 'Time to stretch';
   document.getElementById('sbSub').textContent = sbSession.dur + ' seconds — take your time';
   document.getElementById('sbReadyIcon').textContent = sbSession.icon;
@@ -641,20 +641,25 @@ function startStretchScreen() {
   document.getElementById('sbExInst').textContent = sbSession.inst;
   document.getElementById('sbExIcon').textContent = sbSession.icon;
 
+  // Show Ready state, hide Active state
   document.getElementById('sbReady').style.display = 'flex';
   document.getElementById('sbActive').style.display = 'none';
   document.getElementById('sbActionsReady').style.display = 'flex';
   document.getElementById('sbActionsActive').style.display = 'none';
   document.getElementById('sbSuccess').classList.remove('show');
 
+  // Ring reset
   var ring = document.getElementById('ringProg');
-  ring.style.strokeDasharray = sbCircumference;
-  ring.style.strokeDashoffset = '0';
-  document.getElementById('sbTime').textContent = sbDuration;
+  if (ring) {
+    ring.style.strokeDasharray = sbCircumference;
+    ring.style.strokeDashoffset = '0';
+  }
+  var t = document.getElementById('sbTime');
+  if (t) t.textContent = sbDuration;
 
-  // Play chime when screen opens
-  playStretchChime();
   clearInterval(sbTimerId);
+  // Play chime — screen just opened (from notification tap = AudioContext unlocked)
+  playStretchChime();
 }
 
 function beginStretchCountdown() {
@@ -668,236 +673,223 @@ function beginStretchCountdown() {
   sbTimerId = setInterval(function() {
     sbElapsed++;
     var remaining = sbDuration - sbElapsed;
-    document.getElementById('sbTime').textContent = remaining;
-    var offset = sbCircumference * (1 - sbElapsed / sbDuration);
-    document.getElementById('ringProg').style.strokeDashoffset = String(offset);
+    var t = document.getElementById('sbTime');
+    if (t) t.textContent = remaining;
+    var ring = document.getElementById('ringProg');
+    if (ring) ring.style.strokeDashoffset = String(sbCircumference * (1 - sbElapsed/sbDuration));
     if (remaining <= 0) { clearInterval(sbTimerId); onStretchComplete(); }
   }, 1000);
 }
 
 function onStretchComplete() {
-  // Record stat
-  var cnt = (store.get('completedCount') || 0) + 1;
-  store.set('completedCount', cnt);
-  // Show success
-  document.getElementById('sbActions').style.display = 'none';
+  store.set('completedCount', (store.get('completedCount')||0) + 1);
+  document.getElementById('sbActionsActive').style.display = 'none';
   document.getElementById('sbSuccess').classList.add('show');
   fireConfetti('sbConfetti');
   playStretchChime();
-  // Reschedule stretch
-  var iv = store.get('stretchInterval') || 30;
-  store.set('nextStretchTime', Date.now() + iv * 60000);
-  syncSchedule();
-  // Return to home after 3s, then check if water is overdue
+  // Reschedule and sync to server AFTER break is done
+  rescheduleStretch();
   setTimeout(function() {
     navigate(SC.HM);
-    setTimeout(checkWaterOverdue, 400);
+    checkWaterOverdue();
   }, 3000);
 }
 
-function stopStretchScreen() { clearInterval(sbTimerId); }
+function rescheduleStretch() {
+  var iv = store.get('stretchInterval') || 30;
+  store.set('nextStretchTime', Date.now() + iv * 60000);
+  store.set('stretchBreakActive', false);
+  syncSchedule();
+}
 
-// Snooze
+function rescheduleWater() {
+  var iv = store.get('waterInterval') || 30;
+  store.set('nextWaterTime', Date.now() + iv * 60000);
+  store.set('waterBreakActive', false);
+  syncSchedule();
+}
+
+// Snooze from break screen
+document.getElementById('sbSnooze').addEventListener('click', function() {
+  clearInterval(sbTimerId);
+  store.set('snoozedCount', (store.get('snoozedCount')||0) + 1);
+  store.set('nextStretchTime', Date.now() + 5 * 60000);
+  store.set('stretchBreakActive', false);
+  syncSchedule();
+  navigate(SC.HM);
+});
+
+// Skip from active countdown
+document.getElementById('sbSkip').addEventListener('click', function() {
+  clearInterval(sbTimerId);
+  store.set('skippedCount', (store.get('skippedCount')||0) + 1);
+  rescheduleStretch();
+  navigate(SC.HM);
+  checkWaterOverdue();
+});
+
+// Skip from ready state (before countdown starts)
+document.getElementById('sbSkipReady').addEventListener('click', function() {
+  clearInterval(sbTimerId);
+  store.set('skippedCount', (store.get('skippedCount')||0) + 1);
+  rescheduleStretch();
+  navigate(SC.HM);
+  checkWaterOverdue();
+});
+
+// Begin countdown
 document.getElementById('sbBegin').addEventListener('click', function() {
   beginStretchCountdown();
 });
 
-// Skip from ready state (before countdown)
-document.getElementById('sbSkipReady').addEventListener('click', function() {
-  clearInterval(sbTimerId);
-  _stretchNavLock = false;
-  var cnt = (store.get('skippedCount') || 0) + 1;
-  store.set('skippedCount', cnt);
-  var iv = store.get('stretchInterval') || 30;
-  store.set('nextStretchTime', Date.now() + iv * 60000);
-  syncSchedule();
-  navigate(SC.HM);
-  setTimeout(checkWaterOverdue, 400);
-});
-
-document.getElementById('sbSnooze').addEventListener('click', function() {
-  clearInterval(sbTimerId);
-  _stretchNavLock = false;
-  var cnt = (store.get('snoozedCount') || 0) + 1;
-  store.set('snoozedCount', cnt);
-  store.set('nextStretchTime', Date.now() + 5 * 60000);
-  syncSchedule();
-  navigate(SC.HM);
-});
-
-// Skip
-document.getElementById('sbSkip').addEventListener('click', function() {
-  clearInterval(sbTimerId);
-  _stretchNavLock = false;
-  var cnt = (store.get('skippedCount') || 0) + 1;
-  store.set('skippedCount', cnt);
-  var iv = store.get('stretchInterval') || 30;
-  store.set('nextStretchTime', Date.now() + iv * 60000);
-  syncSchedule();
-  navigate(SC.HM);
-  setTimeout(checkWaterOverdue, 400);
-});
-
-// ── Water break screen ─────────────────────────────────────────────
-var wbTimerId2 = null;
+// ── Water break screen ────────────────────────────────────────────────
+var wbTickId = null;
 
 function startWaterScreen() {
-  // Reset daily count if new day
   checkWaterDayReset();
-  var cnt = store.get('waterGlassCount') || 0;
+  var cnt  = store.get('waterGlassCount') || 0;
   var goal = store.get('waterGoal') || 8;
 
-  // Glass fill
-  var pct = Math.min(100, Math.round(cnt / goal * 100));
-  document.getElementById('wbFill').style.height = pct + '%';
+  var pct = Math.min(100, Math.round(cnt/goal*100));
+  var fill = document.getElementById('wbFill');
+  if (fill) fill.style.height = pct + '%';
 
-  // Counter
-  document.getElementById('wbCnt').textContent = cnt;
-  document.getElementById('wbGoalLbl').textContent = goal;
+  var wc = document.getElementById('wbCnt');
+  if (wc) wc.textContent = cnt;
+  var wg = document.getElementById('wbGoalLbl');
+  if (wg) wg.textContent = goal;
 
   // Dots
   var dotRow = document.getElementById('wbDotRow');
-  dotRow.innerHTML = '';
-  for (var i = 0; i < goal; i++) {
-    var d = document.createElement('div');
-    d.className = 'wd' + (i < cnt ? ' filled' : '') + (i === goal - 1 && cnt >= goal ? ' goal-dot' : '');
-    dotRow.appendChild(d);
+  if (dotRow) {
+    dotRow.innerHTML = '';
+    for (var i=0; i<goal; i++) {
+      var d = document.createElement('div');
+      d.className = 'wd' + (i < cnt ? ' filled' : '');
+      dotRow.appendChild(d);
+    }
   }
 
-  // Goal banner
-  document.getElementById('wbGoalBanner').classList.toggle('show', cnt >= goal);
+  var banner = document.getElementById('wbGoalBanner');
+  if (banner) banner.classList.toggle('show', cnt >= goal);
 
-  // Next reminder countdown
+  var succ = document.getElementById('wbSuccess');
+  if (succ) succ.classList.remove('show');
+
+  clearInterval(wbTickId);
+  wbTickId = setInterval(updateWbNext, 1000);
   updateWbNext();
-  clearInterval(wbTimerId2);
-  wbTimerId2 = setInterval(updateWbNext, 1000);
 
-  // Success overlay hidden
-  document.getElementById('wbSuccess').classList.remove('show');
-
-  // Sound
   playWaterChime();
 }
 
 function updateWbNext() {
   var next = store.get('nextWaterTime');
   var el = document.getElementById('wbNextTime');
-  if (!next || !store.get('waterEnabled')) { if(el) el.textContent = '–:––'; return; }
+  if (!el) return;
+  if (!next || !store.get('waterEnabled')) { el.textContent = '–:––'; return; }
   var rem = next - Date.now();
-  if (rem <= 0) { if(el) el.textContent = '0:00'; return; }
-  var m = Math.floor(rem / 60000), s = Math.floor((rem % 60000) / 1000);
-  if(el) el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+  if (rem <= 0) { el.textContent = '0:00'; return; }
+  var m = Math.floor(rem/60000), s = Math.floor((rem%60000)/1000);
+  el.textContent = m + ':' + (s<10?'0':'') + s;
 }
 
 function checkWaterDayReset() {
   var today = new Date().toDateString();
-  var last = store.get('waterGoalResetDate');
-  if (last !== today) {
+  if (store.get('waterGoalResetDate') !== today) {
     store.set('waterGlassCount', 0);
     store.set('waterGoalResetDate', today);
   }
 }
 
-// Drink button
 document.getElementById('wbDrink').addEventListener('click', function() {
-  clearInterval(wbTimerId2);
-  _waterNavLock = false;
-  var cnt = (store.get('waterGlassCount') || 0) + 1;
-  store.set('waterGlassCount', cnt);
+  clearInterval(wbTickId);
+  var cnt  = (store.get('waterGlassCount')||0) + 1;
   var goal = store.get('waterGoal') || 8;
+  store.set('waterGlassCount', cnt);
+  store.set('waterBreakActive', false);
 
-  // Animate fill
-  var pct = Math.min(100, Math.round(cnt / goal * 100));
-  document.getElementById('wbFill').style.height = pct + '%';
-  document.getElementById('wbCnt').textContent = cnt;
+  var fill = document.getElementById('wbFill');
+  if (fill) fill.style.height = Math.min(100,Math.round(cnt/goal*100)) + '%';
+  var wc = document.getElementById('wbCnt');
+  if (wc) wc.textContent = cnt;
 
-  // Show success
-  var sub = cnt >= goal
-    ? "Daily goal reached! You're crushing it 🎉"
-    : cnt + ' of ' + goal + ' glasses done. Keep going!';
-  document.getElementById('wbSuccessSub').textContent = sub;
-  document.getElementById('wbSuccess').classList.add('show');
-  playWaterChime();
+  var sub = cnt >= goal ? "Daily goal reached! You're crushing it 🎉"
+          : cnt + ' of ' + goal + ' glasses done. Keep going!';
+  var ss = document.getElementById('wbSuccessSub');
+  if (ss) ss.textContent = sub;
+  var succ = document.getElementById('wbSuccess');
+  if (succ) succ.classList.add('show');
   if (cnt >= goal) fireConfetti('wbConfetti');
+  playWaterChime();
 
-  // Reschedule water (one-shot)
-  var iv = store.get('waterInterval') || 30;
-  store.set('nextWaterTime', Date.now() + iv * 60000);
-  syncSchedule();
-
-  // Sync home screen glass display
+  // Update home glass display
   updateHomeGlasses(cnt, goal);
-
+  rescheduleWater();
   setTimeout(function() { navigate(SC.HM); }, 2500);
 });
 
-// Skip water
 document.getElementById('wbSkip').addEventListener('click', function() {
-  clearInterval(wbTimerId2);
-  _waterNavLock = false;
-  var iv = store.get('waterInterval') || 30;
-  store.set('nextWaterTime', Date.now() + iv * 60000);
-  syncSchedule();
+  clearInterval(wbTickId);
+  store.set('waterBreakActive', false);
+  rescheduleWater();
   navigate(SC.HM);
 });
 
-// ── Water overdue check ────────────────────────────────────────────
+// ── Water overdue check ───────────────────────────────────────────────
 function checkWaterOverdue() {
   if (!store.get('waterEnabled')) return;
+  if (store.get('waterBreakActive')) return;
   var nw = store.get('nextWaterTime');
-  if (nw && Date.now() >= nw && currentScreen !== SC.WB && currentScreen !== SC.SB) {
-    navigateToBreak('water');
+  if (nw && Date.now() >= nw && currentScreen === SC.HM) {
+    store.set('waterBreakActive', true);
+    navigate(SC.WB);
   }
 }
 
-// ── Home countdown tick ────────────────────────────────────────────
+// ── Home countdown tick ───────────────────────────────────────────────
 var tickId = null;
-var _stretchNavLock = false; // prevent double-navigate in same tick cycle
-var _waterNavLock   = false;
 
-function startTick() { if (!tickId) tickId = setInterval(tick, 1000); tick(); }
+function startTick() {
+  if (!tickId) tickId = setInterval(tick, 1000);
+  tick();
+}
 
 function tick() {
   doTick('nextStretchTime','tVal','tLbl','stretchEnabled','Next stretch in','var(--yellow)','Next stretch break');
   doTick('nextWaterTime','wVal','wLbl','waterEnabled','Next water in','var(--blue)','Next water reminder');
 
-  // Auto-navigate when timer expires (only from home screen)
   if (currentScreen !== SC.HM) return;
 
-  if (store.get('stretchEnabled') && !_stretchNavLock) {
+  // Stretch overdue — navigate to break screen
+  // stretchBreakActive prevents double-fire
+  if (store.get('stretchEnabled') && !store.get('stretchBreakActive')) {
     var ns = store.get('nextStretchTime');
     if (ns && Date.now() >= ns) {
-      _stretchNavLock = true;
-      navigateToBreak('stretch');
+      store.set('stretchBreakActive', true);
+      navigate(SC.SB);
+      return; // return so water check doesn't run same tick
     }
   }
 
-  if (store.get('waterEnabled') && !_waterNavLock && currentScreen !== SC.SB) {
+  // Water overdue
+  if (store.get('waterEnabled') && !store.get('waterBreakActive')) {
     var nw = store.get('nextWaterTime');
     if (nw && Date.now() >= nw) {
-      _waterNavLock = true;
-      navigateToBreak('water');
+      store.set('waterBreakActive', true);
+      navigate(SC.WB);
     }
   }
 }
 
-// Navigate to break screen and IMMEDIATELY reschedule next timer.
-// Rescheduling before the break means nextStretchTime is in the future
-// while on the break screen — so page refresh never auto-navigates back.
-function navigateToBreak(type) {
-  var isStretch = type === 'stretch';
-  var iv = store.get(isStretch ? 'stretchInterval' : 'waterInterval') || 30;
-  // Reschedule BEFORE navigate — key to the refresh fix
-  store.set(isStretch ? 'nextStretchTime' : 'nextWaterTime', Date.now() + iv * 60000);
-  if (isStretch) _stretchNavLock = false;
-  else           _waterNavLock   = false;
-  syncSchedule();
-  navigate(isStretch ? SC.SB : SC.WB);
-}
 function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
   var el=document.getElementById(dId); if(!el) return;
   el.style.color=col;
-  if (!store.get(enKey)) { el.textContent='Timer Inactive'; var l=document.getElementById(lId); if(l) l.textContent=lblOff; return; }
+  if (!store.get(enKey)) {
+    el.textContent='Timer Inactive';
+    var l=document.getElementById(lId); if(l) l.textContent=lblOff;
+    return;
+  }
   var next=store.get(key);
   if (!next) { el.textContent='Starting…'; return; }
   var rem=next-Date.now();
@@ -907,27 +899,31 @@ function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
   var l=document.getElementById(lId); if(l) l.textContent=lblOn;
 }
 
-// ── Visibility change ──────────────────────────────────────────────
-// If user returns to app and a timer is overdue, navigate to break screen.
-// Uses same navigateToBreak() which reschedules immediately — refresh-safe.
+// ── Visibility change ────────────────────────────────────────────────
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState !== 'visible') return;
-  tick(); // refresh countdown display
-  // Small delay to let the page settle
-  setTimeout(function() {
-    if (currentScreen !== SC.HM) return;
-    if (store.get('stretchEnabled')) {
+  tick();
+  // Check overdue on app reopen (backgrounded case)
+  if (currentScreen === SC.HM) {
+    if (store.get('stretchEnabled') && !store.get('stretchBreakActive')) {
       var ns = store.get('nextStretchTime');
-      if (ns && Date.now() >= ns) { navigateToBreak('stretch'); return; }
+      if (ns && Date.now() >= ns) {
+        store.set('stretchBreakActive', true);
+        navigate(SC.SB);
+        return;
+      }
     }
-    if (store.get('waterEnabled')) {
+    if (store.get('waterEnabled') && !store.get('waterBreakActive')) {
       var nw = store.get('nextWaterTime');
-      if (nw && Date.now() >= nw) { navigateToBreak('water'); }
+      if (nw && Date.now() >= nw) {
+        store.set('waterBreakActive', true);
+        navigate(SC.WB);
+      }
     }
-  }, 600);
+  }
 });
 
-// ── Push subscription ──────────────────────────────────────────────
+// ── Push subscription ─────────────────────────────────────────────────
 var pushSub = null;
 function urlB64ToU8(b64) {
   var pad='='.repeat((4-b64.length%4)%4);
@@ -939,133 +935,170 @@ function urlB64ToU8(b64) {
 async function getOrCreateSub() {
   if (pushSub) return pushSub;
   try {
-    var reg=await navigator.serviceWorker.ready;
-    var ex=await reg.pushManager.getSubscription();
-    if(ex){pushSub=ex;return ex;}
-    var resp=await fetch(BACKEND+'/api/pwa-vapid-public-key');
-    var data=await resp.json();
-    var sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToU8(data.publicKey)});
-    pushSub=sub; return sub;
-  } catch(e){console.warn('[push] subscribe failed:',e);return null;}
+    var reg = await navigator.serviceWorker.ready;
+    var ex = await reg.pushManager.getSubscription();
+    if (ex) { pushSub=ex; return ex; }
+    var resp = await fetch(BACKEND+'/api/pwa-vapid-public-key');
+    var data = await resp.json();
+    var sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToU8(data.publicKey)
+    });
+    pushSub = sub;
+    return sub;
+  } catch(e) { console.warn('[push] subscribe failed:', e); return null; }
 }
+
 async function syncSchedule() {
   try {
-    var sub=await getOrCreateSub(); if(!sub) return;
-    var id=store.get('installationId');
-    if(!id){id='pwa-'+Math.random().toString(36).slice(2,15);store.set('installationId',id);}
-    await fetch(BACKEND+'/api/pwa-subscribe',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        action:'subscribe',subscription:sub.toJSON(),installationId:id,
-        schedule:{
-          stretchEnabled:store.get('stretchEnabled')||false,
-          stretchInterval:store.get('stretchInterval')||30,
-          waterEnabled:store.get('waterEnabled')||false,
-          waterInterval:store.get('waterInterval')||30,
-          nextStretchTime:store.get('nextStretchTime')||null,
-          nextWaterTime:store.get('nextWaterTime')||null,
+    var sub = await getOrCreateSub();
+    if (!sub) return;
+    var id = store.get('installationId');
+    if (!id) { id='pwa-'+Math.random().toString(36).slice(2,15); store.set('installationId',id); }
+    await fetch(BACKEND+'/api/pwa-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        action: 'subscribe',
+        subscription: sub.toJSON(),
+        installationId: id,
+        schedule: {
+          stretchEnabled:  store.get('stretchEnabled')  || false,
+          stretchInterval: store.get('stretchInterval') || 30,
+          waterEnabled:    store.get('waterEnabled')    || false,
+          waterInterval:   store.get('waterInterval')   || 30,
+          nextStretchTime: store.get('nextStretchTime') || null,
+          nextWaterTime:   store.get('nextWaterTime')   || null,
         }
       })
     });
-  } catch(e){console.warn('[push] sync failed:',e);}
+    console.log('[push] schedule synced');
+  } catch(e) { console.warn('[push] sync failed:', e); }
 }
 
-// ── Custom select ──────────────────────────────────────────────────
-function initSel(wrapId,onChange) {
+// ── Custom select ─────────────────────────────────────────────────────
+function initSel(wrapId, onChange) {
   var wrap=document.getElementById(wrapId); if(!wrap) return;
   var trig=wrap.querySelector('.sel-trig');
   var opts=wrap.querySelector('.sel-opts');
   var lbl=trig&&trig.querySelector('span');
   if(!trig||!opts) return;
-  trig.addEventListener('click',function(e){e.stopPropagation();trig.classList.toggle('open');opts.classList.toggle('open');});
+  trig.addEventListener('click',function(e){
+    e.stopPropagation();
+    trig.classList.toggle('open');
+    opts.classList.toggle('open');
+  });
   wrap.querySelectorAll('.sel-opt').forEach(function(opt){
     opt.addEventListener('click',function(){
       wrap.querySelectorAll('.sel-opt').forEach(function(o){o.classList.remove('selected');});
       opt.classList.add('selected');
       if(lbl) lbl.textContent=opt.textContent;
-      trig.classList.remove('open');opts.classList.remove('open');
+      trig.classList.remove('open'); opts.classList.remove('open');
       if(onChange) onChange(opt.dataset.value);
     });
   });
-  document.addEventListener('click',function(){trig.classList.remove('open');opts.classList.remove('open');});
+  document.addEventListener('click',function(){
+    trig.classList.remove('open'); opts.classList.remove('open');
+  });
 }
-function setSel(wrapId,val) {
+function setSel(wrapId, val) {
   var wrap=document.getElementById(wrapId); if(!wrap) return;
   wrap.querySelectorAll('.sel-opt').forEach(function(opt){
     var sel=Number(opt.dataset.value)===Number(val);
     opt.classList.toggle('selected',sel);
-    if(sel){var l=wrap.querySelector('.sel-trig span');if(l) l.textContent=opt.textContent;}
+    if(sel){ var l=wrap.querySelector('.sel-trig span'); if(l) l.textContent=opt.textContent; }
   });
 }
 
-// ── Home screen ────────────────────────────────────────────────────
-var homeReady=false;
+// ── Home screen ───────────────────────────────────────────────────────
+var homeReady = false;
 function initHome() {
   renderStats(); tick();
-  if(homeReady) return;
-  homeReady=true;
+  if (homeReady) return;
+  homeReady = true;
 
   // Tabs
-  document.getElementById('tabS').addEventListener('click',function(){setTab('s');});
-  document.getElementById('tabW').addEventListener('click',function(){setTab('w');});
+  document.getElementById('tabS').addEventListener('click',function(){ setTab('s'); });
+  document.getElementById('tabW').addEventListener('click',function(){ setTab('w'); });
 
-  // Stretch
+  // Stretch start/stop
   document.getElementById('startS').addEventListener('click',function(){
-    unlockAudio(); // unlock AudioContext on user gesture
-    store.set('stretchEnabled',true);
-    var iv=store.get('stretchInterval')||30;
-    store.set('nextStretchTime',Date.now()+iv*60000);
-    updateStretchUI(true); syncSchedule(); showStatusNotif();
+    unlockAudio();
+    store.set('stretchEnabled', true);
+    store.set('stretchBreakActive', false);
+    var iv = store.get('stretchInterval') || 30;
+    store.set('nextStretchTime', Date.now() + iv*60000);
+    updateStretchUI(true);
+    syncSchedule();
+    showStatusNotif();
   });
   document.getElementById('stopS').addEventListener('click',function(){
-    store.set('stretchEnabled',false); store.set('nextStretchTime',null);
-    updateStretchUI(false); syncSchedule(); showStatusNotif();
-  });
-  document.getElementById('smartTog').addEventListener('change',function(e){store.set('smartMode',e.target.checked);});
-  document.getElementById('soundTog').addEventListener('change',function(e){store.set('stretchSound',e.target.checked);});
-  initSel('selS',function(v){
-    store.set('stretchInterval',Number(v));
-    if(store.get('stretchEnabled')){store.set('nextStretchTime',Date.now()+Number(v)*60000);syncSchedule();}
+    store.set('stretchEnabled', false);
+    store.set('stretchBreakActive', false);
+    store.set('nextStretchTime', null);
+    updateStretchUI(false);
+    syncSchedule();
+    showStatusNotif(); // will hide since both disabled
   });
 
-  // Water
+  document.getElementById('smartTog').addEventListener('change',function(e){ store.set('smartMode',e.target.checked); });
+  document.getElementById('soundTog').addEventListener('change',function(e){ store.set('stretchSound',e.target.checked); });
+  initSel('selS',function(v){
+    store.set('stretchInterval',Number(v));
+    if(store.get('stretchEnabled')){
+      store.set('nextStretchTime',Date.now()+Number(v)*60000);
+      syncSchedule();
+    }
+  });
+
+  // Water start/stop
   document.getElementById('startW').addEventListener('click',function(){
     unlockAudio();
-    store.set('waterEnabled',true);
-    var iv=store.get('waterInterval')||30;
-    store.set('nextWaterTime',Date.now()+iv*60000);
-    updateWaterUI(true); syncSchedule(); showStatusNotif();
+    store.set('waterEnabled', true);
+    store.set('waterBreakActive', false);
+    var iv = store.get('waterInterval') || 30;
+    store.set('nextWaterTime', Date.now() + iv*60000);
+    updateWaterUI(true);
+    syncSchedule();
+    showStatusNotif();
   });
   document.getElementById('stopW').addEventListener('click',function(){
-    store.set('waterEnabled',false); store.set('nextWaterTime',null);
-    updateWaterUI(false); syncSchedule(); showStatusNotif();
+    store.set('waterEnabled', false);
+    store.set('waterBreakActive', false);
+    store.set('nextWaterTime', null);
+    updateWaterUI(false);
+    syncSchedule();
+    showStatusNotif();
   });
-  document.getElementById('wSndTog').addEventListener('change',function(e){store.set('waterSound',e.target.checked);});
-  document.getElementById('wMinus').addEventListener('click',function(){changeGoal(-1);});
-  document.getElementById('wPlus').addEventListener('click',function(){changeGoal(1);});
+
+  document.getElementById('wSndTog').addEventListener('change',function(e){ store.set('waterSound',e.target.checked); });
+  document.getElementById('wMinus').addEventListener('click',function(){ changeGoal(-1); });
+  document.getElementById('wPlus').addEventListener('click',function(){  changeGoal(+1); });
   initSel('selW',function(v){
     store.set('waterInterval',Number(v));
-    if(store.get('waterEnabled')){store.set('nextWaterTime',Date.now()+Number(v)*60000);syncSchedule();}
+    if(store.get('waterEnabled')){
+      store.set('nextWaterTime',Date.now()+Number(v)*60000);
+      syncSchedule();
+    }
   });
 
   // Upgrade
-  document.getElementById('upgS').addEventListener('click',function(){doUpgrade('stretch');});
-  document.getElementById('verS').addEventListener('click',function(){doVerify('stretch');});
-  document.getElementById('upgW').addEventListener('click',function(){doUpgrade('water');});
-  document.getElementById('verW').addEventListener('click',function(){doVerify('water');});
+  document.getElementById('upgS').addEventListener('click',function(){ doUpgrade('stretch'); });
+  document.getElementById('verS').addEventListener('click',function(){ doVerify('stretch'); });
+  document.getElementById('upgW').addEventListener('click',function(){ doUpgrade('water'); });
+  document.getElementById('verW').addEventListener('click',function(){ doVerify('water'); });
 
   // Carousel dots
   var car=document.getElementById('statCarousel');
   var d0=document.getElementById('d0'), d1=document.getElementById('d1');
   if(car&&d0&&d1){
     car.addEventListener('scroll',function(){
-      // d0 = This Week (first slide), d1 = Last Week (second slide)
       var onSecond = car.scrollLeft > (car.scrollWidth/2 - 10);
       d0.classList.toggle('act',!onSecond);
       d1.classList.toggle('act',onSecond);
     },{passive:true});
-    d0.addEventListener('click',function(){car.scrollTo({left:0,behavior:'smooth'});});
-    d1.addEventListener('click',function(){car.scrollTo({left:car.scrollWidth,behavior:'smooth'});});
+    d0.addEventListener('click',function(){ car.scrollTo({left:0,behavior:'smooth'}); });
+    d1.addEventListener('click',function(){ car.scrollTo({left:car.scrollWidth,behavior:'smooth'}); });
   }
 
   loadState();
@@ -1081,15 +1114,17 @@ function setTab(t) {
 }
 
 function loadState() {
-  var se=store.get('stretchEnabled')||false, we=store.get('waterEnabled')||false;
+  var se=store.get('stretchEnabled')||false;
+  var we=store.get('waterEnabled')||false;
   var sm=document.getElementById('smartTog'); if(sm) sm.checked=store.get('smartMode')!==false;
   var ss=document.getElementById('soundTog'); if(ss) ss.checked=store.get('stretchSound')!==false;
-  var ws=document.getElementById('wSndTog'); if(ws) ws.checked=store.get('waterSound')!==false;
-  setSel('selS',store.get('stretchInterval')||30);
-  setSel('selW',store.get('waterInterval')||30);
-  updateStretchUI(se); updateWaterUI(we);
+  var ws=document.getElementById('wSndTog');  if(ws) ws.checked=store.get('waterSound')!==false;
+  setSel('selS', store.get('stretchInterval')||30);
+  setSel('selW', store.get('waterInterval')||30);
+  updateStretchUI(se);
+  updateWaterUI(we);
   checkWaterDayReset();
-  updateHomeGlasses(store.get('waterGlassCount')||0,store.get('waterGoal')||8);
+  updateHomeGlasses(store.get('waterGlassCount')||0, store.get('waterGoal')||8);
   var sp=!!store.get('licenseToken'), wp=!!store.get('waterLicenseToken');
   document.getElementById('uCardS').classList.toggle('hidden',sp);
   document.getElementById('proS').classList.toggle('hidden',!sp);
@@ -1102,20 +1137,26 @@ function loadState() {
 }
 
 function updateStretchUI(on) {
-  var s=document.getElementById('startS'),p=document.getElementById('stopS');
+  var s=document.getElementById('startS'), p=document.getElementById('stopS');
   if(s) s.disabled=on; if(p) p.disabled=!on;
-  if(!on){var d=document.getElementById('tVal');if(d)d.textContent='Timer Inactive';var l=document.getElementById('tLbl');if(l)l.textContent='Next stretch break';}
+  if(!on){
+    var d=document.getElementById('tVal'); if(d) d.textContent='Timer Inactive';
+    var l=document.getElementById('tLbl'); if(l) l.textContent='Next stretch break';
+  }
 }
 function updateWaterUI(on) {
-  var s=document.getElementById('startW'),p=document.getElementById('stopW');
+  var s=document.getElementById('startW'), p=document.getElementById('stopW');
   if(s) s.disabled=on; if(p) p.disabled=!on;
-  if(!on){var d=document.getElementById('wVal');if(d)d.textContent='Timer Inactive';var l=document.getElementById('wLbl');if(l)l.textContent='Next water reminder';}
+  if(!on){
+    var d=document.getElementById('wVal'); if(d) d.textContent='Timer Inactive';
+    var l=document.getElementById('wLbl'); if(l) l.textContent='Next water reminder';
+  }
 }
-function updateHomeGlasses(cnt,goal) {
-  var c=document.getElementById('wCnt');if(c) c.textContent=cnt;
-  var g=document.getElementById('wGoalD');if(g) g.textContent=goal;
+function updateHomeGlasses(cnt, goal) {
+  var c=document.getElementById('wCnt');   if(c) c.textContent=cnt;
+  var g=document.getElementById('wGoalD'); if(g) g.textContent=goal;
   var gv=document.getElementById('wGoalV');if(gv) gv.textContent=goal;
-  var f=document.getElementById('wFill');if(f) f.style.height=Math.min(100,Math.round(cnt/goal*100))+'%';
+  var f=document.getElementById('wFill');  if(f) f.style.height=Math.min(100,Math.round(cnt/goal*100))+'%';
   var dots=document.getElementById('wDots'); if(!dots) return;
   dots.innerHTML='';
   for(var i=0;i<goal;i++){
@@ -1125,117 +1166,153 @@ function updateHomeGlasses(cnt,goal) {
   }
 }
 function changeGoal(delta) {
-  var cur=store.get('waterGoal')||8,next=Math.max(1,Math.min(20,cur+delta));
-  store.set('waterGoal',next); updateHomeGlasses(store.get('waterGlassCount')||0,next);
+  var cur=store.get('waterGoal')||8, next=Math.max(1,Math.min(20,cur+delta));
+  store.set('waterGoal',next);
+  updateHomeGlasses(store.get('waterGlassCount')||0,next);
 }
 function unlockGoal(isPro) {
-  var st=document.getElementById('wStepper');if(st){st.style.opacity=isPro?'1':'0.4';st.style.pointerEvents=isPro?'auto':'none';}
-  var lk=document.getElementById('wLock');if(lk) lk.style.display=isPro?'none':'inline';
-  var sl=document.getElementById('wGoalSub');if(sl) sl.textContent=isPro?'Your daily hydration target':'Upgrade to Pro to set your own goal';
+  var st=document.getElementById('wStepper');
+  if(st){st.style.opacity=isPro?'1':'0.4';st.style.pointerEvents=isPro?'auto':'none';}
+  var lk=document.getElementById('wLock'); if(lk) lk.style.display=isPro?'none':'inline';
+  var sl=document.getElementById('wGoalSub');
+  if(sl) sl.textContent=isPro?'Your daily hydration target':'Upgrade to Pro to set your own goal';
 }
 function renderStats() {
-  var m={'lcC':'lastCompletedCount','lsC':'lastSnoozedCount','lkC':'lastSkippedCount','cC':'completedCount','sC':'snoozedCount','kC':'skippedCount'};
-  for(var id in m){var el=document.getElementById(id);if(el) el.textContent=store.get(m[id])||0;}
-}
-async function doUpgrade(mod) {
-  var id=store.get('installationId');if(!id){id='pwa-'+Math.random().toString(36).slice(2,15);store.set('installationId',id);}
-  var ep=mod==='water'?BACKEND+'/api/create-water-checkout':BACKEND+'/api/create-checkout';
-  try{
-    var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
-    var d=await r.json();
-    if(d.url){window.open(d.url,'_blank');
-      var vb=document.getElementById(mod==='water'?'verW':'verS');if(vb) vb.style.display='flex';
-      var pn=document.getElementById(mod==='water'?'pnoteW':'pnoteS');if(pn) pn.style.display='block';}
-  }catch(e){alert('Could not connect. Check your connection.');}
-}
-async function doVerify(mod) {
-  var id=store.get('installationId');if(!id) return;
-  var ep=mod==='water'?BACKEND+'/api/verify-water-payment':BACKEND+'/api/verify-payment';
-  try{
-    var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
-    var d=await r.json();
-    if(d.token){store.set(mod==='water'?'waterLicenseToken':'licenseToken',d.token);homeReady=false;loadState();}
-    else alert('Payment not found yet — complete checkout and try again.');
-  }catch(e){alert('Could not verify. Check your connection.');}
+  var m={
+    'cC':'completedCount','sC':'snoozedCount','kC':'skippedCount',
+    'lcC':'lastCompletedCount','lsC':'lastSnoozedCount','lkC':'lastSkippedCount'
+  };
+  for(var id in m){ var el=document.getElementById(id); if(el) el.textContent=store.get(m[id])||0; }
 }
 
-// ── Welcome ────────────────────────────────────────────────────────
+async function doUpgrade(mod) {
+  var id=store.get('installationId');
+  if(!id){id='pwa-'+Math.random().toString(36).slice(2,15);store.set('installationId',id);}
+  var ep=mod==='water'?BACKEND+'/api/create-water-checkout':BACKEND+'/api/create-checkout';
+  try {
+    var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
+    var d=await r.json();
+    if(d.url){
+      window.open(d.url,'_blank');
+      var vb=document.getElementById(mod==='water'?'verW':'verS'); if(vb) vb.style.display='flex';
+      var pn=document.getElementById(mod==='water'?'pnoteW':'pnoteS'); if(pn) pn.style.display='block';
+    }
+  } catch(e){ alert('Could not connect. Check your connection.'); }
+}
+async function doVerify(mod) {
+  var id=store.get('installationId'); if(!id) return;
+  var ep=mod==='water'?BACKEND+'/api/verify-water-payment':BACKEND+'/api/verify-payment';
+  try {
+    var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
+    var d=await r.json();
+    if(d.token){ store.set(mod==='water'?'waterLicenseToken':'licenseToken',d.token); homeReady=false; loadState(); }
+    else alert('Payment not found yet — complete checkout and try again.');
+  } catch(e){ alert('Could not verify. Check your connection.'); }
+}
+
+// ── Welcome ───────────────────────────────────────────────────────────
 function showWelcomeCard() {
   var ua=navigator.userAgent;
   var isIOS=/iPad|iPhone|iPod/.test(ua)&&!window.MSStream;
   var isAndroid=/Android/.test(ua);
   var isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-  if(isIOS&&!isStandalone){document.getElementById('nc-android').style.display='none';document.getElementById('nc-ios').style.display='block';}
-  else if(!isIOS&&!isAndroid){document.getElementById('nc-android').style.display='none';document.getElementById('nc-desktop').style.display='block';}
+  if(isIOS&&!isStandalone){
+    document.getElementById('nc-android').style.display='none';
+    document.getElementById('nc-ios').style.display='block';
+  } else if(!isIOS&&!isAndroid){
+    document.getElementById('nc-android').style.display='none';
+    document.getElementById('nc-desktop').style.display='block';
+  }
 }
-document.getElementById('notifBtn').addEventListener('click',async function(){
+
+document.getElementById('notifBtn').addEventListener('click', async function(){
   var st=document.getElementById('notifStatus');
-  if(!('Notification' in window)){st.textContent='Not supported here. Try adding to Home Screen first.';st.style.color='var(--red)';st.style.display='block';return;}
+  if(!('Notification' in window)){
+    st.textContent='Not supported here. Try adding to Home Screen first.';
+    st.style.color='var(--red)'; st.style.display='block'; return;
+  }
   var perm=await Notification.requestPermission();
-  store.set('notificationPermission',perm);
+  store.set('notificationPermission', perm);
   st.textContent=perm==='granted'?"✅ You're all set!":'Blocked — go to Settings → Chrome → Notifications.';
-  st.style.color=perm==='granted'?'var(--green)':'var(--red)';st.style.display='block';
-  setTimeout(function(){store.set('hasSeenWelcome',true);navigate(SC.HM);},1200);
+  st.style.color=perm==='granted'?'var(--green)':'var(--red)'; st.style.display='block';
+  setTimeout(function(){ store.set('hasSeenWelcome',true); navigate(SC.HM); }, 1200);
 });
-document.getElementById('skipWelBtn').addEventListener('click',function(){store.set('hasSeenWelcome',true);navigate(SC.HM);});
+document.getElementById('skipWelBtn').addEventListener('click',function(){
+  store.set('hasSeenWelcome',true); navigate(SC.HM);
+});
 
-// ── Service Worker ─────────────────────────────────────────────────
-if('serviceWorker' in navigator){
+// ── Service Worker ────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./service-worker.js',{scope:'./'})
-    .then(function(reg){console.log('[SW] registered',reg.scope);})
-    .catch(function(e){console.warn('[SW] failed',e);});
+    .then(function(reg){ console.log('[SW] registered', reg.scope); })
+    .catch(function(e){ console.warn('[SW] failed', e); });
 
-  navigator.serviceWorker.addEventListener('message',function(e){
-    if(!e.data) return;
+  navigator.serviceWorker.addEventListener('message', function(e){
+    if (!e.data) return;
     var msg = e.data;
 
-    // Notification tap unlocks AudioContext — the tap is a user gesture
-    if(msg.unlockAudio) unlockAudio();
+    // Notification tap = user gesture = unlock audio
+    if (msg.unlockAudio) unlockAudio();
 
-    if(msg.type==='NAVIGATE'){
-      var scr=msg.screen;
-      if(scr==='stretch')  navigateToBreak('stretch');
-      else if(scr==='water') navigateToBreak('water');
-      else navigate(SC.HM);
+    if (msg.type === 'NAVIGATE') {
+      var scr = msg.screen;
+      if (scr === 'stretch') {
+        // Mark break as active, navigate — do NOT reschedule yet
+        store.set('stretchBreakActive', true);
+        navigate(SC.SB);
+      } else if (scr === 'water') {
+        store.set('waterBreakActive', true);
+        navigate(SC.WB);
+      } else {
+        navigate(SC.HM);
+      }
     }
 
-    // Status notification tapped — app is now open/focused
-    // Re-show the status notif if timer is still running
-    if(msg.type==='STATUS_TAPPED'){
-      // Just focus the app — status notif stays as-is
+    if (msg.type === 'STATUS_TAPPED') {
+      // App focused from status notif tap — just show home
+      navigate(SC.HM);
     }
 
-    // Snooze action from notification shade (without opening app)
-    if(msg.type==='SNOOZE_FROM_NOTIF'){
-      var cnt=(store.get('snoozedCount')||0)+1;
-      store.set('snoozedCount',cnt);
-      store.set('nextStretchTime',Date.now()+5*60000);
+    if (msg.type === 'SNOOZE_FROM_NOTIF') {
+      store.set('snoozedCount', (store.get('snoozedCount')||0) + 1);
+      store.set('nextStretchTime', Date.now() + 5*60000);
+      store.set('stretchBreakActive', false);
       syncSchedule();
     }
   });
 }
 
-// ── Boot ───────────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────────
 function boot() {
   store.init();
+  // Clear any stale break-active flags on fresh boot
+  store.set('stretchBreakActive', false);
+  store.set('waterBreakActive', false);
   showWelcomeCard();
-  var params=new URLSearchParams(window.location.search),scr=params.get('screen');
-  if(!store.get('hasSeenWelcome')) {
+
+  var params = new URLSearchParams(window.location.search);
+  var scr = params.get('screen');
+
+  if (!store.get('hasSeenWelcome')) {
     navigate(SC.WL);
-  } else if(scr==='stretch') {
-    navigateToBreak('stretch'); // reschedules + navigates
-  } else if(scr==='water') {
-    navigateToBreak('water');
+  } else if (scr === 'stretch') {
+    store.set('stretchBreakActive', true);
+    navigate(SC.SB);
+    window.history.replaceState({}, '', './');
+  } else if (scr === 'water') {
+    store.set('waterBreakActive', true);
+    navigate(SC.WB);
+    window.history.replaceState({}, '', './');
   } else {
     navigate(SC.HM);
   }
-  // Clean URL so refresh goes to home not break screen
-  if(scr) window.history.replaceState({}, '', './');
-  var ls=document.getElementById('ls');
-  if(ls){ls.classList.add('out');setTimeout(function(){ls.remove();},350);}
+
+  var ls = document.getElementById('ls');
+  if(ls){ ls.classList.add('out'); setTimeout(function(){ ls.remove(); }, 350); }
 }
 
 boot();
+
 </script>
 </body>
 </html>
