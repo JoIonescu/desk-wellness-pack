@@ -277,14 +277,6 @@
           <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
             <div id="statCarousel" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
               <div style="flex:0 0 100%;scroll-snap-align:start;">
-                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
-                <div class="stats">
-                  <div class="stat"><div class="sv" id="lcC">0</div><div class="sl">Completed</div></div>
-                  <div class="stat"><div class="sv" id="lsC">0</div><div class="sl">Snoozed</div></div>
-                  <div class="stat"><div class="sv" id="lkC">0</div><div class="sl">Skipped</div></div>
-                </div>
-              </div>
-              <div style="flex:0 0 100%;scroll-snap-align:start;">
                 <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">This Week</div>
                 <div class="stats">
                   <div class="stat"><div class="sv" id="cC">0</div><div class="sl">Completed</div></div>
@@ -292,9 +284,17 @@
                   <div class="stat"><div class="sv" id="kC">0</div><div class="sl">Skipped</div></div>
                 </div>
               </div>
+              <div style="flex:0 0 100%;scroll-snap-align:start;">
+                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
+                <div class="stats">
+                  <div class="stat"><div class="sv" id="lcC">0</div><div class="sl">Completed</div></div>
+                  <div class="stat"><div class="sv" id="lsC">0</div><div class="sl">Snoozed</div></div>
+                  <div class="stat"><div class="sv" id="lkC">0</div><div class="sl">Skipped</div></div>
+                </div>
+              </div>
             </div>
           </div>
-          <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;"><div class="cdot" id="d0"></div><div class="cdot act" id="d1"></div></div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;"><div class="cdot act" id="d0"></div><div class="cdot" id="d1"></div></div>
           <div style="margin-top:8px;font-size:11px;opacity:.5;text-align:center;">Resets every Sunday · Swipe to see last week</div>
         </div>
       </div><!-- /secS -->
@@ -677,6 +677,7 @@ function stopStretchScreen() { clearInterval(sbTimerId); }
 // Snooze
 document.getElementById('sbSnooze').addEventListener('click', function() {
   clearInterval(sbTimerId);
+  _stretchNavLock = false;
   var cnt = (store.get('snoozedCount') || 0) + 1;
   store.set('snoozedCount', cnt);
   store.set('nextStretchTime', Date.now() + 5 * 60000);
@@ -688,6 +689,7 @@ document.getElementById('sbSnooze').addEventListener('click', function() {
 // Skip
 document.getElementById('sbSkip').addEventListener('click', function() {
   clearInterval(sbTimerId);
+  _stretchNavLock = false;
   var cnt = (store.get('skippedCount') || 0) + 1;
   store.set('skippedCount', cnt);
   var iv = store.get('stretchInterval') || 30;
@@ -761,6 +763,7 @@ function checkWaterDayReset() {
 // Drink button
 document.getElementById('wbDrink').addEventListener('click', function() {
   clearInterval(wbTimerId2);
+  _waterNavLock = false;
   var cnt = (store.get('waterGlassCount') || 0) + 1;
   store.set('waterGlassCount', cnt);
   var goal = store.get('waterGoal') || 8;
@@ -793,6 +796,7 @@ document.getElementById('wbDrink').addEventListener('click', function() {
 // Skip water
 document.getElementById('wbSkip').addEventListener('click', function() {
   clearInterval(wbTimerId2);
+  _waterNavLock = false;
   var iv = store.get('waterInterval') || 30;
   store.set('nextWaterTime', Date.now() + iv * 60000);
   syncSchedule();
@@ -800,47 +804,53 @@ document.getElementById('wbSkip').addEventListener('click', function() {
   showStatusNotif();
 });
 
-// ── Overdue check — fires when app reopens or timer hits zero ──────
-// justBooted prevents page refresh from triggering break screen.
-// Timer must expire AFTER the page loads, not before.
-var _justBooted = true;
-setTimeout(function() { _justBooted = false; }, 4000);
-
-function checkStretchOverdue() {
-  if (_justBooted) return; // ignore on page load/refresh
-  if (!store.get('stretchEnabled')) return;
-  var next = store.get('nextStretchTime');
-  if (!next) return;
-  var overdue = Date.now() - next;
-  // Only navigate if overdue by less than 90 seconds (just expired, not old)
-  // Prevents old overdue times from triggering on refresh
-  if (overdue >= 0 && overdue < 90000 && currentScreen !== SC.SB && currentScreen !== SC.WB) {
-    navigate(SC.SB);
-  }
-}
-
-function checkWaterOverdue() {
-  if (_justBooted) return;
-  if (!store.get('waterEnabled')) return;
-  var next = store.get('nextWaterTime');
-  if (!next) return;
-  var overdue = Date.now() - next;
-  if (overdue >= 0 && overdue < 90000 && currentScreen !== SC.WB && currentScreen !== SC.SB) {
-    navigate(SC.WB);
-  }
-}
+// ── No overdue auto-check needed ────────────────────────────────────
+// Break screens only open via cron notification tap (SW NAVIGATE message).
+// This keeps behaviour predictable and avoids unexpected screen transitions.
 
 // ── Home countdown tick ────────────────────────────────────────────
 var tickId = null;
+var _stretchNavLock = false; // prevent double-navigate in same tick cycle
+var _waterNavLock   = false;
+
 function startTick() { if (!tickId) tickId = setInterval(tick, 1000); tick(); }
+
 function tick() {
   doTick('nextStretchTime','tVal','tLbl','stretchEnabled','Next stretch in','var(--yellow)','Next stretch break');
   doTick('nextWaterTime','wVal','wLbl','waterEnabled','Next water in','var(--blue)','Next water reminder');
-  // Auto-navigate to break screen when countdown hits zero
-  if (currentScreen === SC.HM) {
-    checkStretchOverdue();
-    if (currentScreen !== SC.SB) checkWaterOverdue();
+
+  // Auto-navigate when timer expires (only from home screen)
+  if (currentScreen !== SC.HM) return;
+
+  if (store.get('stretchEnabled') && !_stretchNavLock) {
+    var ns = store.get('nextStretchTime');
+    if (ns && Date.now() >= ns) {
+      _stretchNavLock = true;
+      navigateToBreak('stretch');
+    }
   }
+
+  if (store.get('waterEnabled') && !_waterNavLock && currentScreen !== SC.SB) {
+    var nw = store.get('nextWaterTime');
+    if (nw && Date.now() >= nw) {
+      _waterNavLock = true;
+      navigateToBreak('water');
+    }
+  }
+}
+
+// Navigate to break screen and IMMEDIATELY reschedule next timer.
+// Rescheduling before the break means nextStretchTime is in the future
+// while on the break screen — so page refresh never auto-navigates back.
+function navigateToBreak(type) {
+  var isStretch = type === 'stretch';
+  var iv = store.get(isStretch ? 'stretchInterval' : 'waterInterval') || 30;
+  // Reschedule BEFORE navigate — key to the refresh fix
+  store.set(isStretch ? 'nextStretchTime' : 'nextWaterTime', Date.now() + iv * 60000);
+  if (isStretch) _stretchNavLock = false;
+  else           _waterNavLock   = false;
+  syncSchedule();
+  navigate(isStretch ? SC.SB : SC.WB);
 }
 function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
   var el=document.getElementById(dId); if(!el) return;
@@ -855,16 +865,24 @@ function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
   var l=document.getElementById(lId); if(l) l.textContent=lblOn;
 }
 
-// ── Visibility change — catch overdue on app reopen ────────────────
-// Uses same checkStretchOverdue/checkWaterOverdue with 90s window guard.
-// justBooted is already false by the time user switches back to the app.
+// ── Visibility change ──────────────────────────────────────────────
+// If user returns to app and a timer is overdue, navigate to break screen.
+// Uses same navigateToBreak() which reschedules immediately — refresh-safe.
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState !== 'visible') return;
-  // Allow a moment for the page to settle before checking
+  tick(); // refresh countdown display
+  // Small delay to let the page settle
   setTimeout(function() {
-    checkStretchOverdue();
-    if (currentScreen !== SC.SB) checkWaterOverdue();
-  }, 500);
+    if (currentScreen !== SC.HM) return;
+    if (store.get('stretchEnabled')) {
+      var ns = store.get('nextStretchTime');
+      if (ns && Date.now() >= ns) { navigateToBreak('stretch'); return; }
+    }
+    if (store.get('waterEnabled')) {
+      var nw = store.get('nextWaterTime');
+      if (nw && Date.now() >= nw) { navigateToBreak('water'); }
+    }
+  }, 600);
 });
 
 // ── Push subscription ──────────────────────────────────────────────
@@ -999,8 +1017,10 @@ function initHome() {
   var d0=document.getElementById('d0'), d1=document.getElementById('d1');
   if(car&&d0&&d1){
     car.addEventListener('scroll',function(){
-      var mid=car.scrollLeft>car.scrollWidth/4;
-      d0.classList.toggle('act',!mid); d1.classList.toggle('act',mid);
+      // d0 = This Week (first slide), d1 = Last Week (second slide)
+      var onSecond = car.scrollLeft > (car.scrollWidth/2 - 10);
+      d0.classList.toggle('act',!onSecond);
+      d1.classList.toggle('act',onSecond);
     },{passive:true});
     d0.addEventListener('click',function(){car.scrollTo({left:0,behavior:'smooth'});});
     d1.addEventListener('click',function(){car.scrollTo({left:car.scrollWidth,behavior:'smooth'});});
@@ -1132,8 +1152,8 @@ if('serviceWorker' in navigator){
 
     if(msg.type==='NAVIGATE'){
       var scr=msg.screen;
-      if(scr==='stretch') navigate(SC.SB);
-      else if(scr==='water') navigate(SC.WB);
+      if(scr==='stretch')  navigateToBreak('stretch');
+      else if(scr==='water') navigateToBreak('water');
       else navigate(SC.HM);
     }
 
@@ -1159,10 +1179,17 @@ function boot() {
   store.init();
   showWelcomeCard();
   var params=new URLSearchParams(window.location.search),scr=params.get('screen');
-  if(!store.get('hasSeenWelcome')) navigate(SC.WL);
-  else if(scr==='stretch') navigate(SC.SB);
-  else if(scr==='water') navigate(SC.WB);
-  else navigate(SC.HM);
+  if(!store.get('hasSeenWelcome')) {
+    navigate(SC.WL);
+  } else if(scr==='stretch') {
+    navigateToBreak('stretch'); // reschedules + navigates
+  } else if(scr==='water') {
+    navigateToBreak('water');
+  } else {
+    navigate(SC.HM);
+  }
+  // Clean URL so refresh goes to home not break screen
+  if(scr) window.history.replaceState({}, '', './');
   var ls=document.getElementById('ls');
   if(ls){ls.classList.add('out');setTimeout(function(){ls.remove();},350);}
 }
