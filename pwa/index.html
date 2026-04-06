@@ -561,12 +561,33 @@ function playChime(freq, dur) {
 }
 function playStretchChime() {
   if (!store.get('stretchSound')) return;
-  playChime(523, 1.0);
-  setTimeout(function(){ playChime(659, 1.2); }, 180);
+  // Try to resume AudioContext even without explicit gesture
+  try {
+    if (_actx && _actx.state === 'suspended') {
+      _actx.resume().then(function() {
+        playChime(523, 1.0);
+        setTimeout(function(){ playChime(659, 1.2); }, 180);
+      });
+    } else {
+      playChime(523, 1.0);
+      setTimeout(function(){ playChime(659, 1.2); }, 180);
+    }
+  } catch(e) {
+    playChime(523, 1.0);
+    setTimeout(function(){ playChime(659, 1.2); }, 180);
+  }
 }
 function playWaterChime() {
   if (!store.get('waterSound')) return;
-  playChime(440, 1.6);
+  // Try to resume AudioContext even without explicit gesture
+  // Works if already unlocked from Start button press
+  try {
+    if (_actx && _actx.state === 'suspended') {
+      _actx.resume().then(function() { playChime(440, 1.6); });
+    } else {
+      playChime(440, 1.6);
+    }
+  } catch(e) { playChime(440, 1.6); }
 }
 
 // ── Confetti ─────────────────────────────────────────────────────────
@@ -580,7 +601,7 @@ function fireConfetti(canvasId) {
 
 // ── Status bar notification ───────────────────────────────────────────
 // Shows silently while timer is running. Shows/hides on Start/Stop only.
-var _statusShown = false;
+var _statusLastBody = '';
 async function showStatusNotif() {
   if (Notification.permission !== 'granted') return;
   try {
@@ -590,8 +611,9 @@ async function showStatusNotif() {
     if (!se && !we) { await hideStatusNotif(); return; }
     var body = (se && we) ? 'Stretch & Water active'
              : se ? 'Stretch active' : 'Water intake active';
-    // Use tag replacement — browser handles deduplication natively
-    // Never manually close before showing — that creates the double-notif spam
+    // Only show if body changed — prevents Chrome spam detection
+    if (body === _statusLastBody) return;
+    _statusLastBody = body;
     await reg.showNotification('Desk Wellness', {
       body: body,
       tag: 'dwp-status',
@@ -602,7 +624,6 @@ async function showStatusNotif() {
       requireInteraction: false,
       data: { type:'status', screen:'' },
     });
-    _statusShown = true;
   } catch(e) { console.warn('[status notif]', e.message); }
 }
 async function hideStatusNotif() {
@@ -610,7 +631,7 @@ async function hideStatusNotif() {
     var reg = await navigator.serviceWorker.ready;
     var existing = await reg.getNotifications({ tag:'dwp-status' });
     existing.forEach(function(n){ n.close(); });
-    _statusShown = false;
+    _statusLastBody = ''; // reset so it shows again when Start is pressed
   } catch(e) {}
 }
 
@@ -679,6 +700,10 @@ function beginStretchCountdown() {
     if (ai) ai.textContent = sbSession.inst;
     if (ic) ic.textContent = sbSession.icon;
   }
+
+  // User tapped "Start Stretch" — real user gesture — unlock + play chime
+  unlockAudio();
+  playStretchChime();
 
   sbElapsed = 0;
   clearInterval(sbTimerId);
@@ -832,8 +857,24 @@ document.getElementById('wbDrink').addEventListener('click', function() {
   if (ss) ss.textContent = sub;
   var succ = document.getElementById('wbSuccess');
   if (succ) succ.classList.add('show');
-  if (cnt >= goal) fireConfetti('wbConfetti');
+  // Unlock audio — wbDrink is a real user gesture
+  unlockAudio();
+  // Chime on every successful drink
   playWaterChime();
+  // Confetti on every drink (bigger burst when goal reached)
+  setTimeout(function() {
+    if (cnt >= goal) {
+      fireConfetti('wbConfetti'); // big burst for goal
+    } else {
+      // Small burst for every drink
+      var canvas = document.getElementById('wbConfetti');
+      if (canvas && typeof confetti !== 'undefined') {
+        var c = confetti.create(canvas, { resize:true });
+        c({ particleCount:40, spread:50, origin:{y:0.5},
+            colors:['#5aa9ff','#3d8fe0','#ffffff','#34c759'] });
+      }
+    }
+  }, 100);
 
   // Update home glass display
   updateHomeGlasses(cnt, goal);
@@ -915,24 +956,8 @@ function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState !== 'visible') return;
   tick();
-  // Check overdue on app reopen (backgrounded case)
-  if (currentScreen === SC.HM) {
-    if (store.get('stretchEnabled') && !store.get('stretchBreakActive')) {
-      var ns = store.get('nextStretchTime');
-      if (ns && Date.now() >= ns) {
-        store.set('stretchBreakActive', true);
-        navigate(SC.SB);
-        return;
-      }
-    }
-    if (store.get('waterEnabled') && !store.get('waterBreakActive')) {
-      var nw = store.get('nextWaterTime');
-      if (nw && Date.now() >= nw) {
-        store.set('waterBreakActive', true);
-        navigate(SC.WB);
-      }
-    }
-  }
+  // Check if any timer expired while app was in background
+  setTimeout(checkAndShowActiveScreen, 300);
 });
 
 // ── Push subscription ─────────────────────────────────────────────────
@@ -1317,10 +1342,35 @@ function boot() {
     window.history.replaceState({}, '', './');
   } else {
     navigate(SC.HM);
+    // If timers expired while app was away, show correct break screen
+    setTimeout(checkAndShowActiveScreen, 500);
   }
 
   var ls = document.getElementById('ls');
   if(ls){ ls.classList.add('out'); setTimeout(function(){ ls.remove(); }, 350); }
+}
+
+// ── Open active break screen if timer already expired ─────────────────
+// Called on boot and on visibilitychange — shows correct screen.
+function checkAndShowActiveScreen() {
+  if (!store.get('hasSeenWelcome')) return;
+  if (currentScreen !== SC.HM) return;
+  var se = store.get('stretchEnabled');
+  var we = store.get('waterEnabled');
+  var ns = store.get('nextStretchTime');
+  var nw = store.get('nextWaterTime');
+  var now = Date.now();
+  // Stretch overdue — show stretch first
+  if (se && !store.get('stretchBreakActive') && ns && now >= ns) {
+    store.set('stretchBreakActive', true);
+    navigate(SC.SB);
+    return;
+  }
+  // Water overdue (only if stretch not active)
+  if (we && !store.get('waterBreakActive') && nw && now >= nw) {
+    store.set('waterBreakActive', true);
+    navigate(SC.WB);
+  }
 }
 
 boot();
