@@ -536,58 +536,53 @@ function navigate(id) {
 }
 
 // ── Audio ────────────────────────────────────────────────────────────
-var _actx = null;
+// Use HTML Audio elements with actual sound files — reliable on Android.
+// Files must be in pwa/assets/ folder.
+var _stretchAudio = null;
+var _waterAudio   = null;
+
+function getStretchAudio() {
+  if (!_stretchAudio) {
+    _stretchAudio = new Audio('./assets/stretch-chime.mp3');
+    _stretchAudio.volume = 0.8;
+  }
+  return _stretchAudio;
+}
+function getWaterAudio() {
+  if (!_waterAudio) {
+    _waterAudio = new Audio('./assets/water-chime.wav');
+    _waterAudio.volume = 0.8;
+  }
+  return _waterAudio;
+}
+
+// Preload on first user interaction so they're ready instantly
 function unlockAudio() {
   try {
-    if (!_actx) _actx = new (window.AudioContext || window.webkitAudioContext)();
-    if (_actx.state === 'suspended') _actx.resume();
+    var sa = getStretchAudio();
+    var wa = getWaterAudio();
+    // Calling play() then immediately pause() unlocks audio on iOS/Android
+    sa.play().then(function(){ sa.pause(); sa.currentTime = 0; }).catch(function(){});
+    wa.play().then(function(){ wa.pause(); wa.currentTime = 0; }).catch(function(){});
   } catch(e) {}
 }
-function playChime(freq, dur) {
-  try {
-    var ctx = _actx || new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume();
-    var d = dur || 1.4;
-    var osc = ctx.createOscillator();
-    var g = ctx.createGain();
-    osc.connect(g); g.connect(ctx.destination);
-    osc.frequency.value = freq || 528;
-    osc.type = 'sine';
-    g.gain.setValueAtTime(0, ctx.currentTime);
-    g.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.05);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + d);
-  } catch(e) {}
-}
+
 function playStretchChime() {
   if (!store.get('stretchSound')) return;
-  // Try to resume AudioContext even without explicit gesture
   try {
-    if (_actx && _actx.state === 'suspended') {
-      _actx.resume().then(function() {
-        playChime(523, 1.0);
-        setTimeout(function(){ playChime(659, 1.2); }, 180);
-      });
-    } else {
-      playChime(523, 1.0);
-      setTimeout(function(){ playChime(659, 1.2); }, 180);
-    }
-  } catch(e) {
-    playChime(523, 1.0);
-    setTimeout(function(){ playChime(659, 1.2); }, 180);
-  }
+    var a = getStretchAudio();
+    a.currentTime = 0;
+    a.play().catch(function(e){ console.warn('[audio] stretch chime blocked:', e.message); });
+  } catch(e) {}
 }
+
 function playWaterChime() {
   if (!store.get('waterSound')) return;
-  // Try to resume AudioContext even without explicit gesture
-  // Works if already unlocked from Start button press
   try {
-    if (_actx && _actx.state === 'suspended') {
-      _actx.resume().then(function() { playChime(440, 1.6); });
-    } else {
-      playChime(440, 1.6);
-    }
-  } catch(e) { playChime(440, 1.6); }
+    var a = getWaterAudio();
+    a.currentTime = 0;
+    a.play().catch(function(e){ console.warn('[audio] water chime blocked:', e.message); });
+  } catch(e) {}
 }
 
 // ── Confetti ─────────────────────────────────────────────────────────
@@ -614,6 +609,9 @@ async function showStatusNotif() {
     // Only show if body changed — prevents Chrome spam detection
     if (body === _statusLastBody) return;
     _statusLastBody = body;
+    // Also close existing before replacing to ensure Android updates properly
+    var existing = await reg.getNotifications({ tag:'dwp-status' });
+    existing.forEach(function(n){ n.close(); });
     await reg.showNotification('Desk Wellness', {
       body: body,
       tag: 'dwp-status',
@@ -681,9 +679,7 @@ function startStretchScreen() {
   if (t) t.textContent = sbDuration;
 
   clearInterval(sbTimerId);
-  // Small delay ensures AudioContext is resumed before playing
-  // (needed when screen opens via auto-navigate, not notification tap)
-  setTimeout(function() { playStretchChime(); }, 150);
+  // No chime here — chime plays when user taps "Start Stretch" button
 }
 
 function beginStretchCountdown() {
@@ -816,8 +812,7 @@ function startWaterScreen() {
   clearInterval(wbTickId);
   wbTickId = setInterval(updateWbNext, 1000);
   updateWbNext();
-
-  playWaterChime();
+  // Chime plays when user taps "I just drank water", not on screen open
 }
 
 function updateWbNext() {
@@ -1075,7 +1070,8 @@ function initHome() {
     store.set('nextStretchTime', null);
     updateStretchUI(false);
     syncSchedule();
-    hideStatusNotif();
+    // If water still running, update notif text; else hide
+    showStatusNotif();
   });
 
   document.getElementById('smartTog').addEventListener('change',function(e){ store.set('smartMode',e.target.checked); });
@@ -1105,7 +1101,8 @@ function initHome() {
     store.set('nextWaterTime', null);
     updateWaterUI(false);
     syncSchedule();
-    hideStatusNotif();
+    // If stretch still running, update notif text; else hide
+    showStatusNotif();
   });
 
   document.getElementById('wSndTog').addEventListener('change',function(e){ store.set('waterSound',e.target.checked); });
@@ -1354,24 +1351,44 @@ function boot() {
 // Called on boot and on visibilitychange — shows correct screen.
 function checkAndShowActiveScreen() {
   if (!store.get('hasSeenWelcome')) return;
-  if (currentScreen !== SC.HM) return;
+  var now = Date.now();
   var se = store.get('stretchEnabled');
   var we = store.get('waterEnabled');
   var ns = store.get('nextStretchTime');
   var nw = store.get('nextWaterTime');
-  var now = Date.now();
-  // Stretch overdue — show stretch first
-  if (se && !store.get('stretchBreakActive') && ns && now >= ns) {
+  var sba = store.get('stretchBreakActive');
+  var wba = store.get('waterBreakActive');
+
+  // Break already in progress (e.g. app was minimised mid-stretch)
+  if (sba && currentScreen !== SC.SB) { navigate(SC.SB); return; }
+  if (wba && currentScreen !== SC.WB && !sba) { navigate(SC.WB); return; }
+
+  // Only check overdue from home screen
+  if (currentScreen !== SC.HM) return;
+
+  // Stretch overdue → stretch screen (priority)
+  if (se && !sba && ns && now >= ns) {
     store.set('stretchBreakActive', true);
     navigate(SC.SB);
     return;
   }
-  // Water overdue (only if stretch not active)
-  if (we && !store.get('waterBreakActive') && nw && now >= nw) {
+  // Water overdue → water screen
+  if (we && !wba && nw && now >= nw) {
     store.set('waterBreakActive', true);
     navigate(SC.WB);
+    return;
+  }
+  // Timers running but not expired → show correct tab on home
+  if (se && we) {
+    // Both running — show stretch tab (priority)
+    setTab('s');
+  } else if (se) {
+    setTab('s');
+  } else if (we) {
+    setTab('w');
   }
 }
+
 
 boot();
 
