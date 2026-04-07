@@ -80,6 +80,11 @@
     .tabbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;background:none;color:var(--muted);min-height:44px;}
     .tabbtn.act{background:rgba(255,212,0,.12);color:var(--yellow);border-color:rgba(255,212,0,.25);}
     .tabbtn-w.act{background:rgba(90,169,255,.12);color:var(--blue);border-color:rgba(90,169,255,.25);}
+    /* Light mode: active tab text must be dark or it's invisible */
+    @media(prefers-color-scheme:light){
+      .tabbtn.act{color:#7a6000;background:rgba(255,212,0,.22);border-color:rgba(180,140,0,.4);}
+      .tabbtn-w.act{color:#1a5a99;background:rgba(90,169,255,.22);border-color:rgba(30,100,200,.4);}
+    }
     .modsec.hidden{display:none;}
     .gmini{position:relative;width:40px;height:50px;flex-shrink:0;}
     .gmini-rim{position:absolute;top:0;left:-2px;right:-2px;height:2px;background:rgba(90,169,255,.4);border-radius:2px;}
@@ -97,7 +102,21 @@
     .ncard{width:100%;max-width:340px;border-radius:18px;padding:18px;text-align:left;background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06));border:1px solid rgba(255,212,0,.22);}
     .ncard-blue{background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.25);}
     /* ── STRETCH BREAK SCREEN ── */
+    /* Always dark background — force light text regardless of system color scheme */
     #sb{background:radial-gradient(circle at top,#2b3348 0%,#1b1f2a 40%,#151923 100%);}
+    #sb .sb-eyebrow{color:#ffd400;}
+    #sb .sb-title{color:#ffffff;}
+    #sb .sb-subtitle{color:#c7cedd;}
+    #sb .sb-ex-name{color:#ffffff;}
+    #sb .sb-ex-inst{color:#c7cedd;}
+    #sb [id="sbExNameActive"]{color:#ffffff;}
+    #sb [id="sbExInstActive"]{color:#c7cedd;}
+    #sb .sb-time{color:#ffffff;}
+    #sb .sb-time-lbl{color:#c7cedd;}
+    #sb .sb-suc-title{color:#ffffff;}
+    #sb .sb-suc-sub{color:#c7cedd;}
+    #sb [style*="font-size:13px"]{color:#c7cedd;}
+    #sb [style*="opacity:.7"]{color:#c7cedd;}
     .sb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top,24px) 24px calc(24px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;width:100%;}
     .sb-top{text-align:center;padding-top:8px;}
     .sb-eyebrow{font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:8px;letter-spacing:0.3px;}
@@ -130,7 +149,19 @@
     .sb-suc-sub{font-size:15px;color:var(--muted2);}
     #sbConfetti{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;width:100%;max-width:480px;height:220px;pointer-events:none;z-index:1;}
     /* ── WATER BREAK SCREEN ── */
+    /* Always dark background — force light text regardless of system color scheme */
     #wb{background:radial-gradient(circle at top,#1a2540 0%,#141820 45%,#0e1318 100%);}
+    #wb .wb-eyebrow{color:#5aa9ff;}
+    #wb .wb-title{color:#ffffff;}
+    #wb .wb-subtitle{color:#8895b0;}
+    #wb .wb-cnt-num{color:#5aa9ff;}
+    #wb .wb-cnt-sub{color:#8895b0;}
+    #wb .wb-dots-lbl{color:#8895b0;}
+    #wb .wb-next{color:#8895b0;}
+    #wb .wb-next strong{color:#5aa9ff;}
+    #wb .wb-goal-banner{color:#34c759;}
+    #wb .wb-suc-title{color:#5aa9ff;}
+    #wb .wb-suc-sub{color:#8895b0;}
     .wb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top,24px) 24px calc(24px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;width:100%;position:relative;}
     .wave-bg{position:absolute;bottom:0;left:0;right:0;height:40%;overflow:hidden;border-radius:0 0 0 0;z-index:0;opacity:.10;}
     .wave{position:absolute;bottom:0;left:-100%;width:300%;height:100%;}
@@ -536,53 +567,80 @@ function navigate(id) {
 }
 
 // ── Audio ────────────────────────────────────────────────────────────
-// Use HTML Audio elements with actual sound files — reliable on Android.
-// Files must be in pwa/assets/ folder.
-var _stretchAudio = null;
-var _waterAudio   = null;
+// Use Web Audio API + fetch/decodeAudioData to play actual sound files.
+// This does NOT create an Android media session — no media player widget.
+var _actx          = null;
+var _stretchBuffer = null;
+var _waterBuffer   = null;
 
-function getStretchAudio() {
-  if (!_stretchAudio) {
-    _stretchAudio = new Audio('./assets/stretch-chime.mp3');
-    _stretchAudio.volume = 0.8;
+function getAudioContext() {
+  if (!_actx) {
+    try { _actx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
   }
-  return _stretchAudio;
-}
-function getWaterAudio() {
-  if (!_waterAudio) {
-    _waterAudio = new Audio('./assets/water-chime.wav');
-    _waterAudio.volume = 0.8;
-  }
-  return _waterAudio;
+  return _actx;
 }
 
-// Preload on first user interaction so they're ready instantly
+// Called on Start button press (real user gesture) to unlock AudioContext
+// and preload both sound files as decoded buffers.
 function unlockAudio() {
+  var ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  // Preload buffers in background
+  if (!_stretchBuffer) loadBuffer('./assets/stretch-chime.mp3', function(buf){ _stretchBuffer = buf; });
+  if (!_waterBuffer)   loadBuffer('./assets/water-chime.wav',   function(buf){ _waterBuffer   = buf; });
+}
+
+function loadBuffer(url, callback) {
+  fetch(url)
+    .then(function(r){ return r.arrayBuffer(); })
+    .then(function(ab){
+      var ctx = getAudioContext();
+      if (!ctx) return;
+      ctx.decodeAudioData(ab, function(buf){ callback(buf); }, function(e){ console.warn('[audio] decode error:', url, e); });
+    })
+    .catch(function(e){ console.warn('[audio] fetch error:', url, e); });
+}
+
+function playBuffer(buffer) {
   try {
-    var sa = getStretchAudio();
-    var wa = getWaterAudio();
-    // Calling play() then immediately pause() unlocks audio on iOS/Android
-    sa.play().then(function(){ sa.pause(); sa.currentTime = 0; }).catch(function(){});
-    wa.play().then(function(){ wa.pause(); wa.currentTime = 0; }).catch(function(){});
-  } catch(e) {}
+    var ctx = getAudioContext();
+    if (!ctx || !buffer) return;
+    if (ctx.state === 'suspended') { ctx.resume(); }
+    var src = ctx.createBufferSource();
+    src.buffer = buffer;
+    var gain = ctx.createGain();
+    gain.gain.value = 0.85;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(0);
+  } catch(e) { console.warn('[audio] playBuffer error:', e); }
 }
 
 function playStretchChime() {
   if (!store.get('stretchSound')) return;
-  try {
-    var a = getStretchAudio();
-    a.currentTime = 0;
-    a.play().catch(function(e){ console.warn('[audio] stretch chime blocked:', e.message); });
-  } catch(e) {}
+  if (_stretchBuffer) {
+    playBuffer(_stretchBuffer);
+  } else {
+    // Buffer not loaded yet — load and play
+    loadBuffer('./assets/stretch-chime.mp3', function(buf){
+      _stretchBuffer = buf;
+      playBuffer(buf);
+    });
+  }
 }
 
 function playWaterChime() {
   if (!store.get('waterSound')) return;
-  try {
-    var a = getWaterAudio();
-    a.currentTime = 0;
-    a.play().catch(function(e){ console.warn('[audio] water chime blocked:', e.message); });
-  } catch(e) {}
+  if (_waterBuffer) {
+    playBuffer(_waterBuffer);
+  } else {
+    loadBuffer('./assets/water-chime.wav', function(buf){
+      _waterBuffer = buf;
+      playBuffer(buf);
+    });
+  }
 }
 
 // ── Confetti ─────────────────────────────────────────────────────────
@@ -625,11 +683,16 @@ async function showStatusNotif() {
   } catch(e) { console.warn('[status notif]', e.message); }
 }
 async function hideStatusNotif() {
+  _statusLastBody = ''; // reset so it shows again on next Start
   try {
     var reg = await navigator.serviceWorker.ready;
+    // Page-side close
     var existing = await reg.getNotifications({ tag:'dwp-status' });
     existing.forEach(function(n){ n.close(); });
-    _statusLastBody = ''; // reset so it shows again when Start is pressed
+    // Also ask SW to close directly — more reliable on some Android versions
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type:'CLOSE_STATUS_NOTIF' });
+    }
   } catch(e) {}
 }
 
