@@ -719,7 +719,7 @@ function onStretchComplete() {
   document.getElementById('sbActionsActive').style.display = 'none';
   document.getElementById('sbSuccess').classList.add('show');
   fireConfetti('sbConfetti');
-  playStretchChime();
+  // No chime on success — chime plays only when stretching starts
   // Reschedule and sync to server AFTER break is done
   rescheduleStretch();
   setTimeout(function() {
