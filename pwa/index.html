@@ -162,7 +162,7 @@
     #wb .wb-goal-banner{color:#34c759;}
     #wb .wb-suc-title{color:#5aa9ff;}
     #wb .wb-suc-sub{color:#8895b0;}
-    .wb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top,24px) 24px calc(24px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;width:100%;position:relative;}
+    .wb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 32px) 24px calc(env(safe-area-inset-bottom,0px) + 32px);max-width:480px;margin:0 auto;width:100%;position:relative;}
     .wave-bg{position:absolute;bottom:0;left:0;right:0;height:40%;overflow:hidden;border-radius:0 0 0 0;z-index:0;opacity:.10;}
     .wave{position:absolute;bottom:0;left:-100%;width:300%;height:100%;}
     .wave svg{width:100%;height:100%;position:absolute;bottom:0;}
@@ -491,7 +491,7 @@
         <div class="wb-next">⏱ Next reminder in <strong id="wbNextTime">–:––</strong></div>
       </div>
       <div class="wb-goal-banner" id="wbGoalBanner">🎉 Daily goal reached! Keep going if you'd like.</div>
-      <div class="wb-actions">
+      <div class="wb-actions" style="margin-top:0;">
         <button class="wb-btn wb-drink" id="wbDrink">💧 I just drank water</button>
         <button class="wb-btn wb-skip" id="wbSkip">Skip</button>
       </div>
@@ -978,6 +978,11 @@ function tick() {
     var ns = store.get('nextStretchTime');
     if (ns && Date.now() >= ns) {
       store.set('stretchBreakActive', true);
+      // Pause cron: set nextStretchTime to far future so cron doesn't
+      // fire a duplicate notification while user is doing the break
+      var pauseTime = Date.now() + 60 * 60 * 1000; // 1 hour
+      store.set('nextStretchTime', pauseTime);
+      syncSchedule(); // update Redis
       navigate(SC.SB);
       return; // return so water check doesn't run same tick
     }
@@ -988,6 +993,9 @@ function tick() {
     var nw = store.get('nextWaterTime');
     if (nw && Date.now() >= nw) {
       store.set('waterBreakActive', true);
+      var pauseTimeW = Date.now() + 60 * 60 * 1000;
+      store.set('nextWaterTime', pauseTimeW);
+      syncSchedule();
       navigate(SC.WB);
     }
   }
@@ -1014,8 +1022,12 @@ function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState !== 'visible') return;
   tick();
-  // Check if any timer expired while app was in background
   setTimeout(checkAndShowActiveScreen, 300);
+  // Re-sync subscription on visibility change — keeps Redis subscription fresh
+  // in case Chrome has rotated the push subscription endpoint
+  if (store.get('stretchEnabled') || store.get('waterEnabled')) {
+    setTimeout(function() { syncSchedule(); }, 800);
+  }
 });
 
 // ── Push subscription ─────────────────────────────────────────────────
@@ -1028,11 +1040,16 @@ function urlB64ToU8(b64) {
   return arr;
 }
 async function getOrCreateSub() {
-  if (pushSub) return pushSub;
   try {
     var reg = await navigator.serviceWorker.ready;
     var ex = await reg.pushManager.getSubscription();
-    if (ex) { pushSub=ex; return ex; }
+    if (ex) {
+      // Always update pushSub with the current subscription
+      // Chrome may rotate the endpoint without us knowing
+      pushSub = ex;
+      return ex;
+    }
+    // No subscription exists — create one
     var resp = await fetch(BACKEND+'/api/pwa-vapid-public-key');
     var data = await resp.json();
     var sub = await reg.pushManager.subscribe({
@@ -1040,6 +1057,7 @@ async function getOrCreateSub() {
       applicationServerKey: urlB64ToU8(data.publicKey)
     });
     pushSub = sub;
+    console.log('[push] new subscription created:', sub.endpoint.slice(-20));
     return sub;
   } catch(e) { console.warn('[push] subscribe failed:', e); return null; }
 }
@@ -1402,6 +1420,15 @@ function boot() {
     window.history.replaceState({}, '', './');
   } else {
     navigate(SC.HM);
+    // Re-register push subscription on every boot — ensures Redis has
+    // the current subscription endpoint (Chrome rotates these periodically)
+    if (store.get('stretchEnabled') || store.get('waterEnabled')) {
+      setTimeout(function() {
+        syncSchedule().then(function() {
+          console.log('[boot] schedule synced on startup');
+        });
+      }, 1000); // slight delay to let SW register first
+    }
     // If timers expired while app was away, show correct break screen
     setTimeout(checkAndShowActiveScreen, 500);
   }
@@ -1432,12 +1459,16 @@ function checkAndShowActiveScreen() {
   // Stretch overdue → stretch screen (priority)
   if (se && !sba && ns && now >= ns) {
     store.set('stretchBreakActive', true);
+    store.set('nextStretchTime', Date.now() + 60 * 60 * 1000);
+    syncSchedule();
     navigate(SC.SB);
     return;
   }
   // Water overdue → water screen
   if (we && !wba && nw && now >= nw) {
     store.set('waterBreakActive', true);
+    store.set('nextWaterTime', Date.now() + 60 * 60 * 1000);
+    syncSchedule();
     navigate(SC.WB);
     return;
   }
