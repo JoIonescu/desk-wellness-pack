@@ -315,7 +315,7 @@
           <div class="ufeats"><div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Checks Google Calendar — pauses when you're busy</div></div></div></div>
           <button class="btn btn-up" id="upgS">Upgrade — €3.00</button>
           <button class="btn btn-verify" id="verS">✓ I've paid — Verify Payment</button>
-          <div class="pnote" id="pnoteS">Complete payment then tap Verify.</div>
+          <div class="pnote" id="pnoteS">Returning from payment? The app will verify automatically, or tap below.</div>
           <div class="uprice">One-time · No subscription · Instant unlock</div>
         </div>
         <div class="card hidden" id="proS">
@@ -395,7 +395,7 @@
           </div>
           <button class="btn btn-up" id="upgW">Upgrade — €5.00</button>
           <button class="btn btn-verify" id="verW">✓ I've paid — Verify Payment</button>
-          <div class="pnote" id="pnoteW">Complete payment then tap Verify.</div>
+          <div class="pnote" id="pnoteW">Returning from payment? The app will verify automatically, or tap below.</div>
           <div class="uprice">One-time · No subscription · Instant unlock</div>
         </div>
         <div class="card hidden" id="proW" style="border-color:rgba(90,169,255,.2);background:rgba(90,169,255,.04);">
@@ -1056,16 +1056,15 @@ function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
 // ── Visibility change ────────────────────────────────────────────────
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState !== 'visible') return;
-  // Run maintenance on every app open — catches day/week boundaries
   maintenance();
   tick();
   setTimeout(checkAndShowActiveScreen, 300);
-  // Re-sync subscription — keeps Redis endpoint fresh
   if (store.get('stretchEnabled') || store.get('waterEnabled')) {
     setTimeout(function() { syncSchedule(); }, 800);
   }
-  // Refresh warning banners (permission may have changed in settings)
   if (currentScreen === SC.HM) loadState();
+  // Auto-verify payment if user is returning from Stripe checkout
+  autoVerifyOnReturn();
 });
 
 // ── Push subscription ─────────────────────────────────────────────────
@@ -1235,11 +1234,20 @@ function initHome() {
     }
   });
 
-  // Upgrade
+  // Upgrade + manual verify fallback
   document.getElementById('upgS').addEventListener('click',function(){ doUpgrade('stretch'); });
-  document.getElementById('verS').addEventListener('click',function(){ doVerify('stretch'); });
+  document.getElementById('verS').addEventListener('click',function(){ doVerify('stretch', false); });
   document.getElementById('upgW').addEventListener('click',function(){ doUpgrade('water'); });
-  document.getElementById('verW').addEventListener('click',function(){ doVerify('water'); });
+  document.getElementById('verW').addEventListener('click',function(){ doVerify('water', false); });
+
+  // Show verify button if payment was pending before app restarted
+  var pending = store.get('pendingPaymentModule');
+  if (pending) {
+    var vbtn = document.getElementById(pending==='water'?'verW':'verS');
+    var pnote = document.getElementById(pending==='water'?'pnoteW':'pnoteS');
+    if (vbtn) vbtn.style.display = 'flex';
+    if (pnote) pnote.style.display = 'block';
+  }
 
   // Carousel dots
   var car=document.getElementById('statCarousel');
@@ -1352,29 +1360,110 @@ function renderStats() {
   for(var id in m){ var el=document.getElementById(id); if(el) el.textContent=store.get(m[id])||0; }
 }
 
+// ── Payment flow ─────────────────────────────────────────────────────
+// Track which module is pending payment for auto-verify on return
+var _pendingPaymentModule = null;
+
 async function doUpgrade(mod) {
-  var id=store.get('installationId');
-  if(!id){id='pwa-'+Math.random().toString(36).slice(2,15);store.set('installationId',id);}
-  var ep=mod==='water'?BACKEND+'/api/create-water-checkout':BACKEND+'/api/create-checkout';
+  var id = store.get('installationId');
+  if (!id) { id='pwa-'+Math.random().toString(36).slice(2,15); store.set('installationId',id); }
+  var ep = mod==='water' ? BACKEND+'/api/create-water-checkout' : BACKEND+'/api/create-checkout';
+
+  // Show loading state on button
+  var btn = document.getElementById(mod==='water'?'upgW':'upgS');
+  if (btn) { btn.textContent = 'Opening Stripe…'; btn.disabled = true; }
+
   try {
-    var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
-    var d=await r.json();
-    if(d.url){
-      window.open(d.url,'_blank');
-      var vb=document.getElementById(mod==='water'?'verW':'verS'); if(vb) vb.style.display='flex';
-      var pn=document.getElementById(mod==='water'?'pnoteW':'pnoteS'); if(pn) pn.style.display='block';
+    var r = await fetch(ep, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ installationId: id })
+    });
+    var d = await r.json();
+    if (d.url) {
+      _pendingPaymentModule = mod;
+      store.set('pendingPaymentModule', mod);
+      // Open Stripe in same tab on mobile (better UX than new tab)
+      // PWA will restore via visibilitychange when user returns
+      window.location.href = d.url;
+    } else {
+      if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
+      alert('Could not create checkout. Try again.');
     }
-  } catch(e){ alert('Could not connect. Check your connection.'); }
+  } catch(e) {
+    if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
+    alert('Could not connect. Check your connection and try again.');
+  }
 }
-async function doVerify(mod) {
-  var id=store.get('installationId'); if(!id) return;
-  var ep=mod==='water'?BACKEND+'/api/verify-water-payment':BACKEND+'/api/verify-payment';
+
+async function doVerify(mod, silent) {
+  var id = store.get('installationId'); if (!id) return false;
+  var ep = mod==='water' ? BACKEND+'/api/verify-water-payment' : BACKEND+'/api/verify-payment';
+
+  if (!silent) {
+    var btn = document.getElementById(mod==='water'?'verW':'verS');
+    if (btn) { btn.textContent = 'Checking…'; btn.disabled = true; }
+  }
+
   try {
-    var r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({installationId:id})});
-    var d=await r.json();
-    if(d.token){ store.set(mod==='water'?'waterLicenseToken':'licenseToken',d.token); homeReady=false; loadState(); }
-    else alert('Payment not found yet — complete checkout and try again.');
-  } catch(e){ alert('Could not verify. Check your connection.'); }
+    var r = await fetch(ep, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ installationId: id })
+    });
+    var d = await r.json();
+    if (d.token) {
+      store.set(mod==='water'?'waterLicenseToken':'licenseToken', d.token);
+      store.set('pendingPaymentModule', null);
+      _pendingPaymentModule = null;
+      homeReady = false;
+      loadState();
+      return true;
+    } else {
+      if (!silent) {
+        var btn2 = document.getElementById(mod==='water'?'verW':'verS');
+        if (btn2) { btn2.textContent='✓ I\u2019ve paid — Verify Payment'; btn2.disabled=false; }
+        alert('Payment not found yet. Complete the Stripe checkout and try again.');
+      }
+      return false;
+    }
+  } catch(e) {
+    if (!silent) {
+      var btn3 = document.getElementById(mod==='water'?'verW':'verS');
+      if (btn3) { btn3.textContent='✓ I\u2019ve paid — Verify Payment'; btn3.disabled=false; }
+      alert('Could not verify. Check your connection.');
+    }
+    return false;
+  }
+}
+
+// Auto-verify when user returns to the app after Stripe checkout
+// Called from visibilitychange — silent, shows success if found
+async function autoVerifyOnReturn() {
+  var pending = store.get('pendingPaymentModule') || _pendingPaymentModule;
+  if (!pending) return;
+  // Small delay — Stripe webhook may not have fired yet
+  await new Promise(function(r){ setTimeout(r, 1500); });
+  var success = await doVerify(pending, true);
+  if (success) {
+    // Show a toast instead of an alert for non-disruptive feedback
+    showToast('✅ Pro unlocked! Thank you.');
+  }
+}
+
+// Show a brief toast message
+function showToast(msg) {
+  var existing = document.getElementById('dwpToast');
+  if (existing) existing.remove();
+  var toast = document.createElement('div');
+  toast.id = 'dwpToast';
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+24px);left:50%;transform:translateX(-50%);background:rgba(30,37,53,.97);color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:100px;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:9998;white-space:nowrap;pointer-events:none;animation:toastIn .25s ease;';
+  document.body.appendChild(toast);
+  var style = document.createElement('style');
+  style.textContent = '@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+  document.head.appendChild(style);
+  setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(function(){ toast.remove(); }, 350); }, 3000);
 }
 
 // ── Welcome ───────────────────────────────────────────────────────────
@@ -1450,6 +1539,52 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────
+// ── License validation ───────────────────────────────────────────────
+// Silently verify stored tokens are still valid.
+// Uses the same verify-license endpoint as the extension.
+async function validateLicenses() {
+  var id = store.get('installationId');
+  if (!id) return;
+
+  // Validate stretch license
+  var stretchToken = store.get('licenseToken');
+  if (stretchToken) {
+    try {
+      var r = await fetch(BACKEND+'/api/verify-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ installationId: id, token: stretchToken })
+      });
+      var d = await r.json();
+      if (!d.valid) {
+        console.warn('[license] stretch token invalid — clearing');
+        store.set('licenseToken', null);
+        homeReady = false;
+        if (currentScreen === SC.HM) loadState();
+      }
+    } catch(e) { /* offline — keep token, try next time */ }
+  }
+
+  // Validate water license
+  var waterToken = store.get('waterLicenseToken');
+  if (waterToken) {
+    try {
+      var r2 = await fetch(BACKEND+'/api/verify-water-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ installationId: id, token: waterToken })
+      });
+      var d2 = await r2.json();
+      if (!d2.valid) {
+        console.warn('[license] water token invalid — clearing');
+        store.set('waterLicenseToken', null);
+        homeReady = false;
+        if (currentScreen === SC.HM) loadState();
+      }
+    } catch(e) { /* offline */ }
+  }
+}
+
 // ── Maintenance — runs on every boot ─────────────────────────────────
 function maintenance() {
   // ── 1. Weekly stats reset (every Sunday) ──────────────────────────
@@ -1543,15 +1678,18 @@ function boot() {
     window.history.replaceState({}, '', './');
   } else {
     navigate(SC.HM);
-    // Re-register push subscription on every boot — ensures Redis has
-    // the current subscription endpoint (Chrome rotates these periodically)
+    // Check if returning from Stripe (app may have been killed after payment)
+    autoVerifyOnReturn();
+    // Re-register push subscription on every boot
     if (store.get('stretchEnabled') || store.get('waterEnabled')) {
       setTimeout(function() {
         syncSchedule().then(function() {
           console.log('[boot] schedule synced on startup');
         });
-      }, 1000); // slight delay to let SW register first
+      }, 1000);
     }
+    // Silent license validation on boot
+    setTimeout(validateLicenses, 2000);
     // If timers expired while app was away, show correct break screen
     setTimeout(checkAndShowActiveScreen, 500);
   }
