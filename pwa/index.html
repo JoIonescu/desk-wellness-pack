@@ -256,6 +256,25 @@
         <div style="font-size:22px;font-weight:800;margin-bottom:4px;">Desk Wellness Pack</div>
         <div style="font-size:14px;color:var(--muted);">Smart reminders for healthier desk habits</div>
       </div>
+
+      <!-- Notification denied warning — shown when permission revoked -->
+      <div id="notifDeniedBanner" class="hidden" style="background:rgba(255,138,128,.12);border:1px solid rgba(255,138,128,.3);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+        <div style="font-size:18px;flex-shrink:0;">⚠️</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:3px;">Notifications blocked</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Reminders won't fire in the background. Go to <strong>Settings → Apps → Chrome → Notifications</strong> and allow notifications for this site.</div>
+        </div>
+      </div>
+
+      <!-- Samsung/Xiaomi battery warning — shown on first run on those devices -->
+      <div id="batteryWarningBanner" class="hidden" style="background:rgba(255,212,0,.08);border:1px solid rgba(255,212,0,.22);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+        <div style="font-size:18px;flex-shrink:0;">🔋</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:3px;">One more step for reliable reminders</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Your phone aggressively stops background apps. Go to <strong>Settings → Battery → App battery usage → Chrome → Unrestricted</strong> to keep reminders firing.</div>
+        </div>
+        <button onclick="this.parentElement.parentElement.classList.add('hidden');localStorage.setItem('batteryTipDone',JSON.stringify(true));" style="border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0;padding:0;">×</button>
+      </div>
       <div class="card" style="padding:6px;">
         <div class="tabbar">
           <button class="tabbtn act" id="tabS">🧘 Smart Stretch</button>
@@ -532,9 +551,10 @@ var store = {
       smartMode: true, stretchSound: true,
       completedCount: 0, snoozedCount: 0, skippedCount: 0,
       lastCompletedCount: 0, lastSnoozedCount: 0, lastSkippedCount: 0,
-      lastSessionType: null,
+      lastSessionType: null, weekStartDate: null,
       waterEnabled: false, waterInterval: 30, waterSound: true,
       waterGlassCount: 0, waterGoal: 8, waterGoalResetDate: null,
+      bgTipDismissed: false,
     };
     for (var k in d) this.set(k, d[k]);
   }
@@ -842,7 +862,7 @@ document.getElementById('sbBegin').addEventListener('click', function() {
 var wbTickId = null;
 
 function startWaterScreen() {
-  checkWaterDayReset();
+  // Daily reset handled by maintenance() on boot/visibility change
   var cnt  = store.get('waterGlassCount') || 0;
   var goal = store.get('waterGoal') || 8;
 
@@ -972,6 +992,21 @@ function tick() {
 
   if (currentScreen !== SC.HM) return;
 
+  // Safety: if stretchBreakActive stuck (crash during break) but timer
+  // is already rescheduled to future — clear the flag so tick works again
+  if (store.get('stretchBreakActive') && currentScreen === SC.HM) {
+    var checkNs = store.get('nextStretchTime');
+    if (checkNs && Date.now() < checkNs) {
+      store.set('stretchBreakActive', false);
+    }
+  }
+  if (store.get('waterBreakActive') && currentScreen === SC.HM) {
+    var checkNw = store.get('nextWaterTime');
+    if (checkNw && Date.now() < checkNw) {
+      store.set('waterBreakActive', false);
+    }
+  }
+
   // Stretch overdue — navigate to break screen
   // stretchBreakActive prevents double-fire
   if (store.get('stretchEnabled') && !store.get('stretchBreakActive')) {
@@ -1021,13 +1056,16 @@ function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
 // ── Visibility change ────────────────────────────────────────────────
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState !== 'visible') return;
+  // Run maintenance on every app open — catches day/week boundaries
+  maintenance();
   tick();
   setTimeout(checkAndShowActiveScreen, 300);
-  // Re-sync subscription on visibility change — keeps Redis subscription fresh
-  // in case Chrome has rotated the push subscription endpoint
+  // Re-sync subscription — keeps Redis endpoint fresh
   if (store.get('stretchEnabled') || store.get('waterEnabled')) {
     setTimeout(function() { syncSchedule(); }, 800);
   }
+  // Refresh warning banners (permission may have changed in settings)
+  if (currentScreen === SC.HM) loadState();
 });
 
 // ── Push subscription ─────────────────────────────────────────────────
@@ -1249,6 +1287,20 @@ function loadState() {
   document.getElementById('wpb').classList.toggle('hidden',!wp);
   unlockGoal(wp);
   renderStats();
+  // Warning banners
+  var denied = document.getElementById('notifDeniedBanner');
+  if (denied) denied.classList.toggle('hidden', !store.get('notifDeniedWarning'));
+  // Battery warning — show once on Samsung/Xiaomi if not dismissed
+  var battBanner = document.getElementById('batteryWarningBanner');
+  if (battBanner) {
+    var ua = navigator.userAgent;
+    var isSamsung = /Samsung/i.test(ua) || /SM-/i.test(ua);
+    var isXiaomi  = /Xiaomi|MIUI|Redmi/i.test(ua);
+    var battDone  = localStorage.getItem('batteryTipDone');
+    if ((isSamsung || isXiaomi) && !battDone) {
+      battBanner.classList.remove('hidden');
+    }
+  }
 }
 
 function updateStretchUI(on) {
@@ -1398,8 +1450,79 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────
+// ── Maintenance — runs on every boot ─────────────────────────────────
+function maintenance() {
+  // ── 1. Weekly stats reset (every Sunday) ──────────────────────────
+  var now = new Date();
+  var sunday = new Date(now);
+  sunday.setDate(now.getDate() - now.getDay()); // this Sunday
+  sunday.setHours(0,0,0,0);
+  var sundayStr = sunday.toDateString();
+  var lastWeekStart = store.get('weekStartDate');
+
+  if (lastWeekStart !== sundayStr) {
+    // New week — roll current week into last week
+    store.set('lastCompletedCount', store.get('completedCount') || 0);
+    store.set('lastSnoozedCount',   store.get('snoozedCount')   || 0);
+    store.set('lastSkippedCount',   store.get('skippedCount')   || 0);
+    store.set('completedCount', 0);
+    store.set('snoozedCount',   0);
+    store.set('skippedCount',   0);
+    store.set('weekStartDate', sundayStr);
+    console.log('[maintenance] weekly stats reset');
+  }
+
+  // ── 2. Daily water reset ───────────────────────────────────────────
+  var today = now.toDateString();
+  if (store.get('waterGoalResetDate') !== today) {
+    store.set('waterGlassCount', 0);
+    store.set('waterGoalResetDate', today);
+    console.log('[maintenance] daily water reset');
+  }
+
+  // ── 3. Detect data-cleared mid-session ────────────────────────────
+  // If timers are enabled but installDate was just set (first boot),
+  // it means data was cleared while timers were running in Redis.
+  // Cancel the schedule to stop ghost notifications.
+  var freshInstall = !store.get('stretchEnabled') && !store.get('waterEnabled');
+  if (freshInstall) {
+    // Unsubscribe from push to stop any ghost cron notifications
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(function(reg) {
+        reg.pushManager.getSubscription().then(function(sub) {
+          if (sub) {
+            // Tell server to clear schedule for this subscription
+            fetch('https://desk-wellness-pack.vercel.app/api/pwa-subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'unsubscribe',
+                installationId: store.get('installationId') || '',
+                subscription: sub.toJSON(),
+              })
+            }).catch(function(){});
+          }
+        });
+      });
+    }
+  }
+
+  // ── 4. Notification permission check ──────────────────────────────
+  if ('Notification' in window) {
+    var perm = Notification.permission;
+    store.set('notificationPermission', perm);
+    if (perm === 'denied' && (store.get('stretchEnabled') || store.get('waterEnabled'))) {
+      // Show a warning banner on the home screen
+      store.set('notifDeniedWarning', true);
+    } else {
+      store.set('notifDeniedWarning', false);
+    }
+  }
+}
+
 function boot() {
   store.init();
+  maintenance();
   // Clear any stale break-active flags on fresh boot
   store.set('stretchBreakActive', false);
   store.set('waterBreakActive', false);
