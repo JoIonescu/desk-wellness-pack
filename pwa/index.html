@@ -1380,15 +1380,16 @@ async function doUpgrade(mod) {
       body: JSON.stringify({ installationId: id })
     });
     var d = await r.json();
+    console.log('[checkout] response status:', r.status, 'body:', JSON.stringify(d));
     if (d.url) {
       _pendingPaymentModule = mod;
       store.set('pendingPaymentModule', mod);
-      // Open Stripe — use location.href so we stay in same session
-      // visibilitychange will auto-verify when user returns
       window.open(d.url, '_blank');
     } else {
       if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
-      alert('Could not create checkout. Try again.');
+      // Show actual server error to help diagnose
+      var errMsg = d.error || d.message || JSON.stringify(d);
+      alert('Checkout failed: ' + errMsg);
     }
   } catch(e) {
     if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
