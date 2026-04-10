@@ -1383,9 +1383,9 @@ async function doUpgrade(mod) {
     if (d.url) {
       _pendingPaymentModule = mod;
       store.set('pendingPaymentModule', mod);
-      // Open Stripe in same tab on mobile (better UX than new tab)
-      // PWA will restore via visibilitychange when user returns
-      window.location.href = d.url;
+      // Open Stripe — use location.href so we stay in same session
+      // visibilitychange will auto-verify when user returns
+      window.open(d.url, '_blank');
     } else {
       if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
       alert('Could not create checkout. Try again.');
