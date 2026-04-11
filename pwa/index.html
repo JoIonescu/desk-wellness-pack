@@ -1426,8 +1426,11 @@ async function doVerify(mod, silent) {
       body: JSON.stringify({ installationId: id })
     });
     var d = await r.json();
-    if (d.token) {
-      store.set(mod==='water'?'waterLicenseToken':'licenseToken', d.token);
+    console.log('[verify] status:', r.status, 'body:', JSON.stringify(d));
+    // Accept any token key the endpoint may return
+    var token = d.token || d.licenseToken || d.license;
+    if (token) {
+      store.set(mod==='water'?'waterLicenseToken':'licenseToken', token);
       store.set('pendingPaymentModule', null);
       _pendingPaymentModule = null;
       homeReady = false;
@@ -1436,16 +1439,19 @@ async function doVerify(mod, silent) {
     } else {
       if (!silent) {
         var btn2 = document.getElementById(mod==='water'?'verW':'verS');
-        if (btn2) { btn2.textContent='✓ I\u2019ve paid — Verify Payment'; btn2.disabled=false; }
-        alert('Payment not found yet. Complete the Stripe checkout and try again.');
+        if (btn2) { btn2.textContent='✓ I’ve paid — Verify Payment'; btn2.disabled=false; }
+        // Show actual server response so we can diagnose
+        var serverMsg = d.error || d.message || d.status || JSON.stringify(d);
+        alert('Server response: ' + serverMsg);
       }
       return false;
     }
   } catch(e) {
+    console.error('[verify] error:', e);
     if (!silent) {
       var btn3 = document.getElementById(mod==='water'?'verW':'verS');
-      if (btn3) { btn3.textContent='✓ I\u2019ve paid — Verify Payment'; btn3.disabled=false; }
-      alert('Could not verify. Check your connection.');
+      if (btn3) { btn3.textContent='✓ I’ve paid — Verify Payment'; btn3.disabled=false; }
+      alert('Network error: ' + e.message);
     }
     return false;
   }
