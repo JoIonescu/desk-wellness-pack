@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -222,6 +223,7 @@
 <div id="app">
 
   <!-- ═══ WELCOME ═══ -->
+
   <div id="wl" class="screen">
     <div class="scr" style="align-items:center;text-align:center;">
       <div style="font-size:52px;margin-bottom:6px;">🧘💧</div>
@@ -250,6 +252,7 @@
   </div>
 
   <!-- ═══ HOME ═══ -->
+
   <div id="hm" class="screen">
     <div class="scr">
       <div class="card">
@@ -257,156 +260,160 @@
         <div style="font-size:14px;color:var(--muted);">Smart reminders for healthier desk habits</div>
       </div>
 
-      <!-- Notification denied warning — shown when permission revoked -->
-      <div id="notifDeniedBanner" class="hidden" style="background:rgba(255,138,128,.12);border:1px solid rgba(255,138,128,.3);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
-        <div style="font-size:18px;flex-shrink:0;">⚠️</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:3px;">Notifications blocked</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Reminders won't fire in the background. Go to <strong>Settings → Apps → Chrome → Notifications</strong> and allow notifications for this site.</div>
-        </div>
-      </div>
+```
+  <!-- Notification denied warning — shown when permission revoked -->
+  <div id="notifDeniedBanner" class="hidden" style="background:rgba(255,138,128,.12);border:1px solid rgba(255,138,128,.3);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+    <div style="font-size:18px;flex-shrink:0;">⚠️</div>
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:3px;">Notifications blocked</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;">Reminders won't fire in the background. Go to <strong>Settings → Apps → Chrome → Notifications</strong> and allow notifications for this site.</div>
+    </div>
+  </div>
 
-      <!-- Samsung/Xiaomi battery warning — shown on first run on those devices -->
-      <div id="batteryWarningBanner" class="hidden" style="background:rgba(255,212,0,.08);border:1px solid rgba(255,212,0,.22);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
-        <div style="font-size:18px;flex-shrink:0;">🔋</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;margin-bottom:3px;">One more step for reliable reminders</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Your phone aggressively stops background apps. Go to <strong>Settings → Battery → App battery usage → Chrome → Unrestricted</strong> to keep reminders firing.</div>
-        </div>
-        <button onclick="this.parentElement.parentElement.classList.add('hidden');localStorage.setItem('batteryTipDone',JSON.stringify(true));" style="border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0;padding:0;">×</button>
-      </div>
-      <div class="card" style="padding:6px;">
-        <div class="tabbar">
-          <button class="tabbtn act" id="tabS">🧘 Smart Stretch</button>
-          <button class="tabbtn tabbtn-w" id="tabW">💧 Water Reminder</button>
-        </div>
-      </div>
+  <!-- Samsung/Xiaomi battery warning — shown on first run on those devices -->
+  <div id="batteryWarningBanner" class="hidden" style="background:rgba(255,212,0,.08);border:1px solid rgba(255,212,0,.22);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+    <div style="font-size:18px;flex-shrink:0;">🔋</div>
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:3px;">One more step for reliable reminders</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;">Your phone aggressively stops background apps. Go to <strong>Settings → Battery → App battery usage → Chrome → Unrestricted</strong> to keep reminders firing.</div>
+    </div>
+    <button onclick="this.parentElement.parentElement.classList.add('hidden');localStorage.setItem('batteryTipDone',JSON.stringify(true));" style="border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0;padding:0;">×</button>
+  </div>
+  <div class="card" style="padding:6px;">
+    <div class="tabbar">
+      <button class="tabbtn act" id="tabS">🧘 Smart Stretch</button>
+      <button class="tabbtn tabbtn-w" id="tabW">💧 Water Reminder</button>
+    </div>
+  </div>
 
-      <!-- STRETCH TAB -->
-      <div id="secS" class="modsec">
-        <div class="card" style="position:relative;">
-          <div id="spb" class="pbi hidden">✨ Pro</div>
-          <div class="tbox">
-            <div class="tlbl" id="tLbl">Next stretch break</div>
-            <div class="tval" id="tVal">Timer Inactive</div>
-          </div>
-          <div class="ctrls">
-            <button class="btn btn-start" id="startS">Start</button>
-            <button class="btn btn-stop" id="stopS" disabled>Stop</button>
-          </div>
-        </div>
-        <div class="sel-wrap" id="selS">
-          <div class="sel-trig" id="selStrig"><span id="selSlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
-          <div class="sel-opts" id="selSopts">
-            <div class="sel-opt" data-value="15">Every 15 minutes</div>
-            <div class="sel-opt" data-value="20">Every 20 minutes</div>
-            <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
-            <div class="sel-opt" data-value="45">Every 45 minutes</div>
-            <div class="sel-opt" data-value="60">Every 60 minutes</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="row"><div class="rt"><div class="lbl">Smart Stretch</div><div class="sub">Adapts stretch type based on your recent behaviour</div></div><input type="checkbox" id="smartTog" class="toggle" /></div>
-          <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the stretch screen opens</div></div><input type="checkbox" id="soundTog" class="toggle" /></div>
-        </div>
-        <div class="card ucard" id="uCardS">
-          <div class="utitle">✨ Upgrade to Pro</div>
-          <div class="usub">One-time purchase. Skip stretches during meetings automatically.</div>
-          <div class="ufeats"><div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Checks Google Calendar — pauses when you're busy</div></div></div></div>
-          <button class="btn btn-up" id="upgS">Upgrade — €3.00</button>
-          <button class="btn btn-verify" id="verS">✓ I've paid — Verify Payment</button>
-          <div class="pnote" id="pnoteS">Returning from payment? The app will verify automatically, or tap below.</div>
-          <div class="uprice">One-time · No subscription · Instant unlock</div>
-        </div>
-        <div class="card hidden" id="proS">
-          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Skips stretch if you're busy in Google Calendar</div></div><input type="checkbox" id="calTog" class="toggle" /></div>
-          <div class="sok" id="calSok">✅ Google Calendar connected</div>
-        </div>
-        <div class="card">
-          <div class="lbl">Weekly stretch activity</div>
-          <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
-            <div id="statCarousel" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
-              <div style="flex:0 0 100%;scroll-snap-align:start;">
-                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">This Week</div>
-                <div class="stats">
-                  <div class="stat"><div class="sv" id="cC">0</div><div class="sl">Completed</div></div>
-                  <div class="stat"><div class="sv" id="sC">0</div><div class="sl">Snoozed</div></div>
-                  <div class="stat"><div class="sv" id="kC">0</div><div class="sl">Skipped</div></div>
-                </div>
-              </div>
-              <div style="flex:0 0 100%;scroll-snap-align:start;">
-                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
-                <div class="stats">
-                  <div class="stat"><div class="sv" id="lcC">0</div><div class="sl">Completed</div></div>
-                  <div class="stat"><div class="sv" id="lsC">0</div><div class="sl">Snoozed</div></div>
-                  <div class="stat"><div class="sv" id="lkC">0</div><div class="sl">Skipped</div></div>
-                </div>
-              </div>
+  <!-- STRETCH TAB -->
+  <div id="secS" class="modsec">
+    <div class="card" style="position:relative;">
+      <div id="spb" class="pbi hidden">✨ Pro</div>
+      <div class="tbox">
+        <div class="tlbl" id="tLbl">Next stretch break</div>
+        <div class="tval" id="tVal">Timer Inactive</div>
+      </div>
+      <div class="ctrls">
+        <button class="btn btn-start" id="startS">Start</button>
+        <button class="btn btn-stop" id="stopS" disabled>Stop</button>
+      </div>
+    </div>
+    <div class="sel-wrap" id="selS">
+      <div class="sel-trig" id="selStrig"><span id="selSlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
+      <div class="sel-opts" id="selSopts">
+        <div class="sel-opt" data-value="15">Every 15 minutes</div>
+        <div class="sel-opt" data-value="20">Every 20 minutes</div>
+        <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
+        <div class="sel-opt" data-value="45">Every 45 minutes</div>
+        <div class="sel-opt" data-value="60">Every 60 minutes</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row"><div class="rt"><div class="lbl">Smart Stretch</div><div class="sub">Adapts stretch type based on your recent behaviour</div></div><input type="checkbox" id="smartTog" class="toggle" /></div>
+      <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the stretch screen opens</div></div><input type="checkbox" id="soundTog" class="toggle" /></div>
+    </div>
+    <div class="card ucard" id="uCardS">
+      <div class="utitle">✨ Upgrade to Pro</div>
+      <div class="usub">One-time purchase. Skip stretches during meetings automatically.</div>
+      <div class="ufeats"><div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Checks Google Calendar — pauses when you're busy</div></div></div></div>
+      <button class="btn btn-up" id="upgS">Upgrade — €3.00</button>
+      <button class="btn btn-verify" id="verS">✓ I've paid — Verify Payment</button>
+      <div class="pnote" id="pnoteS">Returning from payment? The app will verify automatically, or tap below.</div>
+      <div class="uprice">One-time · No subscription · Instant unlock</div>
+    </div>
+    <div class="card hidden" id="proS">
+      <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Skips stretch if you're busy in Google Calendar</div></div><input type="checkbox" id="calTog" class="toggle" /></div>
+      <div class="sok" id="calSok">✅ Google Calendar connected</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Weekly stretch activity</div>
+      <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
+        <div id="statCarousel" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+          <div style="flex:0 0 100%;scroll-snap-align:start;">
+            <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">This Week</div>
+            <div class="stats">
+              <div class="stat"><div class="sv" id="cC">0</div><div class="sl">Completed</div></div>
+              <div class="stat"><div class="sv" id="sC">0</div><div class="sl">Snoozed</div></div>
+              <div class="stat"><div class="sv" id="kC">0</div><div class="sl">Skipped</div></div>
             </div>
           </div>
-          <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;"><div class="cdot act" id="d0"></div><div class="cdot" id="d1"></div></div>
-          <div style="margin-top:8px;font-size:11px;opacity:.5;text-align:center;">Resets every Sunday · Swipe to see last week</div>
-        </div>
-      </div><!-- /secS -->
-
-      <!-- WATER TAB -->
-      <div id="secW" class="modsec hidden">
-        <div class="card" style="position:relative;">
-          <div id="wpb" class="pbi hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
-          <div class="tbox" style="background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.14);">
-            <div class="tlbl" id="wLbl">Next water reminder</div>
-            <div class="tval" id="wVal" style="color:var(--blue);">Timer Inactive</div>
-          </div>
-          <div class="ctrls">
-            <button class="btn btn-start" id="startW">Start</button>
-            <button class="btn btn-stop" id="stopW" disabled>Stop</button>
+          <div style="flex:0 0 100%;scroll-snap-align:start;">
+            <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
+            <div class="stats">
+              <div class="stat"><div class="sv" id="lcC">0</div><div class="sl">Completed</div></div>
+              <div class="stat"><div class="sv" id="lsC">0</div><div class="sl">Snoozed</div></div>
+              <div class="stat"><div class="sv" id="lkC">0</div><div class="sl">Skipped</div></div>
+            </div>
           </div>
         </div>
-        <div class="sel-wrap" id="selW">
-          <div class="sel-trig" id="selWtrig" style="border-color:rgba(90,169,255,.25);"><span id="selWlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
-          <div class="sel-opts" id="selWopts" style="border-color:rgba(90,169,255,.3);">
-            <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
-            <div class="sel-opt" data-value="45">Every 45 minutes</div>
-            <div class="sel-opt" data-value="60">Every 60 minutes</div>
-            <div class="sel-opt" data-value="90">Every 90 minutes</div>
-            <div class="sel-opt" data-value="120">Every 2 hours</div>
-          </div>
-        </div>
-        <div class="card">
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
-            <div class="gmini"><div class="gmini-rim"></div><div class="gmini-body"></div><div class="gmini-fill" id="wFill"></div></div>
-            <div><div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1;"><span id="wCnt">0</span><span style="font-size:13px;font-weight:400;opacity:.6;">/ <span id="wGoalD">8</span></span></div><div style="font-size:11px;opacity:.6;margin-top:3px;">glasses today</div></div>
-          </div>
-          <div id="wDots" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"></div>
-        </div>
-        <div class="card">
-          <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the water screen opens</div></div><input type="checkbox" id="wSndTog" class="toggle toggle-b" /></div>
-          <div class="row">
-            <div class="rt"><div class="lbl">Daily goal <span id="wLock" style="font-size:11px;opacity:.5;">🔒</span></div><div class="sub" id="wGoalSub">Upgrade to Pro to set your own goal</div></div>
-            <div class="stepper" id="wStepper" style="opacity:.4;pointer-events:none;"><button class="stepbtn" id="wMinus">−</button><div class="stepval" id="wGoalV">8</div><button class="stepbtn" id="wPlus">+</button></div>
-          </div>
-        </div>
-        <div class="card ucard hidden" id="uCardW">
-          <div class="utitle">💧 Upgrade Water to Pro</div>
-          <div class="usub">One-time purchase. Unlock meeting detection and custom goals.</div>
-          <div class="ufeats">
-            <div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div></div>
-            <div class="ufeat"><div class="ufi">🎯</div><div><div class="lbl" style="font-size:14px;">Custom daily glass goal</div><div class="sub">Set your own target, not locked to 8 glasses</div></div></div>
-          </div>
-          <button class="btn btn-up" id="upgW">Upgrade — €5.00</button>
-          <button class="btn btn-verify" id="verW">✓ I've paid — Verify Payment</button>
-          <div class="pnote" id="pnoteW">Returning from payment? The app will verify automatically, or tap below.</div>
-          <div class="uprice">One-time · No subscription · Instant unlock</div>
-        </div>
-        <div class="card hidden" id="proW" style="border-color:rgba(90,169,255,.2);background:rgba(90,169,255,.04);">
-          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div><input type="checkbox" id="wCalTog" class="toggle toggle-b" /></div>
-          <div class="sok" id="wCalSok">✅ Google Calendar connected</div>
-        </div>
-      </div><!-- /secW -->
+      </div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;"><div class="cdot act" id="d0"></div><div class="cdot" id="d1"></div></div>
+      <div style="margin-top:8px;font-size:11px;opacity:.5;text-align:center;">Resets every Sunday · Swipe to see last week</div>
     </div>
+  </div><!-- /secS -->
+
+  <!-- WATER TAB -->
+  <div id="secW" class="modsec hidden">
+    <div class="card" style="position:relative;">
+      <div id="wpb" class="pbi hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
+      <div class="tbox" style="background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.14);">
+        <div class="tlbl" id="wLbl">Next water reminder</div>
+        <div class="tval" id="wVal" style="color:var(--blue);">Timer Inactive</div>
+      </div>
+      <div class="ctrls">
+        <button class="btn btn-start" id="startW">Start</button>
+        <button class="btn btn-stop" id="stopW" disabled>Stop</button>
+      </div>
+    </div>
+    <div class="sel-wrap" id="selW">
+      <div class="sel-trig" id="selWtrig" style="border-color:rgba(90,169,255,.25);"><span id="selWlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
+      <div class="sel-opts" id="selWopts" style="border-color:rgba(90,169,255,.3);">
+        <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
+        <div class="sel-opt" data-value="45">Every 45 minutes</div>
+        <div class="sel-opt" data-value="60">Every 60 minutes</div>
+        <div class="sel-opt" data-value="90">Every 90 minutes</div>
+        <div class="sel-opt" data-value="120">Every 2 hours</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+        <div class="gmini"><div class="gmini-rim"></div><div class="gmini-body"></div><div class="gmini-fill" id="wFill"></div></div>
+        <div><div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1;"><span id="wCnt">0</span><span style="font-size:13px;font-weight:400;opacity:.6;">/ <span id="wGoalD">8</span></span></div><div style="font-size:11px;opacity:.6;margin-top:3px;">glasses today</div></div>
+      </div>
+      <div id="wDots" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"></div>
+    </div>
+    <div class="card">
+      <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the water screen opens</div></div><input type="checkbox" id="wSndTog" class="toggle toggle-b" /></div>
+      <div class="row">
+        <div class="rt"><div class="lbl">Daily goal <span id="wLock" style="font-size:11px;opacity:.5;">🔒</span></div><div class="sub" id="wGoalSub">Upgrade to Pro to set your own goal</div></div>
+        <div class="stepper" id="wStepper" style="opacity:.4;pointer-events:none;"><button class="stepbtn" id="wMinus">−</button><div class="stepval" id="wGoalV">8</div><button class="stepbtn" id="wPlus">+</button></div>
+      </div>
+    </div>
+    <div class="card ucard hidden" id="uCardW">
+      <div class="utitle">💧 Upgrade Water to Pro</div>
+      <div class="usub">One-time purchase. Unlock meeting detection and custom goals.</div>
+      <div class="ufeats">
+        <div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div></div>
+        <div class="ufeat"><div class="ufi">🎯</div><div><div class="lbl" style="font-size:14px;">Custom daily glass goal</div><div class="sub">Set your own target, not locked to 8 glasses</div></div></div>
+      </div>
+      <button class="btn btn-up" id="upgW">Upgrade — €5.00</button>
+      <button class="btn btn-verify" id="verW">✓ I've paid — Verify Payment</button>
+      <div class="pnote" id="pnoteW">Returning from payment? The app will verify automatically, or tap below.</div>
+      <div class="uprice">One-time · No subscription · Instant unlock</div>
+    </div>
+    <div class="card hidden" id="proW" style="border-color:rgba(90,169,255,.2);background:rgba(90,169,255,.04);">
+      <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div><input type="checkbox" id="wCalTog" class="toggle toggle-b" /></div>
+      <div class="sok" id="wCalSok">✅ Google Calendar connected</div>
+    </div>
+  </div><!-- /secW -->
+</div>
+```
+
   </div><!-- /hm -->
 
   <!-- ═══ STRETCH BREAK ═══ -->
+
   <div id="sb" class="screen" style="position:relative;overflow:hidden;">
     <div class="sb-wrap">
       <div class="sb-top">
@@ -416,65 +423,69 @@
       </div>
       <div class="sb-center">
 
-        <!-- STATE A: Ready — shown first, countdown not started -->
-        <div id="sbReady" style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;">
-          <div style="font-size:72px;" id="sbReadyIcon">🧘</div>
-          <div>
-            <div class="sb-ex-name" id="sbExName" style="text-align:center;margin-bottom:8px;">Neck Roll</div>
-            <div class="sb-ex-inst" id="sbExInst" style="text-align:center;">Gently roll your head in a circle. Feel the stretch along your neck.</div>
-          </div>
-          <div style="font-size:13px;color:var(--muted2);opacity:.7;">60 seconds · tap when ready</div>
-        </div>
-
-        <!-- STATE B: Active — shown after tapping Start Stretch -->
-        <div id="sbActive" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;">
-          <!-- pulse-wrap uses CSS animation — works fine on display:flex -->
-          <div class="pulse-wrap">
-            <svg class="progress-ring" viewBox="0 0 120 120">
-              <defs>
-                <linearGradient id="grd" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#FFD400"></stop>
-                  <stop offset="100%" stop-color="#FF7A00"></stop>
-                </linearGradient>
-              </defs>
-              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-              <circle id="ringProg" class="ring-prog" cx="60" cy="60" r="52"></circle>
-            </svg>
-            <div class="inner-circle">
-              <div class="sb-time" id="sbTime">60</div>
-              <div class="sb-time-lbl">seconds</div>
-            </div>
-          </div>
-          <!-- Name + short instruction shown during active countdown -->
-          <div style="text-align:center;width:100%;max-width:320px;">
-            <div class="sb-ex-icon" id="sbExIcon" style="font-size:28px;margin-bottom:6px;">🧘</div>
-            <div id="sbExNameActive" style="font-size:18px;font-weight:800;margin-bottom:6px;"></div>
-            <div id="sbExInstActive" style="font-size:13px;color:var(--muted2);line-height:1.5;"></div>
-          </div>
-        </div>
-
+```
+    <!-- STATE A: Ready — shown first, countdown not started -->
+    <div id="sbReady" style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;">
+      <div style="font-size:72px;" id="sbReadyIcon">🧘</div>
+      <div>
+        <div class="sb-ex-name" id="sbExName" style="text-align:center;margin-bottom:8px;">Neck Roll</div>
+        <div class="sb-ex-inst" id="sbExInst" style="text-align:center;">Gently roll your head in a circle. Feel the stretch along your neck.</div>
       </div>
+      <div style="font-size:13px;color:var(--muted2);opacity:.7;">60 seconds · tap when ready</div>
+    </div>
 
-      <!-- ACTION BUTTONS — swap based on state -->
-      <div class="sb-actions" id="sbActionsReady">
-        <button class="sb-btn" id="sbBegin" style="background:var(--green);color:#0f1b12;flex:2;font-size:16px;">▶ Start Stretch</button>
-        <button class="sb-btn sb-skip" id="sbSkipReady" style="flex:1;">Skip</button>
+    <!-- STATE B: Active — shown after tapping Start Stretch -->
+    <div id="sbActive" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;">
+      <!-- pulse-wrap uses CSS animation — works fine on display:flex -->
+      <div class="pulse-wrap">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="grd" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FFD400"></stop>
+              <stop offset="100%" stop-color="#FF7A00"></stop>
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+          <circle id="ringProg" class="ring-prog" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="inner-circle">
+          <div class="sb-time" id="sbTime">60</div>
+          <div class="sb-time-lbl">seconds</div>
+        </div>
       </div>
-      <div class="sb-actions" id="sbActionsActive" style="display:none;">
-        <button class="sb-btn sb-snooze" id="sbSnooze">Snooze 5 min</button>
-        <button class="sb-btn sb-skip" id="sbSkip">Skip</button>
+      <!-- Name + short instruction shown during active countdown -->
+      <div style="text-align:center;width:100%;max-width:320px;">
+        <div class="sb-ex-icon" id="sbExIcon" style="font-size:28px;margin-bottom:6px;">🧘</div>
+        <div id="sbExNameActive" style="font-size:18px;font-weight:800;margin-bottom:6px;"></div>
+        <div id="sbExInstActive" style="font-size:13px;color:var(--muted2);line-height:1.5;"></div>
       </div>
     </div>
-    <!-- Success overlay -->
-    <div class="sb-success" id="sbSuccess">
-      <div class="sb-suc-emoji">👍</div>
-      <div class="sb-suc-title">Good job!</div>
-      <div class="sb-suc-sub">You completed your stretch break.</div>
-      <canvas id="sbConfetti"></canvas>
-    </div>
+
+  </div>
+
+  <!-- ACTION BUTTONS — swap based on state -->
+  <div class="sb-actions" id="sbActionsReady">
+    <button class="sb-btn" id="sbBegin" style="background:var(--green);color:#0f1b12;flex:2;font-size:16px;">▶ Start Stretch</button>
+    <button class="sb-btn sb-skip" id="sbSkipReady" style="flex:1;">Skip</button>
+  </div>
+  <div class="sb-actions" id="sbActionsActive" style="display:none;">
+    <button class="sb-btn sb-snooze" id="sbSnooze">Snooze 5 min</button>
+    <button class="sb-btn sb-skip" id="sbSkip">Skip</button>
+  </div>
+</div>
+<!-- Success overlay -->
+<div class="sb-success" id="sbSuccess">
+  <div class="sb-suc-emoji">👍</div>
+  <div class="sb-suc-title">Good job!</div>
+  <div class="sb-suc-sub">You completed your stretch break.</div>
+  <canvas id="sbConfetti"></canvas>
+</div>
+```
+
   </div><!-- /sb -->
 
   <!-- ═══ WATER BREAK ═══ -->
+
   <div id="wb" class="screen" style="position:relative;overflow:hidden;">
     <div class="wb-wrap">
       <div class="wave-bg">
@@ -527,6 +538,7 @@
 </div><!-- /app -->
 
 <!-- Confetti from CDN -->
+
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
 <script>
@@ -1380,15 +1392,16 @@ async function doUpgrade(mod) {
       body: JSON.stringify({ installationId: id })
     });
     var d = await r.json();
-    console.log('[checkout] response status:', r.status, 'body:', JSON.stringify(d));
-    if (d.url) {
+    // Endpoint returns either d.url or d.checkoutUrl
+    var checkoutUrl = d.url || d.checkoutUrl;
+    if (checkoutUrl) {
       _pendingPaymentModule = mod;
       store.set('pendingPaymentModule', mod);
-      window.open(d.url, '_blank');
+      window.open(checkoutUrl, '_blank');
+      if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
     } else {
       if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
-      // Show actual server error to help diagnose
-      var errMsg = d.error || d.message || JSON.stringify(d);
+      var errMsg = d.error || d.message || 'Unknown error';
       alert('Checkout failed: ' + errMsg);
     }
   } catch(e) {
@@ -1749,5 +1762,6 @@ function checkAndShowActiveScreen() {
 boot();
 
 </script>
+
 </body>
 </html>
