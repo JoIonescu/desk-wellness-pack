@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -260,156 +259,155 @@
         <div style="font-size:14px;color:var(--muted);">Smart reminders for healthier desk habits</div>
       </div>
 
-```
-  <!-- Notification denied warning — shown when permission revoked -->
-  <div id="notifDeniedBanner" class="hidden" style="background:rgba(255,138,128,.12);border:1px solid rgba(255,138,128,.3);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
-    <div style="font-size:18px;flex-shrink:0;">⚠️</div>
-    <div style="flex:1;">
-      <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:3px;">Notifications blocked</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.5;">Reminders won't fire in the background. Go to <strong>Settings → Apps → Chrome → Notifications</strong> and allow notifications for this site.</div>
-    </div>
-  </div>
-
-  <!-- Samsung/Xiaomi battery warning — shown on first run on those devices -->
-  <div id="batteryWarningBanner" class="hidden" style="background:rgba(255,212,0,.08);border:1px solid rgba(255,212,0,.22);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
-    <div style="font-size:18px;flex-shrink:0;">🔋</div>
-    <div style="flex:1;">
-      <div style="font-size:14px;font-weight:600;margin-bottom:3px;">One more step for reliable reminders</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.5;">Your phone aggressively stops background apps. Go to <strong>Settings → Battery → App battery usage → Chrome → Unrestricted</strong> to keep reminders firing.</div>
-    </div>
-    <button onclick="this.parentElement.parentElement.classList.add('hidden');localStorage.setItem('batteryTipDone',JSON.stringify(true));" style="border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0;padding:0;">×</button>
-  </div>
-  <div class="card" style="padding:6px;">
-    <div class="tabbar">
-      <button class="tabbtn act" id="tabS">🧘 Smart Stretch</button>
-      <button class="tabbtn tabbtn-w" id="tabW">💧 Water Reminder</button>
-    </div>
-  </div>
-
-  <!-- STRETCH TAB -->
-  <div id="secS" class="modsec">
-    <div class="card" style="position:relative;">
-      <div id="spb" class="pbi hidden">✨ Pro</div>
-      <div class="tbox">
-        <div class="tlbl" id="tLbl">Next stretch break</div>
-        <div class="tval" id="tVal">Timer Inactive</div>
-      </div>
-      <div class="ctrls">
-        <button class="btn btn-start" id="startS">Start</button>
-        <button class="btn btn-stop" id="stopS" disabled>Stop</button>
-      </div>
-    </div>
-    <div class="sel-wrap" id="selS">
-      <div class="sel-trig" id="selStrig"><span id="selSlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
-      <div class="sel-opts" id="selSopts">
-        <div class="sel-opt" data-value="15">Every 15 minutes</div>
-        <div class="sel-opt" data-value="20">Every 20 minutes</div>
-        <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
-        <div class="sel-opt" data-value="45">Every 45 minutes</div>
-        <div class="sel-opt" data-value="60">Every 60 minutes</div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="row"><div class="rt"><div class="lbl">Smart Stretch</div><div class="sub">Adapts stretch type based on your recent behaviour</div></div><input type="checkbox" id="smartTog" class="toggle" /></div>
-      <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the stretch screen opens</div></div><input type="checkbox" id="soundTog" class="toggle" /></div>
-    </div>
-    <div class="card ucard" id="uCardS">
-      <div class="utitle">✨ Upgrade to Pro</div>
-      <div class="usub">One-time purchase. Skip stretches during meetings automatically.</div>
-      <div class="ufeats"><div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Checks Google Calendar — pauses when you're busy</div></div></div></div>
-      <button class="btn btn-up" id="upgS">Upgrade — €3.00</button>
-      <button class="btn btn-verify" id="verS">✓ I've paid — Verify Payment</button>
-      <div class="pnote" id="pnoteS">Returning from payment? The app will verify automatically, or tap below.</div>
-      <div class="uprice">One-time · No subscription · Instant unlock</div>
-    </div>
-    <div class="card hidden" id="proS">
-      <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Skips stretch if you're busy in Google Calendar</div></div><input type="checkbox" id="calTog" class="toggle" /></div>
-      <div class="sok" id="calSok">✅ Google Calendar connected</div>
-    </div>
-    <div class="card">
-      <div class="lbl">Weekly stretch activity</div>
-      <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
-        <div id="statCarousel" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
-          <div style="flex:0 0 100%;scroll-snap-align:start;">
-            <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">This Week</div>
-            <div class="stats">
-              <div class="stat"><div class="sv" id="cC">0</div><div class="sl">Completed</div></div>
-              <div class="stat"><div class="sv" id="sC">0</div><div class="sl">Snoozed</div></div>
-              <div class="stat"><div class="sv" id="kC">0</div><div class="sl">Skipped</div></div>
-            </div>
-          </div>
-          <div style="flex:0 0 100%;scroll-snap-align:start;">
-            <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
-            <div class="stats">
-              <div class="stat"><div class="sv" id="lcC">0</div><div class="sl">Completed</div></div>
-              <div class="stat"><div class="sv" id="lsC">0</div><div class="sl">Snoozed</div></div>
-              <div class="stat"><div class="sv" id="lkC">0</div><div class="sl">Skipped</div></div>
-            </div>
-          </div>
+      <!-- Notification denied warning — shown when permission revoked -->
+      <div id="notifDeniedBanner" class="hidden" style="background:rgba(255,138,128,.12);border:1px solid rgba(255,138,128,.3);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+        <div style="font-size:18px;flex-shrink:0;">⚠️</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:3px;">Notifications blocked</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Reminders won't fire in the background. Go to <strong>Settings → Apps → Chrome → Notifications</strong> and allow notifications for this site.</div>
         </div>
       </div>
-      <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;"><div class="cdot act" id="d0"></div><div class="cdot" id="d1"></div></div>
-      <div style="margin-top:8px;font-size:11px;opacity:.5;text-align:center;">Resets every Sunday · Swipe to see last week</div>
-    </div>
-  </div><!-- /secS -->
 
-  <!-- WATER TAB -->
-  <div id="secW" class="modsec hidden">
-    <div class="card" style="position:relative;">
-      <div id="wpb" class="pbi hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
-      <div class="tbox" style="background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.14);">
-        <div class="tlbl" id="wLbl">Next water reminder</div>
-        <div class="tval" id="wVal" style="color:var(--blue);">Timer Inactive</div>
+      <!-- Samsung/Xiaomi battery warning — shown on first run on those devices -->
+      <div id="batteryWarningBanner" class="hidden" style="background:rgba(255,212,0,.08);border:1px solid rgba(255,212,0,.22);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+        <div style="font-size:18px;flex-shrink:0;">🔋</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:3px;">One more step for reliable reminders</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Your phone aggressively stops background apps. Go to <strong>Settings → Battery → App battery usage → Chrome → Unrestricted</strong> to keep reminders firing.</div>
+        </div>
+        <button onclick="this.parentElement.parentElement.classList.add('hidden');localStorage.setItem('batteryTipDone',JSON.stringify(true));" style="border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0;padding:0;">×</button>
       </div>
-      <div class="ctrls">
-        <button class="btn btn-start" id="startW">Start</button>
-        <button class="btn btn-stop" id="stopW" disabled>Stop</button>
-      </div>
-    </div>
-    <div class="sel-wrap" id="selW">
-      <div class="sel-trig" id="selWtrig" style="border-color:rgba(90,169,255,.25);"><span id="selWlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
-      <div class="sel-opts" id="selWopts" style="border-color:rgba(90,169,255,.3);">
-        <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
-        <div class="sel-opt" data-value="45">Every 45 minutes</div>
-        <div class="sel-opt" data-value="60">Every 60 minutes</div>
-        <div class="sel-opt" data-value="90">Every 90 minutes</div>
-        <div class="sel-opt" data-value="120">Every 2 hours</div>
-      </div>
-    </div>
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
-        <div class="gmini"><div class="gmini-rim"></div><div class="gmini-body"></div><div class="gmini-fill" id="wFill"></div></div>
-        <div><div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1;"><span id="wCnt">0</span><span style="font-size:13px;font-weight:400;opacity:.6;">/ <span id="wGoalD">8</span></span></div><div style="font-size:11px;opacity:.6;margin-top:3px;">glasses today</div></div>
-      </div>
-      <div id="wDots" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"></div>
-    </div>
-    <div class="card">
-      <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the water screen opens</div></div><input type="checkbox" id="wSndTog" class="toggle toggle-b" /></div>
-      <div class="row">
-        <div class="rt"><div class="lbl">Daily goal <span id="wLock" style="font-size:11px;opacity:.5;">🔒</span></div><div class="sub" id="wGoalSub">Upgrade to Pro to set your own goal</div></div>
-        <div class="stepper" id="wStepper" style="opacity:.4;pointer-events:none;"><button class="stepbtn" id="wMinus">−</button><div class="stepval" id="wGoalV">8</div><button class="stepbtn" id="wPlus">+</button></div>
-      </div>
-    </div>
-    <div class="card ucard hidden" id="uCardW">
-      <div class="utitle">💧 Upgrade Water to Pro</div>
-      <div class="usub">One-time purchase. Unlock meeting detection and custom goals.</div>
-      <div class="ufeats">
-        <div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div></div>
-        <div class="ufeat"><div class="ufi">🎯</div><div><div class="lbl" style="font-size:14px;">Custom daily glass goal</div><div class="sub">Set your own target, not locked to 8 glasses</div></div></div>
-      </div>
-      <button class="btn btn-up" id="upgW">Upgrade — €5.00</button>
-      <button class="btn btn-verify" id="verW">✓ I've paid — Verify Payment</button>
-      <div class="pnote" id="pnoteW">Returning from payment? The app will verify automatically, or tap below.</div>
-      <div class="uprice">One-time · No subscription · Instant unlock</div>
-    </div>
-    <div class="card hidden" id="proW" style="border-color:rgba(90,169,255,.2);background:rgba(90,169,255,.04);">
-      <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div><input type="checkbox" id="wCalTog" class="toggle toggle-b" /></div>
-      <div class="sok" id="wCalSok">✅ Google Calendar connected</div>
-    </div>
-  </div><!-- /secW -->
-</div>
-```
 
+      <div class="card" style="padding:6px;">
+        <div class="tabbar">
+          <button class="tabbtn act" id="tabS">🧘 Smart Stretch</button>
+          <button class="tabbtn tabbtn-w" id="tabW">💧 Water Reminder</button>
+        </div>
+      </div>
+
+      <!-- STRETCH TAB -->
+      <div id="secS" class="modsec">
+        <div class="card" style="position:relative;">
+          <div id="spb" class="pbi hidden">✨ Pro</div>
+          <div class="tbox">
+            <div class="tlbl" id="tLbl">Next stretch break</div>
+            <div class="tval" id="tVal">Timer Inactive</div>
+          </div>
+          <div class="ctrls">
+            <button class="btn btn-start" id="startS">Start</button>
+            <button class="btn btn-stop" id="stopS" disabled>Stop</button>
+          </div>
+        </div>
+        <div class="sel-wrap" id="selS">
+          <div class="sel-trig" id="selStrig"><span id="selSlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
+          <div class="sel-opts" id="selSopts">
+            <div class="sel-opt" data-value="15">Every 15 minutes</div>
+            <div class="sel-opt" data-value="20">Every 20 minutes</div>
+            <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
+            <div class="sel-opt" data-value="45">Every 45 minutes</div>
+            <div class="sel-opt" data-value="60">Every 60 minutes</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row"><div class="rt"><div class="lbl">Smart Stretch</div><div class="sub">Adapts stretch type based on your recent behaviour</div></div><input type="checkbox" id="smartTog" class="toggle" /></div>
+          <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the stretch screen opens</div></div><input type="checkbox" id="soundTog" class="toggle" /></div>
+        </div>
+        <div class="card ucard" id="uCardS">
+          <div class="utitle">✨ Upgrade to Pro</div>
+          <div class="usub">One-time purchase. Skip stretches during meetings automatically.</div>
+          <div class="ufeats"><div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Checks Google Calendar — pauses when you're busy</div></div></div></div>
+          <button class="btn btn-up" id="upgS">Upgrade — €3.00</button>
+          <button class="btn btn-verify" id="verS">✓ I've paid — Verify Payment</button>
+          <div class="pnote" id="pnoteS">Returning from payment? The app will verify automatically, or tap below.</div>
+          <div class="uprice">One-time · No subscription · Instant unlock</div>
+        </div>
+        <div class="card hidden" id="proS">
+          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Skips stretch if you're busy in Google Calendar</div></div><input type="checkbox" id="calTog" class="toggle" /></div>
+          <div class="sok" id="calSok">✅ Google Calendar connected</div>
+        </div>
+        <div class="card">
+          <div class="lbl">Weekly stretch activity</div>
+          <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
+            <div id="statCarousel" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+              <div style="flex:0 0 100%;scroll-snap-align:start;">
+                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">This Week</div>
+                <div class="stats">
+                  <div class="stat"><div class="sv" id="cC">0</div><div class="sl">Completed</div></div>
+                  <div class="stat"><div class="sv" id="sC">0</div><div class="sl">Snoozed</div></div>
+                  <div class="stat"><div class="sv" id="kC">0</div><div class="sl">Skipped</div></div>
+                </div>
+              </div>
+              <div style="flex:0 0 100%;scroll-snap-align:start;">
+                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
+                <div class="stats">
+                  <div class="stat"><div class="sv" id="lcC">0</div><div class="sl">Completed</div></div>
+                  <div class="stat"><div class="sv" id="lsC">0</div><div class="sl">Snoozed</div></div>
+                  <div class="stat"><div class="sv" id="lkC">0</div><div class="sl">Skipped</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;"><div class="cdot act" id="d0"></div><div class="cdot" id="d1"></div></div>
+          <div style="margin-top:8px;font-size:11px;opacity:.5;text-align:center;">Resets every Sunday · Swipe to see last week</div>
+        </div>
+      </div><!-- /secS -->
+
+      <!-- WATER TAB -->
+      <div id="secW" class="modsec hidden">
+        <div class="card" style="position:relative;">
+          <div id="wpb" class="pbi hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
+          <div class="tbox" style="background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.14);">
+            <div class="tlbl" id="wLbl">Next water reminder</div>
+            <div class="tval" id="wVal" style="color:var(--blue);">Timer Inactive</div>
+          </div>
+          <div class="ctrls">
+            <button class="btn btn-start" id="startW">Start</button>
+            <button class="btn btn-stop" id="stopW" disabled>Stop</button>
+          </div>
+        </div>
+        <div class="sel-wrap" id="selW">
+          <div class="sel-trig" id="selWtrig" style="border-color:rgba(90,169,255,.25);"><span id="selWlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
+          <div class="sel-opts" id="selWopts" style="border-color:rgba(90,169,255,.3);">
+            <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
+            <div class="sel-opt" data-value="45">Every 45 minutes</div>
+            <div class="sel-opt" data-value="60">Every 60 minutes</div>
+            <div class="sel-opt" data-value="90">Every 90 minutes</div>
+            <div class="sel-opt" data-value="120">Every 2 hours</div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+            <div class="gmini"><div class="gmini-rim"></div><div class="gmini-body"></div><div class="gmini-fill" id="wFill"></div></div>
+            <div><div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1;"><span id="wCnt">0</span><span style="font-size:13px;font-weight:400;opacity:.6;">/ <span id="wGoalD">8</span></span></div><div style="font-size:11px;opacity:.6;margin-top:3px;">glasses today</div></div>
+          </div>
+          <div id="wDots" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"></div>
+        </div>
+        <div class="card">
+          <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the water screen opens</div></div><input type="checkbox" id="wSndTog" class="toggle toggle-b" /></div>
+          <div class="row">
+            <div class="rt"><div class="lbl">Daily goal <span id="wLock" style="font-size:11px;opacity:.5;">🔒</span></div><div class="sub" id="wGoalSub">Upgrade to Pro to set your own goal</div></div>
+            <div class="stepper" id="wStepper" style="opacity:.4;pointer-events:none;"><button class="stepbtn" id="wMinus">−</button><div class="stepval" id="wGoalV">8</div><button class="stepbtn" id="wPlus">+</button></div>
+          </div>
+        </div>
+        <div class="card ucard hidden" id="uCardW">
+          <div class="utitle">💧 Upgrade Water to Pro</div>
+          <div class="usub">One-time purchase. Unlock meeting detection and custom goals.</div>
+          <div class="ufeats">
+            <div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div></div>
+            <div class="ufeat"><div class="ufi">🎯</div><div><div class="lbl" style="font-size:14px;">Custom daily glass goal</div><div class="sub">Set your own target, not locked to 8 glasses</div></div></div>
+          </div>
+          <button class="btn btn-up" id="upgW">Upgrade — €5.00</button>
+          <button class="btn btn-verify" id="verW">✓ I've paid — Verify Payment</button>
+          <div class="pnote" id="pnoteW">Returning from payment? The app will verify automatically, or tap below.</div>
+          <div class="uprice">One-time · No subscription · Instant unlock</div>
+        </div>
+        <div class="card hidden" id="proW" style="border-color:rgba(90,169,255,.2);background:rgba(90,169,255,.04);">
+          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div><input type="checkbox" id="wCalTog" class="toggle toggle-b" /></div>
+          <div class="sok" id="wCalSok">✅ Google Calendar connected</div>
+        </div>
+      </div><!-- /secW -->
+
+    </div>
   </div><!-- /hm -->
 
   <!-- ═══ STRETCH BREAK ═══ -->
@@ -423,65 +421,60 @@
       </div>
       <div class="sb-center">
 
-```
-    <!-- STATE A: Ready — shown first, countdown not started -->
-    <div id="sbReady" style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;">
-      <div style="font-size:72px;" id="sbReadyIcon">🧘</div>
-      <div>
-        <div class="sb-ex-name" id="sbExName" style="text-align:center;margin-bottom:8px;">Neck Roll</div>
-        <div class="sb-ex-inst" id="sbExInst" style="text-align:center;">Gently roll your head in a circle. Feel the stretch along your neck.</div>
-      </div>
-      <div style="font-size:13px;color:var(--muted2);opacity:.7;">60 seconds · tap when ready</div>
-    </div>
-
-    <!-- STATE B: Active — shown after tapping Start Stretch -->
-    <div id="sbActive" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;">
-      <!-- pulse-wrap uses CSS animation — works fine on display:flex -->
-      <div class="pulse-wrap">
-        <svg class="progress-ring" viewBox="0 0 120 120">
-          <defs>
-            <linearGradient id="grd" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#FFD400"></stop>
-              <stop offset="100%" stop-color="#FF7A00"></stop>
-            </linearGradient>
-          </defs>
-          <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-          <circle id="ringProg" class="ring-prog" cx="60" cy="60" r="52"></circle>
-        </svg>
-        <div class="inner-circle">
-          <div class="sb-time" id="sbTime">60</div>
-          <div class="sb-time-lbl">seconds</div>
+        <!-- STATE A: Ready — shown first, countdown not started -->
+        <div id="sbReady" style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;">
+          <div style="font-size:72px;" id="sbReadyIcon">🧘</div>
+          <div>
+            <div class="sb-ex-name" id="sbExName" style="text-align:center;margin-bottom:8px;">Neck Roll</div>
+            <div class="sb-ex-inst" id="sbExInst" style="text-align:center;">Gently roll your head in a circle. Feel the stretch along your neck.</div>
+          </div>
+          <div style="font-size:13px;color:var(--muted2);opacity:.7;">60 seconds · tap when ready</div>
         </div>
+
+        <!-- STATE B: Active — shown after tapping Start Stretch -->
+        <div id="sbActive" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;">
+          <div class="pulse-wrap">
+            <svg class="progress-ring" viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="grd" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FFD400"></stop>
+                  <stop offset="100%" stop-color="#FF7A00"></stop>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+              <circle id="ringProg" class="ring-prog" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="inner-circle">
+              <div class="sb-time" id="sbTime">60</div>
+              <div class="sb-time-lbl">seconds</div>
+            </div>
+          </div>
+          <div style="text-align:center;width:100%;max-width:320px;">
+            <div class="sb-ex-icon" id="sbExIcon" style="font-size:28px;margin-bottom:6px;">🧘</div>
+            <div id="sbExNameActive" style="font-size:18px;font-weight:800;margin-bottom:6px;"></div>
+            <div id="sbExInstActive" style="font-size:13px;color:var(--muted2);line-height:1.5;"></div>
+          </div>
+        </div>
+
       </div>
-      <!-- Name + short instruction shown during active countdown -->
-      <div style="text-align:center;width:100%;max-width:320px;">
-        <div class="sb-ex-icon" id="sbExIcon" style="font-size:28px;margin-bottom:6px;">🧘</div>
-        <div id="sbExNameActive" style="font-size:18px;font-weight:800;margin-bottom:6px;"></div>
-        <div id="sbExInstActive" style="font-size:13px;color:var(--muted2);line-height:1.5;"></div>
+
+      <!-- ACTION BUTTONS — swap based on state -->
+      <div class="sb-actions" id="sbActionsReady">
+        <button class="sb-btn" id="sbBegin" style="background:var(--green);color:#0f1b12;flex:2;font-size:16px;">▶ Start Stretch</button>
+        <button class="sb-btn sb-skip" id="sbSkipReady" style="flex:1;">Skip</button>
+      </div>
+      <div class="sb-actions" id="sbActionsActive" style="display:none;">
+        <button class="sb-btn sb-snooze" id="sbSnooze">Snooze 5 min</button>
+        <button class="sb-btn sb-skip" id="sbSkip">Skip</button>
       </div>
     </div>
-
-  </div>
-
-  <!-- ACTION BUTTONS — swap based on state -->
-  <div class="sb-actions" id="sbActionsReady">
-    <button class="sb-btn" id="sbBegin" style="background:var(--green);color:#0f1b12;flex:2;font-size:16px;">▶ Start Stretch</button>
-    <button class="sb-btn sb-skip" id="sbSkipReady" style="flex:1;">Skip</button>
-  </div>
-  <div class="sb-actions" id="sbActionsActive" style="display:none;">
-    <button class="sb-btn sb-snooze" id="sbSnooze">Snooze 5 min</button>
-    <button class="sb-btn sb-skip" id="sbSkip">Skip</button>
-  </div>
-</div>
-<!-- Success overlay -->
-<div class="sb-success" id="sbSuccess">
-  <div class="sb-suc-emoji">👍</div>
-  <div class="sb-suc-title">Good job!</div>
-  <div class="sb-suc-sub">You completed your stretch break.</div>
-  <canvas id="sbConfetti"></canvas>
-</div>
-```
-
+    <!-- Success overlay -->
+    <div class="sb-success" id="sbSuccess">
+      <div class="sb-suc-emoji">👍</div>
+      <div class="sb-suc-title">Good job!</div>
+      <div class="sb-suc-sub">You completed your stretch break.</div>
+      <canvas id="sbConfetti"></canvas>
+    </div>
   </div><!-- /sb -->
 
   <!-- ═══ WATER BREAK ═══ -->
@@ -538,13 +531,24 @@
 </div><!-- /app -->
 
 <!-- Confetti from CDN -->
-
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
 <script>
 'use strict';
 
 var BACKEND = 'https://desk-wellness-pack.vercel.app';
+
+// Google OAuth URL — used by calTog / wCalTog to initiate Calendar connection.
+// Full page navigation (window.location.href) — callback page stores tokens
+// and redirects back to the app.
+var OAUTH_URL =
+  'https://accounts.google.com/o/oauth2/v2/auth' +
+  '?client_id=750220805739-602skppeurd5oad6nrnucsselt8p6o5o.apps.googleusercontent.com' +
+  '&redirect_uri=https%3A%2F%2Fdwpinstall.netlify.app%2Foauth-callback.html' +
+  '&response_type=code' +
+  '&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly' +
+  '&access_type=offline' +
+  '&prompt=consent';
 
 // ── Storage ────────────────────────────────────────────────────────
 var store = {
@@ -599,8 +603,6 @@ function navigate(id) {
 }
 
 // ── Audio ────────────────────────────────────────────────────────────
-// Use Web Audio API + fetch/decodeAudioData to play actual sound files.
-// This does NOT create an Android media session — no media player widget.
 var _actx          = null;
 var _stretchBuffer = null;
 var _waterBuffer   = null;
@@ -613,13 +615,10 @@ function getAudioContext() {
   return _actx;
 }
 
-// Called on Start button press (real user gesture) to unlock AudioContext
-// and preload both sound files as decoded buffers.
 function unlockAudio() {
   var ctx = getAudioContext();
   if (!ctx) return;
   if (ctx.state === 'suspended') ctx.resume();
-  // Preload buffers in background
   if (!_stretchBuffer) loadBuffer('./assets/stretch-chime.mp3', function(buf){ _stretchBuffer = buf; });
   if (!_waterBuffer)   loadBuffer('./assets/water-chime.wav',   function(buf){ _waterBuffer   = buf; });
 }
@@ -655,7 +654,6 @@ function playStretchChime() {
   if (_stretchBuffer) {
     playBuffer(_stretchBuffer);
   } else {
-    // Buffer not loaded yet — load and play
     loadBuffer('./assets/stretch-chime.mp3', function(buf){
       _stretchBuffer = buf;
       playBuffer(buf);
@@ -685,7 +683,6 @@ function fireConfetti(canvasId) {
 }
 
 // ── Status bar notification ───────────────────────────────────────────
-// Shows silently while timer is running. Shows/hides on Start/Stop only.
 var _statusLastBody = '';
 async function showStatusNotif() {
   if (Notification.permission !== 'granted') return;
@@ -696,10 +693,8 @@ async function showStatusNotif() {
     if (!se && !we) { await hideStatusNotif(); return; }
     var body = (se && we) ? 'Stretch & Water active'
              : se ? 'Stretch active' : 'Water intake active';
-    // Only show if body changed — prevents Chrome spam detection
     if (body === _statusLastBody) return;
     _statusLastBody = body;
-    // Also close existing before replacing to ensure Android updates properly
     var existing = await reg.getNotifications({ tag:'dwp-status' });
     existing.forEach(function(n){ n.close(); });
     await reg.showNotification('Desk Wellness', {
@@ -715,13 +710,11 @@ async function showStatusNotif() {
   } catch(e) { console.warn('[status notif]', e.message); }
 }
 async function hideStatusNotif() {
-  _statusLastBody = ''; // reset so it shows again on next Start
+  _statusLastBody = '';
   try {
     var reg = await navigator.serviceWorker.ready;
-    // Page-side close
     var existing = await reg.getNotifications({ tag:'dwp-status' });
     existing.forEach(function(n){ n.close(); });
-    // Also ask SW to close directly — more reliable on some Android versions
     if (navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type:'CLOSE_STATUS_NOTIF' });
     }
@@ -749,7 +742,6 @@ function startStretchScreen() {
   sbDuration = sbSession.dur;
   sbElapsed = 0;
 
-  // Populate content
   document.getElementById('sbTitle').textContent = 'Time to stretch';
   document.getElementById('sbSub').textContent = sbSession.dur + ' seconds — take your time';
   document.getElementById('sbReadyIcon').textContent = sbSession.icon;
@@ -757,14 +749,12 @@ function startStretchScreen() {
   document.getElementById('sbExInst').textContent = sbSession.inst;
   document.getElementById('sbExIcon').textContent = sbSession.icon;
 
-  // Show Ready state, hide Active state
   document.getElementById('sbReady').style.display = 'flex';
   document.getElementById('sbActive').style.display = 'none';
   document.getElementById('sbActionsReady').style.display = 'flex';
   document.getElementById('sbActionsActive').style.display = 'none';
   document.getElementById('sbSuccess').classList.remove('show');
 
-  // Ring reset
   var ring = document.getElementById('ringProg');
   if (ring) {
     ring.style.strokeDasharray = sbCircumference;
@@ -774,7 +764,6 @@ function startStretchScreen() {
   if (t) t.textContent = sbDuration;
 
   clearInterval(sbTimerId);
-  // No chime here — chime plays when user taps "Start Stretch" button
 }
 
 function beginStretchCountdown() {
@@ -782,7 +771,7 @@ function beginStretchCountdown() {
   document.getElementById('sbActive').style.display = 'flex';
   document.getElementById('sbActionsReady').style.display = 'none';
   document.getElementById('sbActionsActive').style.display = 'flex';
-  // Populate active state text
+
   var an = document.getElementById('sbExNameActive');
   var ai = document.getElementById('sbExInstActive');
   var ic = document.getElementById('sbExIcon');
@@ -792,7 +781,6 @@ function beginStretchCountdown() {
     if (ic) ic.textContent = sbSession.icon;
   }
 
-  // User tapped "Start Stretch" — real user gesture — unlock + play chime
   unlockAudio();
   playStretchChime();
 
@@ -814,8 +802,6 @@ function onStretchComplete() {
   document.getElementById('sbActionsActive').style.display = 'none';
   document.getElementById('sbSuccess').classList.add('show');
   fireConfetti('sbConfetti');
-  // No chime on success — chime plays only when stretching starts
-  // Reschedule and sync to server AFTER break is done
   rescheduleStretch();
   setTimeout(function() {
     navigate(SC.HM);
@@ -837,7 +823,6 @@ function rescheduleWater() {
   syncSchedule();
 }
 
-// Snooze from break screen
 document.getElementById('sbSnooze').addEventListener('click', function() {
   clearInterval(sbTimerId);
   store.set('snoozedCount', (store.get('snoozedCount')||0) + 1);
@@ -847,7 +832,6 @@ document.getElementById('sbSnooze').addEventListener('click', function() {
   navigate(SC.HM);
 });
 
-// Skip from active countdown
 document.getElementById('sbSkip').addEventListener('click', function() {
   clearInterval(sbTimerId);
   store.set('skippedCount', (store.get('skippedCount')||0) + 1);
@@ -856,7 +840,6 @@ document.getElementById('sbSkip').addEventListener('click', function() {
   checkWaterOverdue();
 });
 
-// Skip from ready state (before countdown starts)
 document.getElementById('sbSkipReady').addEventListener('click', function() {
   clearInterval(sbTimerId);
   store.set('skippedCount', (store.get('skippedCount')||0) + 1);
@@ -865,7 +848,6 @@ document.getElementById('sbSkipReady').addEventListener('click', function() {
   checkWaterOverdue();
 });
 
-// Begin countdown
 document.getElementById('sbBegin').addEventListener('click', function() {
   beginStretchCountdown();
 });
@@ -874,7 +856,6 @@ document.getElementById('sbBegin').addEventListener('click', function() {
 var wbTickId = null;
 
 function startWaterScreen() {
-  // Daily reset handled by maintenance() on boot/visibility change
   var cnt  = store.get('waterGlassCount') || 0;
   var goal = store.get('waterGoal') || 8;
 
@@ -887,7 +868,6 @@ function startWaterScreen() {
   var wg = document.getElementById('wbGoalLbl');
   if (wg) wg.textContent = goal;
 
-  // Dots
   var dotRow = document.getElementById('wbDotRow');
   if (dotRow) {
     dotRow.innerHTML = '';
@@ -907,7 +887,6 @@ function startWaterScreen() {
   clearInterval(wbTickId);
   wbTickId = setInterval(updateWbNext, 1000);
   updateWbNext();
-  // Chime plays when user taps "I just drank water", not on screen open
 }
 
 function updateWbNext() {
@@ -947,16 +926,14 @@ document.getElementById('wbDrink').addEventListener('click', function() {
   if (ss) ss.textContent = sub;
   var succ = document.getElementById('wbSuccess');
   if (succ) succ.classList.add('show');
-  // Unlock audio — wbDrink is a real user gesture
+
   unlockAudio();
-  // Chime on every successful drink
   playWaterChime();
-  // Confetti on every drink (bigger burst when goal reached)
+
   setTimeout(function() {
     if (cnt >= goal) {
-      fireConfetti('wbConfetti'); // big burst for goal
+      fireConfetti('wbConfetti');
     } else {
-      // Small burst for every drink
       var canvas = document.getElementById('wbConfetti');
       if (canvas && typeof confetti !== 'undefined') {
         var c = confetti.create(canvas, { resize:true });
@@ -966,7 +943,6 @@ document.getElementById('wbDrink').addEventListener('click', function() {
     }
   }, 100);
 
-  // Update home glass display
   updateHomeGlasses(cnt, goal);
   rescheduleWater();
   setTimeout(function() { navigate(SC.HM); }, 2500);
@@ -1004,8 +980,6 @@ function tick() {
 
   if (currentScreen !== SC.HM) return;
 
-  // Safety: if stretchBreakActive stuck (crash during break) but timer
-  // is already rescheduled to future — clear the flag so tick works again
   if (store.get('stretchBreakActive') && currentScreen === SC.HM) {
     var checkNs = store.get('nextStretchTime');
     if (checkNs && Date.now() < checkNs) {
@@ -1019,23 +993,17 @@ function tick() {
     }
   }
 
-  // Stretch overdue — navigate to break screen
-  // stretchBreakActive prevents double-fire
   if (store.get('stretchEnabled') && !store.get('stretchBreakActive')) {
     var ns = store.get('nextStretchTime');
     if (ns && Date.now() >= ns) {
       store.set('stretchBreakActive', true);
-      // Pause cron: set nextStretchTime to far future so cron doesn't
-      // fire a duplicate notification while user is doing the break
-      var pauseTime = Date.now() + 60 * 60 * 1000; // 1 hour
-      store.set('nextStretchTime', pauseTime);
-      syncSchedule(); // update Redis
+      store.set('nextStretchTime', Date.now() + 60 * 60 * 1000);
+      syncSchedule();
       navigate(SC.SB);
-      return; // return so water check doesn't run same tick
+      return;
     }
   }
 
-  // Water overdue
   if (store.get('waterEnabled') && !store.get('waterBreakActive')) {
     var nw = store.get('nextWaterTime');
     if (nw && Date.now() >= nw) {
@@ -1069,13 +1037,13 @@ function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState !== 'visible') return;
   maintenance();
+  checkOAuthReturn(); // before loadState so UI reflects fresh state
   tick();
   setTimeout(checkAndShowActiveScreen, 300);
   if (store.get('stretchEnabled') || store.get('waterEnabled')) {
     setTimeout(function() { syncSchedule(); }, 800);
   }
   if (currentScreen === SC.HM) loadState();
-  // Auto-verify payment if user is returning from Stripe checkout
   autoVerifyOnReturn();
 });
 
@@ -1092,13 +1060,7 @@ async function getOrCreateSub() {
   try {
     var reg = await navigator.serviceWorker.ready;
     var ex = await reg.pushManager.getSubscription();
-    if (ex) {
-      // Always update pushSub with the current subscription
-      // Chrome may rotate the endpoint without us knowing
-      pushSub = ex;
-      return ex;
-    }
-    // No subscription exists — create one
+    if (ex) { pushSub = ex; return ex; }
     var resp = await fetch(BACKEND+'/api/pwa-vapid-public-key');
     var data = await resp.json();
     var sub = await reg.pushManager.subscribe({
@@ -1125,12 +1087,19 @@ async function syncSchedule() {
         subscription: sub.toJSON(),
         installationId: id,
         schedule: {
-          stretchEnabled:  store.get('stretchEnabled')  || false,
-          stretchInterval: store.get('stretchInterval') || 30,
-          waterEnabled:    store.get('waterEnabled')    || false,
-          waterInterval:   store.get('waterInterval')   || 30,
-          nextStretchTime: store.get('nextStretchTime') || null,
-          nextWaterTime:   store.get('nextWaterTime')   || null,
+          stretchEnabled:      store.get('stretchEnabled')  || false,
+          stretchInterval:     store.get('stretchInterval') || 30,
+          waterEnabled:        store.get('waterEnabled')    || false,
+          waterInterval:       store.get('waterInterval')   || 30,
+          nextStretchTime:     store.get('nextStretchTime') || null,
+          nextWaterTime:       store.get('nextWaterTime')   || null,
+          // ── Google Calendar ──────────────────────────────────────
+          calendarEnabled:     localStorage.getItem('googleCalConnected') === 'true',
+          calendarSkipStretch: store.get('calendarSkipStretch') || false,
+          calendarSkipWater:   store.get('calendarSkipWater')   || false,
+          googleAccessToken:   localStorage.getItem('googleAccessToken')    || null,
+          googleRefreshToken:  localStorage.getItem('googleRefreshToken')   || null,
+          googleTokenExpiresAt: parseInt(localStorage.getItem('googleTokenExpiresAt') || '0', 10) || null,
         }
       })
     });
@@ -1200,24 +1169,54 @@ function initHome() {
     store.set('nextStretchTime', null);
     updateStretchUI(false);
     syncSchedule();
-    // If water still running, update notif text; else hide
     showStatusNotif();
   });
 
   document.getElementById('smartTog').addEventListener('change',function(e){ store.set('smartMode',e.target.checked); });
   document.getElementById('soundTog').addEventListener('change',function(e){ store.set('stretchSound',e.target.checked); });
-  document.getElementById('calTog').addEventListener('change',function(e){
+
+  // ── Calendar toggle — Stretch ────────────────────────────────────
+  // If calendar not yet connected: full-page navigation to Google OAuth.
+  // If already connected: toggle the per-module skip preference.
+  document.getElementById('calTog').addEventListener('change', function(e) {
+    var calConnected = localStorage.getItem('googleCalConnected') === 'true';
     if (e.target.checked) {
-      e.target.checked = false; // revert
-      showToast('Google Calendar sync coming soon in the next update.');
+      if (!calConnected) {
+        e.target.checked = false; // revert — OAuth needed first
+        store.set('oauthPending', 'stretch');
+        window.location.href = OAUTH_URL;
+      } else {
+        store.set('calendarSkipStretch', true);
+        var calSok = document.getElementById('calSok');
+        if (calSok) calSok.style.display = 'block';
+        syncSchedule();
+      }
+    } else {
+      store.set('calendarSkipStretch', false);
+      syncSchedule();
     }
   });
-  document.getElementById('wCalTog').addEventListener('change',function(e){
+
+  // ── Calendar toggle — Water ──────────────────────────────────────
+  document.getElementById('wCalTog').addEventListener('change', function(e) {
+    var calConnected = localStorage.getItem('googleCalConnected') === 'true';
     if (e.target.checked) {
-      e.target.checked = false;
-      showToast('Google Calendar sync coming soon in the next update.');
+      if (!calConnected) {
+        e.target.checked = false;
+        store.set('oauthPending', 'water');
+        window.location.href = OAUTH_URL;
+      } else {
+        store.set('calendarSkipWater', true);
+        var wCalSok = document.getElementById('wCalSok');
+        if (wCalSok) wCalSok.style.display = 'block';
+        syncSchedule();
+      }
+    } else {
+      store.set('calendarSkipWater', false);
+      syncSchedule();
     }
   });
+
   initSel('selS',function(v){
     store.set('stretchInterval',Number(v));
     if(store.get('stretchEnabled')){
@@ -1243,7 +1242,6 @@ function initHome() {
     store.set('nextWaterTime', null);
     updateWaterUI(false);
     syncSchedule();
-    // If stretch still running, update notif text; else hide
     showStatusNotif();
   });
 
@@ -1264,7 +1262,6 @@ function initHome() {
   document.getElementById('upgW').addEventListener('click',function(){ doUpgrade('water'); });
   document.getElementById('verW').addEventListener('click',function(){ doVerify('water', false); });
 
-  // Show verify button if payment was pending before app restarted
   var pending = store.get('pendingPaymentModule');
   if (pending) {
     var vbtn = document.getElementById(pending==='water'?'verW':'verS');
@@ -1310,6 +1307,7 @@ function loadState() {
   updateWaterUI(we);
   checkWaterDayReset();
   updateHomeGlasses(store.get('waterGlassCount')||0, store.get('waterGoal')||8);
+
   var sp=!!store.get('licenseToken'), wp=!!store.get('waterLicenseToken');
   document.getElementById('uCardS').classList.toggle('hidden',sp);
   document.getElementById('proS').classList.toggle('hidden',!sp);
@@ -1319,10 +1317,22 @@ function loadState() {
   document.getElementById('wpb').classList.toggle('hidden',!wp);
   unlockGoal(wp);
   renderStats();
+
+  // ── Google Calendar connected state ──────────────────────────────
+  // Show connection indicator and restore toggle positions.
+  var calConnected = localStorage.getItem('googleCalConnected') === 'true';
+  var calTog  = document.getElementById('calTog');
+  var wCalTog = document.getElementById('wCalTog');
+  var calSok  = document.getElementById('calSok');
+  var wCalSok = document.getElementById('wCalSok');
+  if (calTog)  calTog.checked  = calConnected && store.get('calendarSkipStretch') !== false;
+  if (wCalTog) wCalTog.checked = calConnected && store.get('calendarSkipWater')   !== false;
+  if (calSok)  calSok.style.display  = calConnected && store.get('calendarSkipStretch') !== false ? 'block' : 'none';
+  if (wCalSok) wCalSok.style.display = calConnected && store.get('calendarSkipWater')   !== false ? 'block' : 'none';
+
   // Warning banners
   var denied = document.getElementById('notifDeniedBanner');
   if (denied) denied.classList.toggle('hidden', !store.get('notifDeniedWarning'));
-  // Battery warning — show once on Samsung/Xiaomi if not dismissed
   var battBanner = document.getElementById('batteryWarningBanner');
   if (battBanner) {
     var ua = navigator.userAgent;
@@ -1384,8 +1394,34 @@ function renderStats() {
   for(var id in m){ var el=document.getElementById(id); if(el) el.textContent=store.get(m[id])||0; }
 }
 
+// ── Google OAuth return handler ───────────────────────────────────────
+// Called on every boot and visibilitychange.
+// Checks whether the app just returned from the Google OAuth consent screen
+// and applies the result synchronously (so loadState picks it up).
+function checkOAuthReturn() {
+  var pending = store.get('oauthPending');
+  if (!pending) return;
+
+  // Always clear pending — prevents looping if OAuth was cancelled
+  store.set('oauthPending', null);
+
+  var calConnected = localStorage.getItem('googleCalConnected') === 'true';
+  if (!calConnected) return; // user cancelled or OAuth failed — nothing to do
+
+  // OAuth succeeded — enable calendar skip for the module that triggered it
+  if (pending === 'stretch' || pending === 'both') store.set('calendarSkipStretch', true);
+  if (pending === 'water'   || pending === 'both') store.set('calendarSkipWater',   true);
+
+  // Sync tokens to Redis and refresh UI after a short delay
+  // (delay lets boot() complete so syncSchedule + loadState have proper context)
+  setTimeout(function() {
+    syncSchedule();
+    loadState();
+    showToast('✅ Google Calendar connected!');
+  }, 600);
+}
+
 // ── Payment flow ─────────────────────────────────────────────────────
-// Track which module is pending payment for auto-verify on return
 var _pendingPaymentModule = null;
 
 async function doUpgrade(mod) {
@@ -1393,7 +1429,6 @@ async function doUpgrade(mod) {
   if (!id) { id='pwa-'+Math.random().toString(36).slice(2,15); store.set('installationId',id); }
   var ep = mod==='water' ? BACKEND+'/api/create-water-checkout' : BACKEND+'/api/create-checkout';
 
-  // Show loading state on button
   var btn = document.getElementById(mod==='water'?'upgW':'upgS');
   if (btn) { btn.textContent = 'Opening Stripe…'; btn.disabled = true; }
 
@@ -1404,13 +1439,11 @@ async function doUpgrade(mod) {
       body: JSON.stringify({ installationId: id })
     });
     var d = await r.json();
-    // Endpoint returns either d.url or d.checkoutUrl
     var checkoutUrl = d.url || d.checkoutUrl;
     var sessionId = d.sessionId || d.session_id || d.id;
     if (checkoutUrl) {
       _pendingPaymentModule = mod;
       store.set('pendingPaymentModule', mod);
-      // Store sessionId so verify-payment can retrieve the Stripe session
       if (sessionId) store.set('pendingSessionId', sessionId);
       window.open(checkoutUrl, '_blank');
       if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
@@ -1445,7 +1478,6 @@ async function doVerify(mod, silent) {
     });
     var d = await r.json();
     console.log('[verify] status:', r.status, 'body:', JSON.stringify(d));
-    // Endpoint returns licenseToken (per verify-payment.js source)
     var token = d.licenseToken || d.token || d.license;
     if (token) {
       store.set(mod==='water'?'waterLicenseToken':'licenseToken', token);
@@ -1458,8 +1490,7 @@ async function doVerify(mod, silent) {
     } else {
       if (!silent) {
         var btn2 = document.getElementById(mod==='water'?'verW':'verS');
-        if (btn2) { btn2.textContent='✓ I’ve paid — Verify Payment'; btn2.disabled=false; }
-        // Show actual server response so we can diagnose
+        if (btn2) { btn2.textContent='✓ I\'ve paid — Verify Payment'; btn2.disabled=false; }
         var serverMsg = d.error || d.message || d.status || JSON.stringify(d);
         alert('Server response: ' + serverMsg);
       }
@@ -1469,28 +1500,23 @@ async function doVerify(mod, silent) {
     console.error('[verify] error:', e);
     if (!silent) {
       var btn3 = document.getElementById(mod==='water'?'verW':'verS');
-      if (btn3) { btn3.textContent='✓ I’ve paid — Verify Payment'; btn3.disabled=false; }
+      if (btn3) { btn3.textContent='✓ I\'ve paid — Verify Payment'; btn3.disabled=false; }
       alert('Network error: ' + e.message);
     }
     return false;
   }
 }
 
-// Auto-verify when user returns to the app after Stripe checkout
-// Called from visibilitychange — silent, shows success if found
 async function autoVerifyOnReturn() {
   var pending = store.get('pendingPaymentModule') || _pendingPaymentModule;
   if (!pending) return;
-  // Small delay — Stripe webhook may not have fired yet
   await new Promise(function(r){ setTimeout(r, 1500); });
   var success = await doVerify(pending, true);
   if (success) {
-    // Show a toast instead of an alert for non-disruptive feedback
     showToast('✅ Pro unlocked! Thank you.');
   }
 }
 
-// Show a brief toast message
 function showToast(msg) {
   var existing = document.getElementById('dwpToast');
   if (existing) existing.remove();
@@ -1546,13 +1572,11 @@ if ('serviceWorker' in navigator) {
     if (!e.data) return;
     var msg = e.data;
 
-    // Notification tap = user gesture = unlock audio
     if (msg.unlockAudio) unlockAudio();
 
     if (msg.type === 'NAVIGATE') {
       var scr = msg.screen;
       if (scr === 'stretch') {
-        // Mark break as active, navigate — do NOT reschedule yet
         store.set('stretchBreakActive', true);
         navigate(SC.SB);
       } else if (scr === 'water') {
@@ -1564,7 +1588,6 @@ if ('serviceWorker' in navigator) {
     }
 
     if (msg.type === 'STATUS_TAPPED') {
-      // App focused from status notif tap — just show home
       navigate(SC.HM);
     }
 
@@ -1578,28 +1601,19 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────
-// ── License validation ───────────────────────────────────────────────
-// Silently verify stored tokens are still valid.
-// Uses the same verify-license endpoint as the extension.
 function validateLicenses() {
-  // License tokens are HMAC-SHA256 signed with LICENSE_SECRET.
-  // They cannot be forged so we trust them as stored — no server round-trip needed.
-  // If a user clears their browser data, they can re-verify via the Verify button.
   console.log('[license] stretch:', !!store.get('licenseToken'), 'water:', !!store.get('waterLicenseToken'));
 }
 
-// ── Maintenance — runs on every boot ─────────────────────────────────
 function maintenance() {
-  // ── 1. Weekly stats reset (every Sunday) ──────────────────────────
   var now = new Date();
   var sunday = new Date(now);
-  sunday.setDate(now.getDate() - now.getDay()); // this Sunday
+  sunday.setDate(now.getDate() - now.getDay());
   sunday.setHours(0,0,0,0);
   var sundayStr = sunday.toDateString();
   var lastWeekStart = store.get('weekStartDate');
 
   if (lastWeekStart !== sundayStr) {
-    // New week — roll current week into last week
     store.set('lastCompletedCount', store.get('completedCount') || 0);
     store.set('lastSnoozedCount',   store.get('snoozedCount')   || 0);
     store.set('lastSkippedCount',   store.get('skippedCount')   || 0);
@@ -1610,7 +1624,6 @@ function maintenance() {
     console.log('[maintenance] weekly stats reset');
   }
 
-  // ── 2. Daily water reset ───────────────────────────────────────────
   var today = now.toDateString();
   if (store.get('waterGoalResetDate') !== today) {
     store.set('waterGlassCount', 0);
@@ -1618,18 +1631,12 @@ function maintenance() {
     console.log('[maintenance] daily water reset');
   }
 
-  // ── 3. Detect data-cleared mid-session ────────────────────────────
-  // If timers are enabled but installDate was just set (first boot),
-  // it means data was cleared while timers were running in Redis.
-  // Cancel the schedule to stop ghost notifications.
   var freshInstall = !store.get('stretchEnabled') && !store.get('waterEnabled');
   if (freshInstall) {
-    // Unsubscribe from push to stop any ghost cron notifications
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.ready.then(function(reg) {
         reg.pushManager.getSubscription().then(function(sub) {
           if (sub) {
-            // Tell server to clear schedule for this subscription
             fetch('https://desk-wellness-pack.vercel.app/api/pwa-subscribe', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1645,12 +1652,10 @@ function maintenance() {
     }
   }
 
-  // ── 4. Notification permission check ──────────────────────────────
   if ('Notification' in window) {
     var perm = Notification.permission;
     store.set('notificationPermission', perm);
     if (perm === 'denied' && (store.get('stretchEnabled') || store.get('waterEnabled'))) {
-      // Show a warning banner on the home screen
       store.set('notifDeniedWarning', true);
     } else {
       store.set('notifDeniedWarning', false);
@@ -1661,10 +1666,12 @@ function maintenance() {
 function boot() {
   store.init();
   maintenance();
-  // Clear any stale break-active flags on fresh boot
   store.set('stretchBreakActive', false);
   store.set('waterBreakActive', false);
   showWelcomeCard();
+
+  // Handle OAuth return before navigation so loadState() sees fresh state
+  checkOAuthReturn();
 
   var params = new URLSearchParams(window.location.search);
   var scr = params.get('screen');
@@ -1681,9 +1688,7 @@ function boot() {
     window.history.replaceState({}, '', './');
   } else {
     navigate(SC.HM);
-    // Check if returning from Stripe (app may have been killed after payment)
     autoVerifyOnReturn();
-    // Re-register push subscription on every boot
     if (store.get('stretchEnabled') || store.get('waterEnabled')) {
       setTimeout(function() {
         syncSchedule().then(function() {
@@ -1691,9 +1696,7 @@ function boot() {
         });
       }, 1000);
     }
-    // Silent license validation on boot
     setTimeout(validateLicenses, 2000);
-    // If timers expired while app was away, show correct break screen
     setTimeout(checkAndShowActiveScreen, 500);
   }
 
@@ -1701,8 +1704,6 @@ function boot() {
   if(ls){ ls.classList.add('out'); setTimeout(function(){ ls.remove(); }, 350); }
 }
 
-// ── Open active break screen if timer already expired ─────────────────
-// Called on boot and on visibilitychange — shows correct screen.
 function checkAndShowActiveScreen() {
   if (!store.get('hasSeenWelcome')) return;
   var now = Date.now();
@@ -1713,14 +1714,11 @@ function checkAndShowActiveScreen() {
   var sba = store.get('stretchBreakActive');
   var wba = store.get('waterBreakActive');
 
-  // Break already in progress (e.g. app was minimised mid-stretch)
   if (sba && currentScreen !== SC.SB) { navigate(SC.SB); return; }
   if (wba && currentScreen !== SC.WB && !sba) { navigate(SC.WB); return; }
 
-  // Only check overdue from home screen
   if (currentScreen !== SC.HM) return;
 
-  // Stretch overdue → stretch screen (priority)
   if (se && !sba && ns && now >= ns) {
     store.set('stretchBreakActive', true);
     store.set('nextStretchTime', Date.now() + 60 * 60 * 1000);
@@ -1728,7 +1726,6 @@ function checkAndShowActiveScreen() {
     navigate(SC.SB);
     return;
   }
-  // Water overdue → water screen
   if (we && !wba && nw && now >= nw) {
     store.set('waterBreakActive', true);
     store.set('nextWaterTime', Date.now() + 60 * 60 * 1000);
@@ -1736,9 +1733,8 @@ function checkAndShowActiveScreen() {
     navigate(SC.WB);
     return;
   }
-  // Timers running but not expired → show correct tab on home
+
   if (se && we) {
-    // Both running — show stretch tab (priority)
     setTab('s');
   } else if (se) {
     setTab('s');
@@ -1746,7 +1742,6 @@ function checkAndShowActiveScreen() {
     setTab('w');
   }
 }
-
 
 boot();
 
