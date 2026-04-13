@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b1f2a" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f2f7" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Desk Wellness" />
+  <title>Desk Wellness Pack</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
+  <style>
+    /* ── Base ── */
+    :root { color-scheme:dark light; --yellow:#ffd400; --orange:#ff7a00; --green:#34c759; --red:#ff8a80; --blue:#5aa9ff; --blue2:#3d8fe0; }
+    *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html{height:100%;-webkit-text-size-adjust:100%;}
+    body{margin:0;padding:0;min-height:100dvh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none;}
+    @media(prefers-color-scheme:dark){
+      :root{--bg1:#1b1f2a;--bg2:#23293a;--panel:rgba(255,255,255,.08);--pb:rgba(255,255,255,.12);--text:#fff;--muted:#8d97ae;--muted2:#c7cedd;--sb:rgba(255,255,255,.06);--sbb:rgba(255,255,255,.08);--selbg:#1e2535;--setb:rgba(255,255,255,.07);--tog:rgba(255,255,255,.18);}
+      body{background:linear-gradient(180deg,#1b1f2a,#23293a);color:#fff;}
+      #ls{background:#1b1f2a;}
+    }
+    @media(prefers-color-scheme:light){
+      :root{--bg1:#f0f2f7;--bg2:#e4e8f2;--panel:rgba(255,255,255,.85);--pb:rgba(0,0,0,.08);--text:#1b1f2a;--muted:#5a6480;--muted2:#3a4260;--sb:rgba(0,0,0,.04);--sbb:rgba(0,0,0,.08);--selbg:#fff;--setb:rgba(0,0,0,.07);--tog:rgba(0,0,0,.15);}
+      body{background:linear-gradient(180deg,#f0f2f7,#e4e8f2);color:#1b1f2a;}
+      #ls{background:#f0f2f7;}
+    }
+    /* ── Loading ── */
+    #ls{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .3s;}
+    #ls.out{opacity:0;pointer-events:none;}
+    .spin{font-size:40px;animation:pulse 1.5s ease infinite;}
+    .spin-txt{font-size:14px;color:var(--muted);}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    /* ── App ── */
+    #app{display:flex;flex-direction:column;min-height:100dvh;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);}
+    .screen{display:none;flex:1;flex-direction:column;}
+    .screen.active{display:flex;}
+    .scr{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;}
+    /* ── Home UI ── */
+    .card{background:var(--panel);border:1px solid var(--pb);border-radius:20px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.12);}
+    .btn{display:flex;align-items:center;justify-content:center;border:none;border-radius:16px;padding:0 20px;height:48px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;transition:transform .15s,opacity .15s;-webkit-user-select:none;user-select:none;}
+    .btn:active{transform:scale(.97)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+    .btn-start{background:var(--green);color:#0f1b12;flex:1}.btn-stop{background:var(--red);color:#2b1010;flex:1}
+    .btn-up{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#1b1f2a;width:100%;margin-top:14px;font-size:16px;height:52px;border-radius:16px;}
+    .btn-verify{background:var(--blue);color:#0a1220;width:100%;margin-top:10px;font-size:14px;height:48px;border-radius:14px;display:none;}
+    .btn-sec{background:rgba(128,128,128,.15);border:1px solid rgba(128,128,128,.2);color:var(--muted);width:100%;font-size:14px;}
+    .ctrls{display:flex;gap:10px;margin-top:12px;}
+    .toggle{appearance:none;-webkit-appearance:none;width:44px;min-width:44px;height:26px;border-radius:100px;border:none;background:var(--tog);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;margin:0;}
+    .toggle::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.7);top:3px;left:3px;transition:transform .2s,background .2s;}
+    .toggle:checked{background:var(--yellow)}.toggle:checked::after{background:#1b1f2a;transform:translateX(18px);}
+    .toggle-b:checked{background:var(--blue)}.toggle-b:checked::after{background:#081726;}
+    .row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;min-height:48px;}
+    .row+.row{border-top:1px solid var(--setb)}.rt{flex:1;min-width:0;}
+    .lbl{font-size:15px;font-weight:600;line-height:1.3}.sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45;}
+    .tbox{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:88px;border-radius:16px;background:var(--sb);border:1px solid var(--sbb);text-align:center;padding:16px;}
+    .tlbl{font-size:12px;color:var(--muted);margin-bottom:6px}.tval{font-size:32px;font-weight:800;line-height:1;color:var(--yellow);}
+    .sel-wrap{width:100%;user-select:none;}
+    .sel-trig{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:48px;border-radius:14px;border:1px solid var(--pb);background:var(--panel);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;}
+    .sel-trig.open{border-radius:14px 14px 0 0;border-color:rgba(255,212,0,.5);border-bottom-color:transparent;}
+    .sel-arr{font-size:11px;color:var(--muted);transition:transform .2s}.sel-trig.open .sel-arr{transform:rotate(180deg);}
+    .sel-opts{width:100%;background:var(--selbg);border:1px solid rgba(255,212,0,.3);border-top:none;border-radius:0 0 14px 14px;overflow:hidden;max-height:0;opacity:0;transition:max-height .22s,opacity .18s;}
+    .sel-opts.open{max-height:280px;opacity:1;}
+    .sel-opt{padding:14px 16px;font-size:14px;color:var(--muted);cursor:pointer;border-top:1px solid var(--setb);}
+    .sel-opt.selected{color:var(--yellow);font-weight:700;}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .stat{background:var(--sb);border:1px solid var(--sbb);border-radius:14px;padding:12px 8px;text-align:center;}
+    .sv{font-size:22px;font-weight:800;margin-bottom:4px}.sl{font-size:11px;color:var(--muted);}
+    .ucard{background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06));border:1px solid rgba(255,212,0,.22);}
+    .utitle{font-size:17px;font-weight:800;margin-bottom:4px}.usub{font-size:13px;color:var(--muted);line-height:1.5;}
+    .ufeats{display:flex;flex-direction:column;gap:10px;margin-top:12px;}.ufeat{display:flex;align-items:flex-start;gap:12px;}.ufi{font-size:20px;min-width:28px;}
+    .uprice{margin-top:8px;font-size:12px;color:var(--muted);text-align:center;}.pnote{display:none;font-size:13px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5;}
+    .sok{font-size:12px;color:var(--green);margin-top:6px;display:none;}
+    .pbi{position:absolute;top:0;right:0;font-size:9px;font-weight:800;padding:3px 9px;border-radius:100px;background:linear-gradient(90deg,var(--yellow),var(--orange));color:#1b1f2a;}
+    .hidden{display:none!important;}
+    .tabbar{display:flex;gap:6px;border-radius:14px;padding:5px;background:rgba(0,0,0,.2);}
+    .tabbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;background:none;color:var(--muted);min-height:44px;}
+    .tabbtn.act{background:rgba(255,212,0,.12);color:var(--yellow);border-color:rgba(255,212,0,.25);}
+    .tabbtn-w.act{background:rgba(90,169,255,.12);color:var(--blue);border-color:rgba(90,169,255,.25);}
+    /* Light mode: active tab text must be dark or it's invisible */
+    @media(prefers-color-scheme:light){
+      .tabbtn.act{color:#7a6000;background:rgba(255,212,0,.22);border-color:rgba(180,140,0,.4);}
+      .tabbtn-w.act{color:#1a5a99;background:rgba(90,169,255,.22);border-color:rgba(30,100,200,.4);}
+    }
+    .modsec.hidden{display:none;}
+    .gmini{position:relative;width:40px;height:50px;flex-shrink:0;}
+    .gmini-rim{position:absolute;top:0;left:-2px;right:-2px;height:2px;background:rgba(90,169,255,.4);border-radius:2px;}
+    .gmini-body{position:absolute;inset:0;border:2px solid rgba(90,169,255,.35);border-top:none;border-radius:2px 2px 12px 12px;}
+    .gmini-fill{position:absolute;bottom:2px;left:2px;right:2px;border-radius:1px 1px 10px 10px;background:linear-gradient(180deg,rgba(90,169,255,.55),rgba(61,143,224,.75));transition:height .5s ease;height:0%;}
+    .stepper{display:flex;align-items:center;border-radius:12px;overflow:hidden;border:1px solid var(--pb);background:var(--sb);}
+    .stepbtn{width:36px;height:36px;border:none;background:none;color:var(--blue);font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;}
+    .stepval{min-width:28px;text-align:center;font-size:14px;font-weight:700;color:var(--blue);line-height:36px;border-left:1px solid var(--pb);border-right:1px solid var(--pb);}
+    .cdot{width:10px;height:10px;border-radius:50%;cursor:pointer;background:var(--sb);border:1px solid var(--pb);transition:background .2s,transform .2s;}
+    .cdot.act{background:var(--yellow);border-color:var(--yellow);transform:scale(1.15);}
+    /* ── Welcome ── */
+    .wfeat{display:flex;align-items:flex-start;gap:14px;border-radius:16px;padding:14px;text-align:left;background:var(--panel);border:1px solid var(--pb);}
+    .wfeat-icon{font-size:24px;margin-top:1px}.wfeat-txt{font-size:14px;line-height:1.5;}
+    .wfeat-txt strong{font-weight:700;display:block;margin-bottom:2px;}
+    .ncard{width:100%;max-width:340px;border-radius:18px;padding:18px;text-align:left;background:linear-gradient(135deg,rgba(255,212,0,.08),rgba(255,122,0,.06));border:1px solid rgba(255,212,0,.22);}
+    .ncard-blue{background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.25);}
+    /* ── STRETCH BREAK SCREEN ── */
+    /* Always dark background — force light text regardless of system color scheme */
+    #sb{background:radial-gradient(circle at top,#2b3348 0%,#1b1f2a 40%,#151923 100%);}
+    #sb .sb-eyebrow{color:#ffd400;}
+    #sb .sb-title{color:#ffffff;}
+    #sb .sb-subtitle{color:#c7cedd;}
+    #sb .sb-ex-name{color:#ffffff;}
+    #sb .sb-ex-inst{color:#c7cedd;}
+    #sb [id="sbExNameActive"]{color:#ffffff;}
+    #sb [id="sbExInstActive"]{color:#c7cedd;}
+    #sb .sb-time{color:#ffffff;}
+    #sb .sb-time-lbl{color:#c7cedd;}
+    #sb .sb-suc-title{color:#ffffff;}
+    #sb .sb-suc-sub{color:#c7cedd;}
+    #sb [style*="font-size:13px"]{color:#c7cedd;}
+    #sb [style*="opacity:.7"]{color:#c7cedd;}
+    .sb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top,24px) 24px calc(24px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;width:100%;}
+    .sb-top{text-align:center;padding-top:8px;}
+    .sb-eyebrow{font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:8px;letter-spacing:0.3px;}
+    .sb-title{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px;}
+    .sb-subtitle{font-size:14px;color:var(--muted2);line-height:1.5;}
+    .sb-center{display:flex;flex-direction:column;align-items:center;gap:20px;flex:1;justify-content:center;}
+    .pulse-wrap{width:260px;height:260px;position:relative;display:grid;place-items:center;animation:breathe 8s ease-in-out infinite;}
+    @keyframes breathe{0%{transform:scale(.97)}50%{transform:scale(1.03)}100%{transform:scale(.97)}}
+    .progress-ring{width:260px;height:260px;position:absolute;inset:0;transform:rotate(-90deg);pointer-events:none;}
+    .ring-bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:10;}
+    .ring-prog{fill:none;stroke:url(#grd);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 1s linear;}
+    .inner-circle{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,212,0,.18),rgba(255,122,0,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.10);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2;text-align:center;}
+    .sb-time{font-size:52px;font-weight:900;line-height:1;color:#fff;}
+    .sb-time-lbl{margin-top:6px;font-size:13px;color:var(--muted2);font-weight:600;}
+    .sb-exercise{width:100%;text-align:center;}
+    .sb-ex-icon{font-size:38px;margin-bottom:8px;}
+    .sb-ex-name{font-size:22px;font-weight:800;margin-bottom:6px;}
+    .sb-ex-inst{font-size:14px;color:var(--muted2);line-height:1.55;min-height:44px;}
+    .sb-actions{width:100%;display:flex;gap:12px;padding-bottom:4px;}
+    .sb-btn{flex:1;border:none;border-radius:16px;padding:0;height:52px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform .15s;}
+    .sb-btn:active{transform:scale(.97);}
+    .sb-snooze{background:var(--blue);color:#081726;}
+    .sb-skip{background:var(--red);color:#2b1010;}
+    .sb-done{background:var(--green);color:#0f1b12;width:100%;display:none;}
+    .sb-success{display:none;position:absolute;inset:0;background:rgba(21,25,35,.96);flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;z-index:20;}
+    .sb-success.show{display:flex;}
+    .sb-suc-emoji{font-size:64px;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+    @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+    .sb-suc-title{font-size:30px;font-weight:900;}
+    .sb-suc-sub{font-size:15px;color:var(--muted2);}
+    #sbConfetti{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;width:100%;max-width:480px;height:220px;pointer-events:none;z-index:1;}
+    /* ── WATER BREAK SCREEN ── */
+    /* Always dark background — force light text regardless of system color scheme */
+    #wb{background:radial-gradient(circle at top,#1a2540 0%,#141820 45%,#0e1318 100%);}
+    #wb .wb-eyebrow{color:#5aa9ff;}
+    #wb .wb-title{color:#ffffff;}
+    #wb .wb-subtitle{color:#8895b0;}
+    #wb .wb-cnt-num{color:#5aa9ff;}
+    #wb .wb-cnt-sub{color:#8895b0;}
+    #wb .wb-dots-lbl{color:#8895b0;}
+    #wb .wb-next{color:#8895b0;}
+    #wb .wb-next strong{color:#5aa9ff;}
+    #wb .wb-goal-banner{color:#34c759;}
+    #wb .wb-suc-title{color:#5aa9ff;}
+    #wb .wb-suc-sub{color:#8895b0;}
+    .wb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 32px) 24px calc(env(safe-area-inset-bottom,0px) + 32px);max-width:480px;margin:0 auto;width:100%;position:relative;}
+    .wave-bg{position:absolute;bottom:0;left:0;right:0;height:40%;overflow:hidden;border-radius:0 0 0 0;z-index:0;opacity:.10;}
+    .wave{position:absolute;bottom:0;left:-100%;width:300%;height:100%;}
+    .wave svg{width:100%;height:100%;position:absolute;bottom:0;}
+    .wave-1{animation:waveM 6s linear infinite;}
+    .wave-2{animation:waveM 9s linear infinite reverse;opacity:.6;}
+    .wave-3{animation:waveM 12s linear infinite;opacity:.4;}
+    @keyframes waveM{0%{transform:translateX(0)}100%{transform:translateX(33.33%)}}
+    .wb-top{text-align:center;position:relative;z-index:2;}
+    .wb-eyebrow{font-size:11px;font-weight:600;color:var(--blue);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;opacity:.8;}
+    .wb-title{font-size:28px;font-weight:800;line-height:1.1;margin-bottom:6px;}
+    .wb-subtitle{font-size:13px;color:var(--muted);line-height:1.5;}
+    .wb-center{display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;z-index:2;flex:1;justify-content:center;}
+    .glass-wrap{position:relative;width:100px;height:130px;}
+    .glass-top{position:absolute;top:0;left:-2px;right:-2px;height:2px;background:rgba(90,169,255,.4);border-radius:2px 2px 0 0;}
+    .glass-outline{position:absolute;inset:0;border:2.5px solid rgba(90,169,255,.35);border-top:none;border-radius:3px 3px 18px 18px;}
+    .glass-shine{position:absolute;top:8px;left:10px;width:8px;height:35%;background:linear-gradient(180deg,rgba(255,255,255,.2),transparent);border-radius:4px;z-index:4;}
+    .water-fill{position:absolute;bottom:2px;left:2px;right:2px;border-radius:2px 2px 16px 16px;overflow:hidden;z-index:2;background:linear-gradient(180deg,rgba(90,169,255,.55),rgba(61,143,224,.75));transition:height .6s cubic-bezier(.34,1.56,.64,1);}
+    .water-surface{position:absolute;top:0;left:-20%;right:-20%;height:10px;}
+    .water-surface svg{width:100%;height:100%;animation:ripple 2.5s ease-in-out infinite;}
+    @keyframes ripple{0%,100%{transform:translateX(0)}50%{transform:translateX(-12px)}}
+    .bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.28);animation:rise linear infinite;}
+    .b1{width:5px;height:5px;left:20%;bottom:8%;animation-duration:2.4s;}
+    .b2{width:3px;height:3px;left:55%;bottom:5%;animation-duration:3.1s;animation-delay:.8s;}
+    .b3{width:4px;height:4px;left:72%;bottom:12%;animation-duration:2.7s;animation-delay:1.5s;}
+    @keyframes rise{0%{transform:translateY(0);opacity:.4}100%{transform:translateY(-80px);opacity:0}}
+    .wb-counter{text-align:center;}
+    .wb-cnt-num{font-size:40px;font-weight:900;color:var(--blue);line-height:1;font-variant-numeric:tabular-nums;}
+    .wb-cnt-num span{font-size:18px;font-weight:400;color:var(--muted);margin-left:3px;}
+    .wb-cnt-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+    .wb-dots{display:flex;flex-direction:column;align-items:center;gap:6px;}
+    .wb-dots-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+    .wb-dot-row{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-width:280px;}
+    .wd{height:7px;border-radius:4px;flex:1;min-width:18px;max-width:28px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.07);transition:all .3s;}
+    .wd.filled{background:var(--blue);border-color:var(--blue2);box-shadow:0 0 5px rgba(90,169,255,.35);}
+    .wb-next{display:flex;align-items:center;gap:7px;background:rgba(90,169,255,.08);border:1px solid rgba(90,169,255,.15);border-radius:10px;padding:7px 14px;font-size:12px;color:var(--muted);}
+    .wb-next strong{color:var(--blue);font-variant-numeric:tabular-nums;}
+    .wb-goal-banner{display:none;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.25);border-radius:10px;padding:8px 14px;font-size:12px;color:var(--green);text-align:center;position:relative;z-index:2;}
+    .wb-goal-banner.show{display:block;}
+    .wb-actions{width:100%;display:flex;gap:10px;position:relative;z-index:2;}
+    .wb-btn{flex:1;border:none;border-radius:16px;height:52px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform .15s;}
+    .wb-btn:active{transform:scale(.97);}
+    .wb-drink{background:var(--blue);color:#081726;flex:2;font-size:15px;}
+    .wb-skip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:var(--muted);}
+    .wb-success{display:none;position:absolute;inset:0;background:rgba(14,19,30,.96);flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:20;animation:fadeIn .3s ease;}
+    .wb-success.show{display:flex;}
+    @keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+    .wb-suc-icon{font-size:64px;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+    .wb-suc-title{font-size:28px;font-weight:900;color:var(--blue);}
+    .wb-suc-sub{font-size:14px;color:var(--muted);text-align:center;max-width:260px;line-height:1.5;}
+    #wbConfetti{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;width:100%;max-width:480px;height:220px;pointer-events:none;z-index:1;}
+  </style>
+</head>
+<body>
+
+<div id="ls"><div class="spin">🧘</div><div class="spin-txt">Loading…</div></div>
+
+<div id="app">
+
+  <!-- ═══ WELCOME ═══ -->
+
+  <div id="wl" class="screen">
+    <div class="scr" style="align-items:center;text-align:center;">
+      <div style="font-size:52px;margin-bottom:6px;">🧘💧</div>
+      <div style="font-size:28px;font-weight:800;margin-bottom:8px;">Desk Wellness Pack</div>
+      <div style="font-size:15px;line-height:1.6;margin-bottom:24px;max-width:320px;color:var(--muted2);">Smart reminders for healthier desk habits.</div>
+      <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;margin-bottom:24px;">
+        <div class="wfeat"><div class="wfeat-icon">🧘</div><div class="wfeat-txt"><strong>Smart Stretch</strong>Adaptive guided breaks with countdown ring and session types.</div></div>
+        <div class="wfeat"><div class="wfeat-icon">💧</div><div class="wfeat-txt"><strong>Water Reminder</strong>Tracks daily glasses and reminds you to drink at your own pace.</div></div>
+      </div>
+      <div class="ncard" id="nc-android">
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;">🔔 Allow notifications</div>
+        <div style="font-size:13px;line-height:1.55;margin-bottom:14px;opacity:.75;">The app uses notifications when you're away. Without them, reminders won't fire in the background.</div>
+      <button class="btn btn-up" id="installBtn" style="display:none;max-width:340px;width:100%;margin-top:0;background:var(--blue);color:#081726;">📲 Add to Home Screen</button>
+      <button class="btn btn-up" id="notifBtn" style="margin-top:0;">Allow notifications</button>
+        <div id="notifStatus" style="font-size:12px;margin-top:10px;text-align:center;display:none;"></div>
+      </div>
+      <div class="ncard" id="nc-ios" style="display:none;">
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📲 Add to Home Screen first</div>
+        <div style="font-size:13px;line-height:1.6;opacity:.75;">Tap <strong>Share</strong> → <strong>Add to Home Screen</strong>, then open from your home screen.</div>
+      </div>
+      <div class="ncard ncard-blue" id="nc-desktop" style="display:none;">
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;">📱 Best on Android</div>
+        <div style="font-size:13px;line-height:1.6;opacity:.75;">Open this URL in Chrome for Android and add it to your home screen.</div>
+      </div>
+      <button class="btn btn-sec" id="skipWelBtn" style="max-width:340px;width:100%;margin-top:10px;">Continue anyway</button>
+    </div>
+  </div>
+
+  <!-- ═══ HOME ═══ -->
+
+  <div id="hm" class="screen">
+    <div class="scr">
+      <div class="card">
+        <div style="font-size:22px;font-weight:800;margin-bottom:4px;">Desk Wellness Pack</div>
+        <div style="font-size:14px;color:var(--muted);">Smart reminders for healthier desk habits</div>
+      </div>
+
+      <!-- Notification denied warning — shown when permission revoked -->
+      <div id="notifDeniedBanner" class="hidden" style="background:rgba(255,138,128,.12);border:1px solid rgba(255,138,128,.3);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+        <div style="font-size:18px;flex-shrink:0;">⚠️</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:3px;">Notifications blocked</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Reminders won't fire in the background. Go to <strong>Settings → Apps → Chrome → Notifications</strong> and allow notifications for this site.</div>
+        </div>
+      </div>
+
+      <!-- Samsung/Xiaomi battery warning — shown on first run on those devices -->
+      <div id="batteryWarningBanner" class="hidden" style="background:rgba(255,212,0,.08);border:1px solid rgba(255,212,0,.22);border-radius:16px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+        <div style="font-size:18px;flex-shrink:0;">🔋</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:3px;">One more step for reliable reminders</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">Your phone aggressively stops background apps. Go to <strong>Settings → Battery → App battery usage → Chrome → Unrestricted</strong> to keep reminders firing.</div>
+        </div>
+        <button onclick="this.parentElement.parentElement.classList.add('hidden');localStorage.setItem('batteryTipDone',JSON.stringify(true));" style="border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0;padding:0;">×</button>
+      </div>
+
+      <div class="card" style="padding:6px;">
+        <div class="tabbar">
+          <button class="tabbtn act" id="tabS">🧘 Smart Stretch</button>
+          <button class="tabbtn tabbtn-w" id="tabW">💧 Water Reminder</button>
+        </div>
+      </div>
+
+      <!-- STRETCH TAB -->
+      <div id="secS" class="modsec">
+        <div class="card" style="position:relative;">
+          <div id="spb" class="pbi hidden">✨ Pro</div>
+          <div class="tbox">
+            <div class="tlbl" id="tLbl">Next stretch break</div>
+            <div class="tval" id="tVal">Timer Inactive</div>
+          </div>
+          <div class="ctrls">
+            <button class="btn btn-start" id="startS">Start</button>
+            <button class="btn btn-stop" id="stopS" disabled>Stop</button>
+          </div>
+        </div>
+        <div class="sel-wrap" id="selS">
+          <div class="sel-trig" id="selStrig"><span id="selSlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
+          <div class="sel-opts" id="selSopts">
+            <div class="sel-opt" data-value="15">Every 15 minutes</div>
+            <div class="sel-opt" data-value="20">Every 20 minutes</div>
+            <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
+            <div class="sel-opt" data-value="45">Every 45 minutes</div>
+            <div class="sel-opt" data-value="60">Every 60 minutes</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row"><div class="rt"><div class="lbl">Smart Stretch</div><div class="sub">Adapts stretch type based on your recent behaviour</div></div><input type="checkbox" id="smartTog" class="toggle" /></div>
+          <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the stretch screen opens</div></div><input type="checkbox" id="soundTog" class="toggle" /></div>
+        </div>
+        <div class="card ucard" id="uCardS">
+          <div class="utitle">✨ Upgrade to Pro</div>
+          <div class="usub">One-time purchase. Skip stretches during meetings automatically.</div>
+          <div class="ufeats"><div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Checks Google Calendar — pauses when you're busy</div></div></div></div>
+          <button class="btn btn-up" id="upgS">Upgrade — €3.00</button>
+          <button class="btn btn-verify" id="verS">✓ I've paid — Verify Payment</button>
+          <div class="pnote" id="pnoteS">Returning from payment? The app will verify automatically, or tap below.</div>
+          <div class="uprice">One-time · No subscription · Instant unlock</div>
+        </div>
+        <div class="card hidden" id="proS">
+          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Skips stretch if you're busy in Google Calendar</div></div><input type="checkbox" id="calTog" class="toggle" /></div>
+          <div class="sok" id="calSok">✅ Google Calendar connected</div>
+        </div>
+        <div class="card">
+          <div class="lbl">Weekly stretch activity</div>
+          <div style="overflow:hidden;border-radius:14px;margin-top:12px;">
+            <div id="statCarousel" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+              <div style="flex:0 0 100%;scroll-snap-align:start;">
+                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">This Week</div>
+                <div class="stats">
+                  <div class="stat"><div class="sv" id="cC">0</div><div class="sl">Completed</div></div>
+                  <div class="stat"><div class="sv" id="sC">0</div><div class="sl">Snoozed</div></div>
+                  <div class="stat"><div class="sv" id="kC">0</div><div class="sl">Skipped</div></div>
+                </div>
+              </div>
+              <div style="flex:0 0 100%;scroll-snap-align:start;">
+                <div style="font-size:12px;font-weight:700;opacity:.6;margin-bottom:10px;text-align:center;">Last Week</div>
+                <div class="stats">
+                  <div class="stat"><div class="sv" id="lcC">0</div><div class="sl">Completed</div></div>
+                  <div class="stat"><div class="sv" id="lsC">0</div><div class="sl">Snoozed</div></div>
+                  <div class="stat"><div class="sv" id="lkC">0</div><div class="sl">Skipped</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;"><div class="cdot act" id="d0"></div><div class="cdot" id="d1"></div></div>
+          <div style="margin-top:8px;font-size:11px;opacity:.5;text-align:center;">Resets every Sunday · Swipe to see last week</div>
+        </div>
+      </div><!-- /secS -->
+
+      <!-- WATER TAB -->
+      <div id="secW" class="modsec hidden">
+        <div class="card" style="position:relative;">
+          <div id="wpb" class="pbi hidden" style="background:linear-gradient(90deg,#5aa9ff,#3d8fe0);color:#081726;">💧 Pro</div>
+          <div class="tbox" style="background:rgba(90,169,255,.06);border-color:rgba(90,169,255,.14);">
+            <div class="tlbl" id="wLbl">Next water reminder</div>
+            <div class="tval" id="wVal" style="color:var(--blue);">Timer Inactive</div>
+          </div>
+          <div class="ctrls">
+            <button class="btn btn-start" id="startW">Start</button>
+            <button class="btn btn-stop" id="stopW" disabled>Stop</button>
+          </div>
+        </div>
+        <div class="sel-wrap" id="selW">
+          <div class="sel-trig" id="selWtrig" style="border-color:rgba(90,169,255,.25);"><span id="selWlbl">Every 30 minutes</span><span class="sel-arr">▼</span></div>
+          <div class="sel-opts" id="selWopts" style="border-color:rgba(90,169,255,.3);">
+            <div class="sel-opt selected" data-value="30">Every 30 minutes</div>
+            <div class="sel-opt" data-value="45">Every 45 minutes</div>
+            <div class="sel-opt" data-value="60">Every 60 minutes</div>
+            <div class="sel-opt" data-value="90">Every 90 minutes</div>
+            <div class="sel-opt" data-value="120">Every 2 hours</div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+            <div class="gmini"><div class="gmini-rim"></div><div class="gmini-body"></div><div class="gmini-fill" id="wFill"></div></div>
+            <div><div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1;"><span id="wCnt">0</span><span style="font-size:13px;font-weight:400;opacity:.6;">/ <span id="wGoalD">8</span></span></div><div style="font-size:11px;opacity:.6;margin-top:3px;">glasses today</div></div>
+          </div>
+          <div id="wDots" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"></div>
+        </div>
+        <div class="card">
+          <div class="row"><div class="rt"><div class="lbl">Play sound</div><div class="sub">Gentle chime when the water screen opens</div></div><input type="checkbox" id="wSndTog" class="toggle toggle-b" /></div>
+          <div class="row">
+            <div class="rt"><div class="lbl">Daily goal <span id="wLock" style="font-size:11px;opacity:.5;">🔒</span></div><div class="sub" id="wGoalSub">Upgrade to Pro to set your own goal</div></div>
+            <div class="stepper" id="wStepper" style="opacity:.4;pointer-events:none;"><button class="stepbtn" id="wMinus">−</button><div class="stepval" id="wGoalV">8</div><button class="stepbtn" id="wPlus">+</button></div>
+          </div>
+        </div>
+        <div class="card ucard hidden" id="uCardW">
+          <div class="utitle">💧 Upgrade Water to Pro</div>
+          <div class="usub">One-time purchase. Unlock meeting detection and custom goals.</div>
+          <div class="ufeats">
+            <div class="ufeat"><div class="ufi">📅</div><div><div class="lbl" style="font-size:14px;">Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div></div>
+            <div class="ufeat"><div class="ufi">🎯</div><div><div class="lbl" style="font-size:14px;">Custom daily glass goal</div><div class="sub">Set your own target, not locked to 8 glasses</div></div></div>
+          </div>
+          <button class="btn btn-up" id="upgW">Upgrade — €5.00</button>
+          <button class="btn btn-verify" id="verW">✓ I've paid — Verify Payment</button>
+          <div class="pnote" id="pnoteW">Returning from payment? The app will verify automatically, or tap below.</div>
+          <div class="uprice">One-time · No subscription · Instant unlock</div>
+        </div>
+        <div class="card hidden" id="proW" style="border-color:rgba(90,169,255,.2);background:rgba(90,169,255,.04);">
+          <div class="row"><div class="rt"><div class="lbl">📅 Skip during meetings</div><div class="sub">Pauses water reminders during Google Calendar events</div></div><input type="checkbox" id="wCalTog" class="toggle toggle-b" /></div>
+          <div class="sok" id="wCalSok">✅ Google Calendar connected</div>
+        </div>
+      </div><!-- /secW -->
+
+    </div>
+  </div><!-- /hm -->
+
+  <!-- ═══ STRETCH BREAK ═══ -->
+
+  <div id="sb" class="screen" style="position:relative;overflow:hidden;">
+    <div class="sb-wrap">
+      <div class="sb-top">
+        <div class="sb-eyebrow">Smart Stretch Break</div>
+        <div class="sb-title" id="sbTitle">Time to move</div>
+        <div class="sb-subtitle" id="sbSub">A short guided stretch to reset your posture and energy.</div>
+      </div>
+      <div class="sb-center">
+
+        <!-- STATE A: Ready — shown first, countdown not started -->
+        <div id="sbReady" style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;">
+          <div style="font-size:72px;" id="sbReadyIcon">🧘</div>
+          <div>
+            <div class="sb-ex-name" id="sbExName" style="text-align:center;margin-bottom:8px;">Neck Roll</div>
+            <div class="sb-ex-inst" id="sbExInst" style="text-align:center;">Gently roll your head in a circle. Feel the stretch along your neck.</div>
+          </div>
+          <div style="font-size:13px;color:var(--muted2);opacity:.7;">60 seconds · tap when ready</div>
+        </div>
+
+        <!-- STATE B: Active — shown after tapping Start Stretch -->
+        <div id="sbActive" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;">
+          <div class="pulse-wrap">
+            <svg class="progress-ring" viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="grd" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FFD400"></stop>
+                  <stop offset="100%" stop-color="#FF7A00"></stop>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+              <circle id="ringProg" class="ring-prog" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="inner-circle">
+              <div class="sb-time" id="sbTime">60</div>
+              <div class="sb-time-lbl">seconds</div>
+            </div>
+          </div>
+          <div style="text-align:center;width:100%;max-width:320px;">
+            <div class="sb-ex-icon" id="sbExIcon" style="font-size:28px;margin-bottom:6px;">🧘</div>
+            <div id="sbExNameActive" style="font-size:18px;font-weight:800;margin-bottom:6px;"></div>
+            <div id="sbExInstActive" style="font-size:13px;color:var(--muted2);line-height:1.5;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ACTION BUTTONS — swap based on state -->
+      <div class="sb-actions" id="sbActionsReady">
+        <button class="sb-btn" id="sbBegin" style="background:var(--green);color:#0f1b12;flex:2;font-size:16px;">▶ Start Stretch</button>
+        <button class="sb-btn sb-skip" id="sbSkipReady" style="flex:1;">Skip</button>
+      </div>
+      <div class="sb-actions" id="sbActionsActive" style="display:none;">
+        <button class="sb-btn sb-snooze" id="sbSnooze">Snooze 5 min</button>
+        <button class="sb-btn sb-skip" id="sbSkip">Skip</button>
+      </div>
+    </div>
+    <!-- Success overlay -->
+    <div class="sb-success" id="sbSuccess">
+      <div class="sb-suc-emoji">👍</div>
+      <div class="sb-suc-title">Good job!</div>
+      <div class="sb-suc-sub">You completed your stretch break.</div>
+      <canvas id="sbConfetti"></canvas>
+    </div>
+  </div><!-- /sb -->
+
+  <!-- ═══ WATER BREAK ═══ -->
+
+  <div id="wb" class="screen" style="position:relative;overflow:hidden;">
+    <div class="wb-wrap">
+      <div class="wave-bg">
+        <div class="wave wave-1"><svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,100 C150,160 350,40 600,100 C850,160 1050,40 1200,100 L1200,200 L0,200 Z" fill="#5aa9ff"/></svg></div>
+        <div class="wave wave-2"><svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,120 C200,60 400,180 600,120 C800,60 1000,180 1200,120 L1200,200 L0,200 Z" fill="#3d8fe0"/></svg></div>
+        <div class="wave wave-3"><svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,80 C300,140 500,20 800,80 C1000,120 1100,60 1200,80 L1200,200 L0,200 Z" fill="#5aa9ff"/></svg></div>
+      </div>
+      <div class="wb-top">
+        <div class="wb-eyebrow">💧 Hydration Break</div>
+        <div class="wb-title">Time to drink water</div>
+        <div class="wb-subtitle">Hydration keeps your focus sharp and your energy steady.</div>
+      </div>
+      <div class="wb-center">
+        <div class="glass-wrap">
+          <div class="glass-top"></div>
+          <div class="glass-outline"></div>
+          <div class="glass-shine"></div>
+          <div class="water-fill" id="wbFill">
+            <div class="water-surface"><svg viewBox="0 0 200 10" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C25,0 50,10 75,5 C100,0 125,10 150,5 C175,0 200,10 200,5 L200,10 L0,10 Z" fill="rgba(255,255,255,0.22)"/></svg></div>
+            <div class="bubble b1"></div>
+            <div class="bubble b2"></div>
+            <div class="bubble b3"></div>
+          </div>
+        </div>
+        <div class="wb-counter">
+          <div class="wb-cnt-num"><span id="wbCnt">0</span><span>/ <span id="wbGoalLbl">8</span></span></div>
+          <div class="wb-cnt-sub">glasses today</div>
+        </div>
+        <div class="wb-dots">
+          <div class="wb-dots-lbl">Daily Goal</div>
+          <div class="wb-dot-row" id="wbDotRow"></div>
+        </div>
+        <div class="wb-next">⏱ Next reminder in <strong id="wbNextTime">–:––</strong></div>
+      </div>
+      <div class="wb-goal-banner" id="wbGoalBanner">🎉 Daily goal reached! Keep going if you'd like.</div>
+      <div class="wb-actions" style="margin-top:0;">
+        <button class="wb-btn wb-drink" id="wbDrink">💧 I just drank water</button>
+        <button class="wb-btn wb-skip" id="wbSkip">Skip</button>
+      </div>
+    </div>
+    <!-- Success overlay -->
+    <div class="wb-success" id="wbSuccess">
+      <canvas id="wbConfetti"></canvas>
+      <div class="wb-suc-icon">💧</div>
+      <div class="wb-suc-title">Great job!</div>
+      <div class="wb-suc-sub" id="wbSuccessSub">Keep it up — your body thanks you.</div>
+    </div>
+  </div><!-- /wb -->
+
+</div><!-- /app -->
+
+<!-- Confetti from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+<script>
+'use strict';
+
+var BACKEND = 'https://desk-wellness-pack.vercel.app';
+
+// ── PWA Install prompt ────────────────────────────────────────────────
+// Do NOT call preventDefault() — that suppresses Chrome's native
+// "Add to Home Screen" mini-infobar. Let Chrome handle it automatically.
+// We capture the event only to power the fallback button.
+var _installPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  _installPrompt = e;
+  // Show fallback install button on welcome screen
+  var btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'flex';
+});
+window.addEventListener('appinstalled', function() {
+  _installPrompt = null;
+  var btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+});
+
+// Google OAuth URL — used by calTog / wCalTog to initiate Calendar connection.
+// Full page navigation (window.location.href) — callback page stores tokens
+// and redirects back to the app.
+var OAUTH_URL =
+  'https://accounts.google.com/o/oauth2/v2/auth' +
+  '?client_id=750220805739-kuihv9grhjb9n66iqg8h52jr4c6anlrg.apps.googleusercontent.com' +
+  '&redirect_uri=https%3A%2F%2Fdwpinstall.netlify.app%2Foauth-callback.html' +
+  '&response_type=code' +
+  '&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly' +
+  '&access_type=offline' +
+  '&prompt=consent';
+
+// ── Storage ────────────────────────────────────────────────────────
+var store = {
+  get: function(k) {
+    try { var v=localStorage.getItem(k); return v===null?null:JSON.parse(v); } catch(e){return null;}
+  },
+  set: function(k,v) {
+    try { localStorage.setItem(k,JSON.stringify(v)); } catch(e){}
+  },
+  init: function() {
+    if (this.get('installDate')!==null) return;
+    var d = {
+      installDate: new Date().toISOString(),
+      hasSeenWelcome: false,
+      stretchEnabled: false, stretchInterval: 30,
+      smartMode: true, stretchSound: true,
+      completedCount: 0, snoozedCount: 0, skippedCount: 0,
+      lastCompletedCount: 0, lastSnoozedCount: 0, lastSkippedCount: 0,
+      lastSessionType: null, weekStartDate: null,
+      waterEnabled: false, waterInterval: 30, waterSound: true,
+      waterGlassCount: 0, waterGoal: 8, waterGoalResetDate: null,
+      bgTipDismissed: false,
+    };
+    for (var k in d) this.set(k, d[k]);
+  }
+};
+
+// ── Sessions ────────────────────────────────────────────────────────
+var SESSIONS = [
+  { type:'neck',      icon:'🔄', name:'Neck Roll',        inst:'Slowly roll your head in a full circle — feel the gentle stretch along your neck and shoulders.',                     dur:60 },
+  { type:'shoulder',  icon:'💪', name:'Shoulder Stretch', inst:'Roll your shoulders back 5 times, then forward 5 times. Squeeze them up to your ears and release.',                 dur:45 },
+  { type:'back',      icon:'🪑', name:'Back Arch',        inst:'Sit up straight, place hands on your lower back and gently arch backward. Hold 5 seconds and repeat.',              dur:45 },
+  { type:'wrist',     icon:'✋', name:'Wrist & Hand',     inst:'Extend your arms, rotate wrists both ways 5 times. Spread fingers wide and make a fist — repeat 10 times.',         dur:30 },
+  { type:'eyes',      icon:'👁️', name:'Eye Rest',         inst:'Look away from your screen at something far away for 20 seconds. Blink slowly and relax.',                          dur:20 },
+  { type:'breathing', icon:'🫁', name:'Deep Breathing',   inst:'Breathe in 4 counts, hold 4, out 4. Repeat 4 times and feel tension release.',                                     dur:60 },
+  { type:'standing',  icon:'🧍', name:'Stand & Stretch',  inst:'Stand up and reach arms high above your head. Side bend left and right, then roll shoulders back.',                 dur:45 },
+  { type:'hip',       icon:'🦵', name:'Hip Flexor',       inst:'Stand and step one foot forward into a gentle lunge. Hold 15 seconds each side.',                                   dur:45 },
+];
+
+// ── Screen router ────────────────────────────────────────────────────
+var SC = { WL:'wl', HM:'hm', SB:'sb', WB:'wb' };
+var currentScreen = '';
+
+function navigate(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  currentScreen = id;
+  if (id === SC.HM) initHome();
+  if (id === SC.SB) startStretchScreen();
+  if (id === SC.WB) startWaterScreen();
+}
+
+// ── Audio ────────────────────────────────────────────────────────────
+var _actx          = null;
+var _stretchBuffer = null;
+var _waterBuffer   = null;
+
+function getAudioContext() {
+  if (!_actx) {
+    try { _actx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
+  }
+  return _actx;
+}
+
+function unlockAudio() {
+  var ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  if (!_stretchBuffer) loadBuffer('./assets/stretch-chime.mp3', function(buf){ _stretchBuffer = buf; });
+  if (!_waterBuffer)   loadBuffer('./assets/water-chime.wav',   function(buf){ _waterBuffer   = buf; });
+}
+
+function loadBuffer(url, callback) {
+  fetch(url)
+    .then(function(r){ return r.arrayBuffer(); })
+    .then(function(ab){
+      var ctx = getAudioContext();
+      if (!ctx) return;
+      ctx.decodeAudioData(ab, function(buf){ callback(buf); }, function(e){ console.warn('[audio] decode error:', url, e); });
+    })
+    .catch(function(e){ console.warn('[audio] fetch error:', url, e); });
+}
+
+function playBuffer(buffer) {
+  try {
+    var ctx = getAudioContext();
+    if (!ctx || !buffer) return;
+    if (ctx.state === 'suspended') { ctx.resume(); }
+    var src = ctx.createBufferSource();
+    src.buffer = buffer;
+    var gain = ctx.createGain();
+    gain.gain.value = 0.85;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(0);
+  } catch(e) { console.warn('[audio] playBuffer error:', e); }
+}
+
+function playStretchChime() {
+  if (!store.get('stretchSound')) return;
+  if (_stretchBuffer) {
+    playBuffer(_stretchBuffer);
+  } else {
+    loadBuffer('./assets/stretch-chime.mp3', function(buf){
+      _stretchBuffer = buf;
+      playBuffer(buf);
+    });
+  }
+}
+
+function playWaterChime() {
+  if (!store.get('waterSound')) return;
+  if (_waterBuffer) {
+    playBuffer(_waterBuffer);
+  } else {
+    loadBuffer('./assets/water-chime.wav', function(buf){
+      _waterBuffer = buf;
+      playBuffer(buf);
+    });
+  }
+}
+
+// ── Confetti ─────────────────────────────────────────────────────────
+function fireConfetti(canvasId) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas || typeof confetti === 'undefined') return;
+  var myConfetti = confetti.create(canvas, { resize:true });
+  myConfetti({ particleCount:120, spread:80, origin:{y:0.4},
+    colors:['#ffd400','#ff7a00','#34c759','#5aa9ff','#ffffff'] });
+}
+
+// ── Status bar notification ───────────────────────────────────────────
+var _statusLastBody = '';
+async function showStatusNotif() {
+  if (Notification.permission !== 'granted') return;
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var se = store.get('stretchEnabled');
+    var we = store.get('waterEnabled');
+    if (!se && !we) { await hideStatusNotif(); return; }
+    var body = (se && we) ? 'Stretch & Water active'
+             : se ? 'Stretch active' : 'Water intake active';
+    if (body === _statusLastBody) return;
+    _statusLastBody = body;
+    var existing = await reg.getNotifications({ tag:'dwp-status' });
+    existing.forEach(function(n){ n.close(); });
+    await reg.showNotification('Desk Wellness', {
+      body: body,
+      tag: 'dwp-status',
+      icon: './assets/icons/icon-192.png',
+      badge: './assets/icons/icon-192.png',
+      silent: true,
+      renotify: false,
+      requireInteraction: false,
+      data: { type:'status', screen:'' },
+    });
+  } catch(e) { console.warn('[status notif]', e.message); }
+}
+async function hideStatusNotif() {
+  _statusLastBody = '';
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var existing = await reg.getNotifications({ tag:'dwp-status' });
+    existing.forEach(function(n){ n.close(); });
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type:'CLOSE_STATUS_NOTIF' });
+    }
+  } catch(e) {}
+}
+
+// ── Smart session picker ──────────────────────────────────────────────
+function pickSession() {
+  var last = store.get('lastSessionType');
+  var smart = store.get('smartMode');
+  var pool = smart ? SESSIONS.filter(function(s){ return s.type !== last; }) : SESSIONS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ── Stretch break screen ──────────────────────────────────────────────
+var sbSession = null;
+var sbDuration = 0;
+var sbElapsed = 0;
+var sbTimerId = null;
+var sbCircumference = 2 * Math.PI * 52;
+
+function startStretchScreen() {
+  sbSession = pickSession();
+  store.set('lastSessionType', sbSession.type);
+  sbDuration = sbSession.dur;
+  sbElapsed = 0;
+
+  document.getElementById('sbTitle').textContent = 'Time to stretch';
+  document.getElementById('sbSub').textContent = sbSession.dur + ' seconds — take your time';
+  document.getElementById('sbReadyIcon').textContent = sbSession.icon;
+  document.getElementById('sbExName').textContent = sbSession.name;
+  document.getElementById('sbExInst').textContent = sbSession.inst;
+  document.getElementById('sbExIcon').textContent = sbSession.icon;
+
+  document.getElementById('sbReady').style.display = 'flex';
+  document.getElementById('sbActive').style.display = 'none';
+  document.getElementById('sbActionsReady').style.display = 'flex';
+  document.getElementById('sbActionsActive').style.display = 'none';
+  document.getElementById('sbSuccess').classList.remove('show');
+
+  var ring = document.getElementById('ringProg');
+  if (ring) {
+    ring.style.strokeDasharray = sbCircumference;
+    ring.style.strokeDashoffset = '0';
+  }
+  var t = document.getElementById('sbTime');
+  if (t) t.textContent = sbDuration;
+
+  clearInterval(sbTimerId);
+}
+
+function beginStretchCountdown() {
+  document.getElementById('sbReady').style.display = 'none';
+  document.getElementById('sbActive').style.display = 'flex';
+  document.getElementById('sbActionsReady').style.display = 'none';
+  document.getElementById('sbActionsActive').style.display = 'flex';
+
+  var an = document.getElementById('sbExNameActive');
+  var ai = document.getElementById('sbExInstActive');
+  var ic = document.getElementById('sbExIcon');
+  if (sbSession) {
+    if (an) an.textContent = sbSession.name;
+    if (ai) ai.textContent = sbSession.inst;
+    if (ic) ic.textContent = sbSession.icon;
+  }
+
+  unlockAudio();
+  playStretchChime();
+
+  sbElapsed = 0;
+  clearInterval(sbTimerId);
+  sbTimerId = setInterval(function() {
+    sbElapsed++;
+    var remaining = sbDuration - sbElapsed;
+    var t = document.getElementById('sbTime');
+    if (t) t.textContent = remaining;
+    var ring = document.getElementById('ringProg');
+    if (ring) ring.style.strokeDashoffset = String(sbCircumference * (1 - sbElapsed/sbDuration));
+    if (remaining <= 0) { clearInterval(sbTimerId); onStretchComplete(); }
+  }, 1000);
+}
+
+function onStretchComplete() {
+  store.set('completedCount', (store.get('completedCount')||0) + 1);
+  document.getElementById('sbActionsActive').style.display = 'none';
+  document.getElementById('sbSuccess').classList.add('show');
+  fireConfetti('sbConfetti');
+  rescheduleStretch();
+  setTimeout(function() {
+    navigate(SC.HM);
+    checkWaterOverdue();
+  }, 3000);
+}
+
+function rescheduleStretch() {
+  var iv = store.get('stretchInterval') || 30;
+  store.set('nextStretchTime', Date.now() + iv * 60000);
+  store.set('stretchBreakActive', false);
+  syncSchedule();
+}
+
+function rescheduleWater() {
+  var iv = store.get('waterInterval') || 30;
+  store.set('nextWaterTime', Date.now() + iv * 60000);
+  store.set('waterBreakActive', false);
+  syncSchedule();
+}
+
+document.getElementById('sbSnooze').addEventListener('click', function() {
+  clearInterval(sbTimerId);
+  store.set('snoozedCount', (store.get('snoozedCount')||0) + 1);
+  store.set('nextStretchTime', Date.now() + 5 * 60000);
+  store.set('stretchBreakActive', false);
+  syncSchedule();
+  navigate(SC.HM);
+});
+
+document.getElementById('sbSkip').addEventListener('click', function() {
+  clearInterval(sbTimerId);
+  store.set('skippedCount', (store.get('skippedCount')||0) + 1);
+  rescheduleStretch();
+  navigate(SC.HM);
+  checkWaterOverdue();
+});
+
+document.getElementById('sbSkipReady').addEventListener('click', function() {
+  clearInterval(sbTimerId);
+  store.set('skippedCount', (store.get('skippedCount')||0) + 1);
+  rescheduleStretch();
+  navigate(SC.HM);
+  checkWaterOverdue();
+});
+
+document.getElementById('sbBegin').addEventListener('click', function() {
+  beginStretchCountdown();
+});
+
+// ── Water break screen ────────────────────────────────────────────────
+var wbTickId = null;
+
+function startWaterScreen() {
+  var cnt  = store.get('waterGlassCount') || 0;
+  var goal = store.get('waterGoal') || 8;
+
+  var pct = Math.min(100, Math.round(cnt/goal*100));
+  var fill = document.getElementById('wbFill');
+  if (fill) fill.style.height = pct + '%';
+
+  var wc = document.getElementById('wbCnt');
+  if (wc) wc.textContent = cnt;
+  var wg = document.getElementById('wbGoalLbl');
+  if (wg) wg.textContent = goal;
+
+  var dotRow = document.getElementById('wbDotRow');
+  if (dotRow) {
+    dotRow.innerHTML = '';
+    for (var i=0; i<goal; i++) {
+      var d = document.createElement('div');
+      d.className = 'wd' + (i < cnt ? ' filled' : '');
+      dotRow.appendChild(d);
+    }
+  }
+
+  var banner = document.getElementById('wbGoalBanner');
+  if (banner) banner.classList.toggle('show', cnt >= goal);
+
+  var succ = document.getElementById('wbSuccess');
+  if (succ) succ.classList.remove('show');
+
+  clearInterval(wbTickId);
+  wbTickId = setInterval(updateWbNext, 1000);
+  updateWbNext();
+}
+
+function updateWbNext() {
+  var next = store.get('nextWaterTime');
+  var el = document.getElementById('wbNextTime');
+  if (!el) return;
+  if (!next || !store.get('waterEnabled')) { el.textContent = '–:––'; return; }
+  var rem = next - Date.now();
+  if (rem <= 0) { el.textContent = '0:00'; return; }
+  var m = Math.floor(rem/60000), s = Math.floor((rem%60000)/1000);
+  el.textContent = m + ':' + (s<10?'0':'') + s;
+}
+
+function checkWaterDayReset() {
+  var today = new Date().toDateString();
+  if (store.get('waterGoalResetDate') !== today) {
+    store.set('waterGlassCount', 0);
+    store.set('waterGoalResetDate', today);
+  }
+}
+
+document.getElementById('wbDrink').addEventListener('click', function() {
+  clearInterval(wbTickId);
+  var cnt  = (store.get('waterGlassCount')||0) + 1;
+  var goal = store.get('waterGoal') || 8;
+  store.set('waterGlassCount', cnt);
+  store.set('waterBreakActive', false);
+
+  var fill = document.getElementById('wbFill');
+  if (fill) fill.style.height = Math.min(100,Math.round(cnt/goal*100)) + '%';
+  var wc = document.getElementById('wbCnt');
+  if (wc) wc.textContent = cnt;
+
+  var sub = cnt >= goal ? "Daily goal reached! You're crushing it 🎉"
+          : cnt + ' of ' + goal + ' glasses done. Keep going!';
+  var ss = document.getElementById('wbSuccessSub');
+  if (ss) ss.textContent = sub;
+  var succ = document.getElementById('wbSuccess');
+  if (succ) succ.classList.add('show');
+
+  unlockAudio();
+  playWaterChime();
+
+  setTimeout(function() {
+    if (cnt >= goal) {
+      fireConfetti('wbConfetti');
+    } else {
+      var canvas = document.getElementById('wbConfetti');
+      if (canvas && typeof confetti !== 'undefined') {
+        var c = confetti.create(canvas, { resize:true });
+        c({ particleCount:40, spread:50, origin:{y:0.5},
+            colors:['#5aa9ff','#3d8fe0','#ffffff','#34c759'] });
+      }
+    }
+  }, 100);
+
+  updateHomeGlasses(cnt, goal);
+  rescheduleWater();
+  setTimeout(function() { navigate(SC.HM); }, 2500);
+});
+
+document.getElementById('wbSkip').addEventListener('click', function() {
+  clearInterval(wbTickId);
+  store.set('waterBreakActive', false);
+  rescheduleWater();
+  navigate(SC.HM);
+});
+
+// ── Water overdue check ───────────────────────────────────────────────
+function checkWaterOverdue() {
+  if (!store.get('waterEnabled')) return;
+  if (store.get('waterBreakActive')) return;
+  var nw = store.get('nextWaterTime');
+  if (nw && Date.now() >= nw && currentScreen === SC.HM) {
+    store.set('waterBreakActive', true);
+    navigate(SC.WB);
+  }
+}
+
+// ── Home countdown tick ───────────────────────────────────────────────
+var tickId = null;
+
+function startTick() {
+  if (!tickId) tickId = setInterval(tick, 1000);
+  tick();
+}
+
+function tick() {
+  doTick('nextStretchTime','tVal','tLbl','stretchEnabled','Next stretch in','var(--yellow)','Next stretch break');
+  doTick('nextWaterTime','wVal','wLbl','waterEnabled','Next water in','var(--blue)','Next water reminder');
+
+  if (currentScreen !== SC.HM) return;
+
+  if (store.get('stretchBreakActive') && currentScreen === SC.HM) {
+    var checkNs = store.get('nextStretchTime');
+    if (checkNs && Date.now() < checkNs) {
+      store.set('stretchBreakActive', false);
+    }
+  }
+  if (store.get('waterBreakActive') && currentScreen === SC.HM) {
+    var checkNw = store.get('nextWaterTime');
+    if (checkNw && Date.now() < checkNw) {
+      store.set('waterBreakActive', false);
+    }
+  }
+
+  if (store.get('stretchEnabled') && !store.get('stretchBreakActive')) {
+    var ns = store.get('nextStretchTime');
+    if (ns && Date.now() >= ns) {
+      store.set('stretchBreakActive', true);
+      store.set('nextStretchTime', Date.now() + 60 * 60 * 1000);
+      syncSchedule();
+      navigate(SC.SB);
+      return;
+    }
+  }
+
+  if (store.get('waterEnabled') && !store.get('waterBreakActive')) {
+    var nw = store.get('nextWaterTime');
+    if (nw && Date.now() >= nw) {
+      store.set('waterBreakActive', true);
+      var pauseTimeW = Date.now() + 60 * 60 * 1000;
+      store.set('nextWaterTime', pauseTimeW);
+      syncSchedule();
+      navigate(SC.WB);
+    }
+  }
+}
+
+function doTick(key,dId,lId,enKey,lblOn,col,lblOff) {
+  var el=document.getElementById(dId); if(!el) return;
+  el.style.color=col;
+  if (!store.get(enKey)) {
+    el.textContent='Timer Inactive';
+    var l=document.getElementById(lId); if(l) l.textContent=lblOff;
+    return;
+  }
+  var next=store.get(key);
+  if (!next) { el.textContent='Starting…'; return; }
+  var rem=next-Date.now();
+  if (rem<=0) { el.textContent='00:00'; return; }
+  var m=Math.floor(rem/60000), s=Math.floor((rem%60000)/1000);
+  el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  var l=document.getElementById(lId); if(l) l.textContent=lblOn;
+}
+
+// ── Visibility change ────────────────────────────────────────────────
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState !== 'visible') return;
+  maintenance();
+  checkOAuthReturn(); // before loadState so UI reflects fresh state
+  tick();
+  setTimeout(checkAndShowActiveScreen, 300);
+  if (store.get('stretchEnabled') || store.get('waterEnabled')) {
+    setTimeout(function() { syncSchedule(); }, 800);
+  }
+  if (currentScreen === SC.HM) loadState();
+  autoVerifyOnReturn();
+});
+
+// ── Push subscription ─────────────────────────────────────────────────
+var pushSub = null;
+function urlB64ToU8(b64) {
+  var pad='='.repeat((4-b64.length%4)%4);
+  var b=(b64+pad).replace(/-/g,'+').replace(/_/g,'/');
+  var raw=atob(b); var arr=new Uint8Array(raw.length);
+  for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+async function getOrCreateSub() {
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var ex = await reg.pushManager.getSubscription();
+    if (ex) { pushSub = ex; return ex; }
+    var resp = await fetch(BACKEND+'/api/pwa-vapid-public-key');
+    var data = await resp.json();
+    var sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToU8(data.publicKey)
+    });
+    pushSub = sub;
+    console.log('[push] new subscription created:', sub.endpoint.slice(-20));
+    return sub;
+  } catch(e) { console.warn('[push] subscribe failed:', e); return null; }
+}
+
+async function syncSchedule() {
+  try {
+    var sub = await getOrCreateSub();
+    if (!sub) return;
+    var id = store.get('installationId');
+    if (!id) { id='pwa-'+Math.random().toString(36).slice(2,15); store.set('installationId',id); }
+    await fetch(BACKEND+'/api/pwa-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        action: 'subscribe',
+        subscription: sub.toJSON(),
+        installationId: id,
+        schedule: {
+          stretchEnabled:      store.get('stretchEnabled')  || false,
+          stretchInterval:     store.get('stretchInterval') || 30,
+          waterEnabled:        store.get('waterEnabled')    || false,
+          waterInterval:       store.get('waterInterval')   || 30,
+          nextStretchTime:     store.get('nextStretchTime') || null,
+          nextWaterTime:       store.get('nextWaterTime')   || null,
+          // ── Google Calendar ──────────────────────────────────────
+          calendarEnabled:     localStorage.getItem('googleCalConnected') === 'true',
+          calendarSkipStretch: store.get('calendarSkipStretch') || false,
+          calendarSkipWater:   store.get('calendarSkipWater')   || false,
+          googleAccessToken:   localStorage.getItem('googleAccessToken')    || null,
+          googleRefreshToken:  localStorage.getItem('googleRefreshToken')   || null,
+          googleTokenExpiresAt: parseInt(localStorage.getItem('googleTokenExpiresAt') || '0', 10) || null,
+        }
+      })
+    });
+    console.log('[push] schedule synced');
+  } catch(e) { console.warn('[push] sync failed:', e); }
+}
+
+// ── Custom select ─────────────────────────────────────────────────────
+function initSel(wrapId, onChange) {
+  var wrap=document.getElementById(wrapId); if(!wrap) return;
+  var trig=wrap.querySelector('.sel-trig');
+  var opts=wrap.querySelector('.sel-opts');
+  var lbl=trig&&trig.querySelector('span');
+  if(!trig||!opts) return;
+  trig.addEventListener('click',function(e){
+    e.stopPropagation();
+    trig.classList.toggle('open');
+    opts.classList.toggle('open');
+  });
+  wrap.querySelectorAll('.sel-opt').forEach(function(opt){
+    opt.addEventListener('click',function(){
+      wrap.querySelectorAll('.sel-opt').forEach(function(o){o.classList.remove('selected');});
+      opt.classList.add('selected');
+      if(lbl) lbl.textContent=opt.textContent;
+      trig.classList.remove('open'); opts.classList.remove('open');
+      if(onChange) onChange(opt.dataset.value);
+    });
+  });
+  document.addEventListener('click',function(){
+    trig.classList.remove('open'); opts.classList.remove('open');
+  });
+}
+function setSel(wrapId, val) {
+  var wrap=document.getElementById(wrapId); if(!wrap) return;
+  wrap.querySelectorAll('.sel-opt').forEach(function(opt){
+    var sel=Number(opt.dataset.value)===Number(val);
+    opt.classList.toggle('selected',sel);
+    if(sel){ var l=wrap.querySelector('.sel-trig span'); if(l) l.textContent=opt.textContent; }
+  });
+}
+
+// ── Home screen ───────────────────────────────────────────────────────
+var homeReady = false;
+function initHome() {
+  renderStats(); tick();
+  if (homeReady) return;
+  homeReady = true;
+
+  // Tabs
+  document.getElementById('tabS').addEventListener('click',function(){ setTab('s'); });
+  document.getElementById('tabW').addEventListener('click',function(){ setTab('w'); });
+
+  // Stretch start/stop
+  document.getElementById('startS').addEventListener('click',function(){
+    unlockAudio();
+    store.set('stretchEnabled', true);
+    store.set('stretchBreakActive', false);
+    var iv = store.get('stretchInterval') || 30;
+    store.set('nextStretchTime', Date.now() + iv*60000);
+    updateStretchUI(true);
+    syncSchedule();
+    showStatusNotif();
+  });
+  document.getElementById('stopS').addEventListener('click',function(){
+    store.set('stretchEnabled', false);
+    store.set('stretchBreakActive', false);
+    store.set('nextStretchTime', null);
+    updateStretchUI(false);
+    syncSchedule();
+    showStatusNotif();
+  });
+
+  document.getElementById('smartTog').addEventListener('change',function(e){ store.set('smartMode',e.target.checked); });
+  document.getElementById('soundTog').addEventListener('change',function(e){ store.set('stretchSound',e.target.checked); });
+
+  // ── Calendar toggle — Stretch ────────────────────────────────────
+  // If calendar not yet connected: full-page navigation to Google OAuth.
+  // If already connected: toggle the per-module skip preference.
+  document.getElementById('calTog').addEventListener('change', function(e) {
+    var calConnected = localStorage.getItem('googleCalConnected') === 'true';
+    if (e.target.checked) {
+      if (!calConnected) {
+        e.target.checked = false; // revert — OAuth needed first
+        store.set('oauthPending', 'stretch');
+        window.location.href = OAUTH_URL;
+      } else {
+        store.set('calendarSkipStretch', true);
+        var calSok = document.getElementById('calSok');
+        if (calSok) calSok.style.display = 'block';
+        syncSchedule();
+      }
+    } else {
+      store.set('calendarSkipStretch', false);
+      syncSchedule();
+    }
+  });
+
+  // ── Calendar toggle — Water ──────────────────────────────────────
+  document.getElementById('wCalTog').addEventListener('change', function(e) {
+    var calConnected = localStorage.getItem('googleCalConnected') === 'true';
+    if (e.target.checked) {
+      if (!calConnected) {
+        e.target.checked = false;
+        store.set('oauthPending', 'water');
+        window.location.href = OAUTH_URL;
+      } else {
+        store.set('calendarSkipWater', true);
+        var wCalSok = document.getElementById('wCalSok');
+        if (wCalSok) wCalSok.style.display = 'block';
+        syncSchedule();
+      }
+    } else {
+      store.set('calendarSkipWater', false);
+      syncSchedule();
+    }
+  });
+
+  initSel('selS',function(v){
+    store.set('stretchInterval',Number(v));
+    if(store.get('stretchEnabled')){
+      store.set('nextStretchTime',Date.now()+Number(v)*60000);
+      syncSchedule();
+    }
+  });
+
+  // Water start/stop
+  document.getElementById('startW').addEventListener('click',function(){
+    unlockAudio();
+    store.set('waterEnabled', true);
+    store.set('waterBreakActive', false);
+    var iv = store.get('waterInterval') || 30;
+    store.set('nextWaterTime', Date.now() + iv*60000);
+    updateWaterUI(true);
+    syncSchedule();
+    showStatusNotif();
+  });
+  document.getElementById('stopW').addEventListener('click',function(){
+    store.set('waterEnabled', false);
+    store.set('waterBreakActive', false);
+    store.set('nextWaterTime', null);
+    updateWaterUI(false);
+    syncSchedule();
+    showStatusNotif();
+  });
+
+  document.getElementById('wSndTog').addEventListener('change',function(e){ store.set('waterSound',e.target.checked); });
+  document.getElementById('wMinus').addEventListener('click',function(){ changeGoal(-1); });
+  document.getElementById('wPlus').addEventListener('click',function(){  changeGoal(+1); });
+  initSel('selW',function(v){
+    store.set('waterInterval',Number(v));
+    if(store.get('waterEnabled')){
+      store.set('nextWaterTime',Date.now()+Number(v)*60000);
+      syncSchedule();
+    }
+  });
+
+  // Upgrade + manual verify fallback
+  document.getElementById('upgS').addEventListener('click',function(){ doUpgrade('stretch'); });
+  document.getElementById('verS').addEventListener('click',function(){ doVerify('stretch', false); });
+  document.getElementById('upgW').addEventListener('click',function(){ doUpgrade('water'); });
+  document.getElementById('verW').addEventListener('click',function(){ doVerify('water', false); });
+
+  var pending = store.get('pendingPaymentModule');
+  if (pending) {
+    var vbtn = document.getElementById(pending==='water'?'verW':'verS');
+    var pnote = document.getElementById(pending==='water'?'pnoteW':'pnoteS');
+    if (vbtn) vbtn.style.display = 'flex';
+    if (pnote) pnote.style.display = 'block';
+  }
+
+  // Carousel dots
+  var car=document.getElementById('statCarousel');
+  var d0=document.getElementById('d0'), d1=document.getElementById('d1');
+  if(car&&d0&&d1){
+    car.addEventListener('scroll',function(){
+      var onSecond = car.scrollLeft > (car.scrollWidth/2 - 10);
+      d0.classList.toggle('act',!onSecond);
+      d1.classList.toggle('act',onSecond);
+    },{passive:true});
+    d0.addEventListener('click',function(){ car.scrollTo({left:0,behavior:'smooth'}); });
+    d1.addEventListener('click',function(){ car.scrollTo({left:car.scrollWidth,behavior:'smooth'}); });
+  }
+
+  loadState();
+  startTick();
+}
+
+function setTab(t) {
+  var isS=t==='s';
+  document.getElementById('tabS').classList.toggle('act',isS);
+  document.getElementById('tabW').classList.toggle('act',!isS);
+  document.getElementById('secS').classList.toggle('hidden',!isS);
+  document.getElementById('secW').classList.toggle('hidden',isS);
+}
+
+function loadState() {
+  var se=store.get('stretchEnabled')||false;
+  var we=store.get('waterEnabled')||false;
+  var sm=document.getElementById('smartTog'); if(sm) sm.checked=store.get('smartMode')!==false;
+  var ss=document.getElementById('soundTog'); if(ss) ss.checked=store.get('stretchSound')!==false;
+  var ws=document.getElementById('wSndTog');  if(ws) ws.checked=store.get('waterSound')!==false;
+  setSel('selS', store.get('stretchInterval')||30);
+  setSel('selW', store.get('waterInterval')||30);
+  updateStretchUI(se);
+  updateWaterUI(we);
+  checkWaterDayReset();
+  updateHomeGlasses(store.get('waterGlassCount')||0, store.get('waterGoal')||8);
+
+  var sp=!!store.get('licenseToken'), wp=!!store.get('waterLicenseToken');
+  document.getElementById('uCardS').classList.toggle('hidden',sp);
+  document.getElementById('proS').classList.toggle('hidden',!sp);
+  document.getElementById('spb').classList.toggle('hidden',!sp);
+  document.getElementById('uCardW').classList.toggle('hidden',wp);
+  document.getElementById('proW').classList.toggle('hidden',!wp);
+  document.getElementById('wpb').classList.toggle('hidden',!wp);
+  unlockGoal(wp);
+  renderStats();
+
+  // ── Google Calendar connected state ──────────────────────────────
+  // Show connection indicator and restore toggle positions.
+  var calConnected = localStorage.getItem('googleCalConnected') === 'true';
+  var calTog  = document.getElementById('calTog');
+  var wCalTog = document.getElementById('wCalTog');
+  var calSok  = document.getElementById('calSok');
+  var wCalSok = document.getElementById('wCalSok');
+  if (calTog)  calTog.checked  = calConnected && store.get('calendarSkipStretch') !== false;
+  if (wCalTog) wCalTog.checked = calConnected && store.get('calendarSkipWater')   !== false;
+  if (calSok)  calSok.style.display  = calConnected && store.get('calendarSkipStretch') !== false ? 'block' : 'none';
+  if (wCalSok) wCalSok.style.display = calConnected && store.get('calendarSkipWater')   !== false ? 'block' : 'none';
+
+  // Warning banners
+  var denied = document.getElementById('notifDeniedBanner');
+  if (denied) denied.classList.toggle('hidden', !store.get('notifDeniedWarning'));
+  var battBanner = document.getElementById('batteryWarningBanner');
+  if (battBanner) {
+    var ua = navigator.userAgent;
+    var isSamsung = /Samsung/i.test(ua) || /SM-/i.test(ua);
+    var isXiaomi  = /Xiaomi|MIUI|Redmi/i.test(ua);
+    var battDone  = localStorage.getItem('batteryTipDone');
+    if ((isSamsung || isXiaomi) && !battDone) {
+      battBanner.classList.remove('hidden');
+    }
+  }
+}
+
+function updateStretchUI(on) {
+  var s=document.getElementById('startS'), p=document.getElementById('stopS');
+  if(s) s.disabled=on; if(p) p.disabled=!on;
+  if(!on){
+    var d=document.getElementById('tVal'); if(d) d.textContent='Timer Inactive';
+    var l=document.getElementById('tLbl'); if(l) l.textContent='Next stretch break';
+  }
+}
+function updateWaterUI(on) {
+  var s=document.getElementById('startW'), p=document.getElementById('stopW');
+  if(s) s.disabled=on; if(p) p.disabled=!on;
+  if(!on){
+    var d=document.getElementById('wVal'); if(d) d.textContent='Timer Inactive';
+    var l=document.getElementById('wLbl'); if(l) l.textContent='Next water reminder';
+  }
+}
+function updateHomeGlasses(cnt, goal) {
+  var c=document.getElementById('wCnt');   if(c) c.textContent=cnt;
+  var g=document.getElementById('wGoalD'); if(g) g.textContent=goal;
+  var gv=document.getElementById('wGoalV');if(gv) gv.textContent=goal;
+  var f=document.getElementById('wFill');  if(f) f.style.height=Math.min(100,Math.round(cnt/goal*100))+'%';
+  var dots=document.getElementById('wDots'); if(!dots) return;
+  dots.innerHTML='';
+  for(var i=0;i<goal;i++){
+    var dot=document.createElement('div');
+    dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+(i<cnt?'var(--blue)':'rgba(90,169,255,.2)')+';transition:background .3s;';
+    dots.appendChild(dot);
+  }
+}
+function changeGoal(delta) {
+  var cur=store.get('waterGoal')||8, next=Math.max(1,Math.min(20,cur+delta));
+  store.set('waterGoal',next);
+  updateHomeGlasses(store.get('waterGlassCount')||0,next);
+}
+function unlockGoal(isPro) {
+  var st=document.getElementById('wStepper');
+  if(st){st.style.opacity=isPro?'1':'0.4';st.style.pointerEvents=isPro?'auto':'none';}
+  var lk=document.getElementById('wLock'); if(lk) lk.style.display=isPro?'none':'inline';
+  var sl=document.getElementById('wGoalSub');
+  if(sl) sl.textContent=isPro?'Your daily hydration target':'Upgrade to Pro to set your own goal';
+}
+function renderStats() {
+  var m={
+    'cC':'completedCount','sC':'snoozedCount','kC':'skippedCount',
+    'lcC':'lastCompletedCount','lsC':'lastSnoozedCount','lkC':'lastSkippedCount'
+  };
+  for(var id in m){ var el=document.getElementById(id); if(el) el.textContent=store.get(m[id])||0; }
+}
+
+// ── Google OAuth return handler ───────────────────────────────────────
+// Called on every boot and visibilitychange.
+// Checks whether the app just returned from the Google OAuth consent screen
+// and applies the result synchronously (so loadState picks it up).
+function checkOAuthReturn() {
+  var pending = store.get('oauthPending');
+  if (!pending) return;
+
+  // Always clear pending — prevents looping if OAuth was cancelled
+  store.set('oauthPending', null);
+
+  var calConnected = localStorage.getItem('googleCalConnected') === 'true';
+  if (!calConnected) return; // user cancelled or OAuth failed — nothing to do
+
+  // OAuth succeeded — enable calendar skip for the module that triggered it
+  if (pending === 'stretch' || pending === 'both') store.set('calendarSkipStretch', true);
+  if (pending === 'water'   || pending === 'both') store.set('calendarSkipWater',   true);
+
+  // Sync tokens to Redis and refresh UI after a short delay
+  // (delay lets boot() complete so syncSchedule + loadState have proper context)
+  setTimeout(function() {
+    syncSchedule();
+    loadState();
+    showToast('✅ Google Calendar connected!');
+  }, 600);
+}
+
+// ── Payment flow ─────────────────────────────────────────────────────
+var _pendingPaymentModule = null;
+
+async function doUpgrade(mod) {
+  var id = store.get('installationId');
+  if (!id) { id='pwa-'+Math.random().toString(36).slice(2,15); store.set('installationId',id); }
+  var ep = mod==='water' ? BACKEND+'/api/create-water-checkout' : BACKEND+'/api/create-checkout';
+
+  var btn = document.getElementById(mod==='water'?'upgW':'upgS');
+  if (btn) { btn.textContent = 'Opening Stripe…'; btn.disabled = true; }
+
+  try {
+    var r = await fetch(ep, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ installationId: id })
+    });
+    var d = await r.json();
+    var checkoutUrl = d.url || d.checkoutUrl;
+    var sessionId = d.sessionId || d.session_id || d.id;
+    if (checkoutUrl) {
+      _pendingPaymentModule = mod;
+      store.set('pendingPaymentModule', mod);
+      if (sessionId) store.set('pendingSessionId', sessionId);
+      window.open(checkoutUrl, '_blank');
+      if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
+    } else {
+      if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
+      var errMsg = d.error || d.message || 'Unknown error';
+      alert('Checkout failed: ' + errMsg);
+    }
+  } catch(e) {
+    if (btn) { btn.textContent = mod==='water'?'Upgrade — €5.00':'Upgrade — €3.00'; btn.disabled=false; }
+    alert('Could not connect. Check your connection and try again.');
+  }
+}
+
+async function doVerify(mod, silent) {
+  var id = store.get('installationId'); if (!id) return false;
+  var ep = mod==='water' ? BACKEND+'/api/verify-water-payment' : BACKEND+'/api/verify-payment';
+
+  if (!silent) {
+    var btn = document.getElementById(mod==='water'?'verW':'verS');
+    if (btn) { btn.textContent = 'Checking…'; btn.disabled = true; }
+  }
+
+  try {
+    var sessionId = store.get('pendingSessionId');
+    var body = { installationId: id };
+    if (sessionId) body.sessionId = sessionId;
+    var r = await fetch(ep, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    var d = await r.json();
+    console.log('[verify] status:', r.status, 'body:', JSON.stringify(d));
+    var token = d.licenseToken || d.token || d.license;
+    if (token) {
+      store.set(mod==='water'?'waterLicenseToken':'licenseToken', token);
+      store.set('pendingPaymentModule', null);
+      store.set('pendingSessionId', null);
+      _pendingPaymentModule = null;
+      homeReady = false;
+      loadState();
+      return true;
+    } else {
+      if (!silent) {
+        var btn2 = document.getElementById(mod==='water'?'verW':'verS');
+        if (btn2) { btn2.textContent='✓ I\'ve paid — Verify Payment'; btn2.disabled=false; }
+        var serverMsg = d.error || d.message || d.status || JSON.stringify(d);
+        alert('Server response: ' + serverMsg);
+      }
+      return false;
+    }
+  } catch(e) {
+    console.error('[verify] error:', e);
+    if (!silent) {
+      var btn3 = document.getElementById(mod==='water'?'verW':'verS');
+      if (btn3) { btn3.textContent='✓ I\'ve paid — Verify Payment'; btn3.disabled=false; }
+      alert('Network error: ' + e.message);
+    }
+    return false;
+  }
+}
+
+async function autoVerifyOnReturn() {
+  var pending = store.get('pendingPaymentModule') || _pendingPaymentModule;
+  if (!pending) return;
+  await new Promise(function(r){ setTimeout(r, 1500); });
+  var success = await doVerify(pending, true);
+  if (success) {
+    showToast('✅ Pro unlocked! Thank you.');
+  }
+}
+
+function showToast(msg) {
+  var existing = document.getElementById('dwpToast');
+  if (existing) existing.remove();
+  var toast = document.createElement('div');
+  toast.id = 'dwpToast';
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+24px);left:50%;transform:translateX(-50%);background:rgba(30,37,53,.97);color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:100px;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:9998;white-space:nowrap;pointer-events:none;animation:toastIn .25s ease;';
+  document.body.appendChild(toast);
+  var style = document.createElement('style');
+  style.textContent = '@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+  document.head.appendChild(style);
+  setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(function(){ toast.remove(); }, 350); }, 3000);
+}
+
+// ── Welcome ───────────────────────────────────────────────────────────
+function showWelcomeCard() {
+  var ua=navigator.userAgent;
+  var isIOS=/iPad|iPhone|iPod/.test(ua)&&!window.MSStream;
+  var isAndroid=/Android/.test(ua);
+  var isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(isIOS&&!isStandalone){
+    document.getElementById('nc-android').style.display='none';
+    document.getElementById('nc-ios').style.display='block';
+  } else if(!isIOS&&!isAndroid){
+    document.getElementById('nc-android').style.display='none';
+    document.getElementById('nc-desktop').style.display='block';
+  }
+}
+
+document.getElementById('installBtn').addEventListener('click', async function() {
+  if (!_installPrompt) {
+    // Prompt not available — navigate to PWA so Chrome can offer install
+    window.location.href = 'https://dwpinstall.netlify.app';
+    return;
+  }
+  _installPrompt.prompt();
+  var result = await _installPrompt.userChoice;
+  if (result.outcome === 'accepted') {
+    _installPrompt = null;
+    document.getElementById('installBtn').style.display = 'none';
+  }
+});
+
+document.getElementById('notifBtn').addEventListener('click', async function(){
+  var st=document.getElementById('notifStatus');
+  if(!('Notification' in window)){
+    st.textContent='Not supported here. Try adding to Home Screen first.';
+    st.style.color='var(--red)'; st.style.display='block'; return;
+  }
+  var perm=await Notification.requestPermission();
+  store.set('notificationPermission', perm);
+  st.textContent=perm==='granted'?"✅ You're all set!":'Blocked — go to Settings → Chrome → Notifications.';
+  st.style.color=perm==='granted'?'var(--green)':'var(--red)'; st.style.display='block';
+  setTimeout(function(){ store.set('hasSeenWelcome',true); navigate(SC.HM); }, 1200);
+});
+document.getElementById('skipWelBtn').addEventListener('click',function(){
+  store.set('hasSeenWelcome',true); navigate(SC.HM);
+});
+
+// ── Service Worker ────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js',{scope:'./'})
+    .then(function(reg){ console.log('[SW] registered', reg.scope); })
+    .catch(function(e){ console.warn('[SW] failed', e); });
+
+  navigator.serviceWorker.addEventListener('message', function(e){
+    if (!e.data) return;
+    var msg = e.data;
+
+    if (msg.unlockAudio) unlockAudio();
+
+    if (msg.type === 'NAVIGATE') {
+      var scr = msg.screen;
+      if (scr === 'stretch') {
+        store.set('stretchBreakActive', true);
+        navigate(SC.SB);
+      } else if (scr === 'water') {
+        store.set('waterBreakActive', true);
+        navigate(SC.WB);
+      } else {
+        navigate(SC.HM);
+      }
+    }
+
+    if (msg.type === 'STATUS_TAPPED') {
+      navigate(SC.HM);
+    }
+
+    if (msg.type === 'SNOOZE_FROM_NOTIF') {
+      store.set('snoozedCount', (store.get('snoozedCount')||0) + 1);
+      store.set('nextStretchTime', Date.now() + 5*60000);
+      store.set('stretchBreakActive', false);
+      syncSchedule();
+    }
+  });
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────
+function validateLicenses() {
+  console.log('[license] stretch:', !!store.get('licenseToken'), 'water:', !!store.get('waterLicenseToken'));
+}
+
+function maintenance() {
+  var now = new Date();
+  var sunday = new Date(now);
+  sunday.setDate(now.getDate() - now.getDay());
+  sunday.setHours(0,0,0,0);
+  var sundayStr = sunday.toDateString();
+  var lastWeekStart = store.get('weekStartDate');
+
+  if (lastWeekStart !== sundayStr) {
+    store.set('lastCompletedCount', store.get('completedCount') || 0);
+    store.set('lastSnoozedCount',   store.get('snoozedCount')   || 0);
+    store.set('lastSkippedCount',   store.get('skippedCount')   || 0);
+    store.set('completedCount', 0);
+    store.set('snoozedCount',   0);
+    store.set('skippedCount',   0);
+    store.set('weekStartDate', sundayStr);
+    console.log('[maintenance] weekly stats reset');
+  }
+
+  var today = now.toDateString();
+  if (store.get('waterGoalResetDate') !== today) {
+    store.set('waterGlassCount', 0);
+    store.set('waterGoalResetDate', today);
+    console.log('[maintenance] daily water reset');
+  }
+
+  var freshInstall = !store.get('stretchEnabled') && !store.get('waterEnabled');
+  if (freshInstall) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(function(reg) {
+        reg.pushManager.getSubscription().then(function(sub) {
+          if (sub) {
+            fetch('https://desk-wellness-pack.vercel.app/api/pwa-subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'unsubscribe',
+                installationId: store.get('installationId') || '',
+                subscription: sub.toJSON(),
+              })
+            }).catch(function(){});
+          }
+        });
+      });
+    }
+  }
+
+  if ('Notification' in window) {
+    var perm = Notification.permission;
+    store.set('notificationPermission', perm);
+    if (perm === 'denied' && (store.get('stretchEnabled') || store.get('waterEnabled'))) {
+      store.set('notifDeniedWarning', true);
+    } else {
+      store.set('notifDeniedWarning', false);
+    }
+  }
+}
+
+function boot() {
+  store.init();
+  maintenance();
+  store.set('stretchBreakActive', false);
+  store.set('waterBreakActive', false);
+  showWelcomeCard();
+
+  // Handle OAuth return before navigation so loadState() sees fresh state
+  checkOAuthReturn();
+
+  var params = new URLSearchParams(window.location.search);
+  var scr = params.get('screen');
+
+  if (!store.get('hasSeenWelcome')) {
+    navigate(SC.WL);
+  } else if (scr === 'stretch') {
+    store.set('stretchBreakActive', true);
+    navigate(SC.SB);
+    window.history.replaceState({}, '', './');
+  } else if (scr === 'water') {
+    store.set('waterBreakActive', true);
+    navigate(SC.WB);
+    window.history.replaceState({}, '', './');
+  } else {
+    navigate(SC.HM);
+    autoVerifyOnReturn();
+    if (store.get('stretchEnabled') || store.get('waterEnabled')) {
+      setTimeout(function() {
+        syncSchedule().then(function() {
+          console.log('[boot] schedule synced on startup');
+        });
+      }, 1000);
+    }
+    setTimeout(validateLicenses, 2000);
+    setTimeout(checkAndShowActiveScreen, 500);
+  }
+
+  var ls = document.getElementById('ls');
+  if(ls){ ls.classList.add('out'); setTimeout(function(){ ls.remove(); }, 350); }
+}
+
+function checkAndShowActiveScreen() {
+  if (!store.get('hasSeenWelcome')) return;
+  var now = Date.now();
+  var se = store.get('stretchEnabled');
+  var we = store.get('waterEnabled');
+  var ns = store.get('nextStretchTime');
+  var nw = store.get('nextWaterTime');
+  var sba = store.get('stretchBreakActive');
+  var wba = store.get('waterBreakActive');
+
+  if (sba && currentScreen !== SC.SB) { navigate(SC.SB); return; }
+  if (wba && currentScreen !== SC.WB && !sba) { navigate(SC.WB); return; }
+
+  if (currentScreen !== SC.HM) return;
+
+  if (se && !sba && ns && now >= ns) {
+    store.set('stretchBreakActive', true);
+    store.set('nextStretchTime', Date.now() + 60 * 60 * 1000);
+    syncSchedule();
+    navigate(SC.SB);
+    return;
+  }
+  if (we && !wba && nw && now >= nw) {
+    store.set('waterBreakActive', true);
+    store.set('nextWaterTime', Date.now() + 60 * 60 * 1000);
+    syncSchedule();
+    navigate(SC.WB);
+    return;
+  }
+
+  if (se && we) {
+    setTab('s');
+  } else if (se) {
+    setTab('s');
+  } else if (we) {
+    setTab('w');
+  }
+}
+
+boot();
+
+</script>
+
+</body>
+</html>

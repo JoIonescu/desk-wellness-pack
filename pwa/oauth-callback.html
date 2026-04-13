@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connecting Google Calendar…</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #1b1f2a;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .wrap { max-width: 320px; }
+    .icon { font-size: 52px; margin-bottom: 16px; }
+    .title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .sub   { font-size: 14px; color: #8d97ae; line-height: 1.55; }
+    .spin  { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .err { color: #ff8a80; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="icon" id="icon"><span class="spin">⏳</span></div>
+    <div class="title" id="title">Connecting Google Calendar…</div>
+    <div class="sub"   id="sub">Hang tight, this only takes a moment.</div>
+  </div>
+
+  <script>
+    'use strict';
+
+    var BACKEND      = 'https://desk-wellness-pack.vercel.app';
+    var REDIRECT_URI = 'https://dwpinstall.netlify.app/oauth-callback.html';
+    var APP_URL      = 'https://dwpinstall.netlify.app/';
+
+    function setUI(icon, title, sub, isErr) {
+      document.getElementById('icon').innerHTML  = icon;
+      document.getElementById('title').textContent = title;
+      document.getElementById('sub').textContent   = sub;
+      if (isErr) document.getElementById('title').classList.add('err');
+    }
+
+    function storeTokens(data) {
+      try {
+        localStorage.setItem('googleAccessToken',  data.access_token);
+        localStorage.setItem('googleRefreshToken', data.refresh_token  || '');
+        // expires_at = now + expires_in (seconds) - 60s safety margin
+        var expiresAt = Date.now() + ((data.expires_in || 3600) - 60) * 1000;
+        localStorage.setItem('googleTokenExpiresAt', String(expiresAt));
+        localStorage.setItem('googleCalConnected', 'true');
+      } catch (e) {
+        console.warn('[oauth-callback] localStorage write failed:', e);
+      }
+    }
+
+    function redirectToApp(delay) {
+      setTimeout(function() {
+        window.location.replace(APP_URL);
+      }, delay || 1500);
+    }
+
+    async function main() {
+      var params = new URLSearchParams(window.location.search);
+      var code  = params.get('code');
+      var error = params.get('error');
+
+      // ── Google denied / user cancelled ──────────────────────────
+      if (error) {
+        setUI('❌', 'Access denied', 'You cancelled or denied access. Returning to app…', true);
+        redirectToApp(2500);
+        return;
+      }
+
+      // ── No code — shouldn't happen, bail ────────────────────────
+      if (!code) {
+        setUI('⚠️', 'Something went wrong', 'No authorisation code received. Returning to app…', true);
+        redirectToApp(2500);
+        return;
+      }
+
+      // ── Exchange code for tokens ─────────────────────────────────
+      try {
+        var resp = await fetch(BACKEND + '/api/pwa-oauth-exchange', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: code, redirectUri: REDIRECT_URI })
+        });
+
+        var data = await resp.json();
+
+        if (!resp.ok || !data.access_token) {
+          throw new Error(data.error || 'Exchange failed (' + resp.status + ')');
+        }
+
+        storeTokens(data);
+
+        setUI('✅', 'Google Calendar connected!', 'Reminders will now pause during meetings. Returning to app…');
+        redirectToApp(1800);
+
+      } catch (err) {
+        console.error('[oauth-callback] exchange error:', err);
+        setUI('❌', 'Connection failed', err.message + ' — Returning to app…', true);
+        redirectToApp(3000);
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
