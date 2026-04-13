@@ -235,7 +235,8 @@
       <div class="ncard" id="nc-android">
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">🔔 Allow notifications</div>
         <div style="font-size:13px;line-height:1.55;margin-bottom:14px;opacity:.75;">The app uses notifications when you're away. Without them, reminders won't fire in the background.</div>
-        <button class="btn btn-up" id="notifBtn" style="margin-top:0;">Allow notifications</button>
+      <button class="btn btn-up" id="installBtn" style="display:none;max-width:340px;width:100%;margin-top:0;background:var(--blue);color:#081726;">📲 Add to Home Screen</button>
+      <button class="btn btn-up" id="notifBtn" style="margin-top:0;">Allow notifications</button>
         <div id="notifStatus" style="font-size:12px;margin-top:10px;text-align:center;display:none;"></div>
       </div>
       <div class="ncard" id="nc-ios" style="display:none;">
@@ -538,12 +539,28 @@
 
 var BACKEND = 'https://desk-wellness-pack.vercel.app';
 
+// ── PWA Install prompt ────────────────────────────────────────────────
+// Capture the browser's install event so we can trigger it on demand.
+var _installPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _installPrompt = e;
+  // Show install button on welcome screen if still visible
+  var btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'flex';
+});
+window.addEventListener('appinstalled', function() {
+  _installPrompt = null;
+  var btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+});
+
 // Google OAuth URL — used by calTog / wCalTog to initiate Calendar connection.
 // Full page navigation (window.location.href) — callback page stores tokens
 // and redirects back to the app.
 var OAUTH_URL =
   'https://accounts.google.com/o/oauth2/v2/auth' +
-  '?client_id=750220805739-602skppeurd5oad6nrnucsselt8p6o5o.apps.googleusercontent.com' +
+  '?client_id=750220805739-kuihv9grhjb9n66iqg8h52jr4c6anlrg.apps.googleusercontent.com' +
   '&redirect_uri=https%3A%2F%2Fdwpinstall.netlify.app%2Foauth-callback.html' +
   '&response_type=code' +
   '&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly' +
@@ -1545,6 +1562,20 @@ function showWelcomeCard() {
     document.getElementById('nc-desktop').style.display='block';
   }
 }
+
+document.getElementById('installBtn').addEventListener('click', async function() {
+  if (!_installPrompt) {
+    // Prompt not available — navigate to PWA so Chrome can offer install
+    window.location.href = 'https://dwpinstall.netlify.app';
+    return;
+  }
+  _installPrompt.prompt();
+  var result = await _installPrompt.userChoice;
+  if (result.outcome === 'accepted') {
+    _installPrompt = null;
+    document.getElementById('installBtn').style.display = 'none';
+  }
+});
 
 document.getElementById('notifBtn').addEventListener('click', async function(){
   var st=document.getElementById('notifStatus');
