@@ -540,12 +540,13 @@
 var BACKEND = 'https://desk-wellness-pack.vercel.app';
 
 // ── PWA Install prompt ────────────────────────────────────────────────
-// Capture the browser's install event so we can trigger it on demand.
+// Do NOT call preventDefault() — that suppresses Chrome's native
+// "Add to Home Screen" mini-infobar. Let Chrome handle it automatically.
+// We capture the event only to power the fallback button.
 var _installPrompt = null;
 window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
   _installPrompt = e;
-  // Show install button on welcome screen if still visible
+  // Show fallback install button on welcome screen
   var btn = document.getElementById('installBtn');
   if (btn) btn.style.display = 'flex';
 });
