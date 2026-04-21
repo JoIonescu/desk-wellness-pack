@@ -10,14 +10,15 @@ module.exports = async (req, res) => {
 
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    const { installationId } = req.body;
 
+    const { installationId } = req.body;
     if (!installationId) {
       res.status(400).json({ error: "Missing installationId" });
       return;
     }
 
-    const baseUrl = process.env.BASE_URL || "https://smart-stretch-backend.vercel.app";
+    // FIX: fallback was pointing to old renamed URL "smart-stretch-backend.vercel.app"
+    const baseUrl = process.env.BASE_URL || "https://desk-wellness-pack.vercel.app";
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -36,7 +37,7 @@ module.exports = async (req, res) => {
       ],
       mode: "payment",
       success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}&product=water`,
-      cancel_url:  `${baseUrl}/cancel`,
+      cancel_url: `${baseUrl}/cancel`,
       metadata: { installationId, product: "water" }
     });
 
