@@ -1,3 +1,8 @@
+
+<img width="1497" height="852" alt="linkedin " src="https://github.com/user-attachments/assets/a4979b3c-7a90-40b7-9fca-509c208b580f" />
+
+
+
 # 🧘 Desk Wellness Pack
 
 A lightweight browser-based toolkit designed to improve focus, reduce fatigue, and promote healthier work habits throughout the day.
